@@ -3,7 +3,7 @@ set(ENGINE_HEADER_PATH
 )
 
 set(HEADER_LIST
-    "${ENGINE_HEADER_PATH}/engine.hpp"
+    "${ENGINE_HEADER_PATH}/engine.h"
 )
 
 add_library(engine
