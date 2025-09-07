@@ -1,5 +1,5 @@
 #include <iostream>
-#include <engine/engine.hpp>
+#include <engine/engine.h>
 
 int main() {
     std::cout << "Hello, world!" << std::endl;
