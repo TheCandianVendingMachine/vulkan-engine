@@ -5,7 +5,8 @@
 #include <deque>
 #include <iterator>
 #include <string_view>
-#include <stdint.h>
+#include <cstdint>
+#include <cstdio>
 
 namespace logger {
     enum class Level : uint8_t {
@@ -27,6 +28,7 @@ namespace logger {
 
     struct Entry {
         Level level{};
+        std::string owner{};
         std::string message{};
     };
 }
@@ -49,6 +51,10 @@ template<> class fmt::formatter<logger::Entry&> : fmt::formatter<logger::Entry> 
         auto format(logger::Entry& entry, fmt::format_context& ctx) const -> fmt::format_context::iterator;
 };
 
+struct Stream {
+    std::FILE* file{};
+    logger::Level level{};
+};
 
 class Logger {
     public:
@@ -82,9 +88,27 @@ class Logger {
         auto last_entries(uint64_t count) const -> std::vector<const logger::Entry*>;
         auto last_entries_of(uint64_t count, logger::Level filter) const -> std::vector<const logger::Entry*>;
 
+        friend class LoggerBuilder;
+
     private:
+        Logger(std::string_view identifier, std::vector<Stream>&& streams);
         auto append(logger::Level level, std::string&& message) -> void;
 
     private:
+        std::vector<Stream> m_streams{};
         std::deque<logger::Entry> m_entries{};
+        std::string m_identifier{};
+};
+
+class LoggerBuilder {
+    public:
+        LoggerBuilder() = default;
+
+        auto with_identifier(std::string&& identifier) -> LoggerBuilder&;
+        auto with_stream(Stream stream) -> LoggerBuilder&;
+        auto build() -> Logger;
+
+    private:
+        std::string m_identifier{};
+        std::vector<Stream> m_streams{};
 };

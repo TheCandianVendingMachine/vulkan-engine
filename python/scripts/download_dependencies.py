@@ -128,6 +128,7 @@ class GitDependency(Dependency):
         'Android.mk',
         'BUGS.txt',
         'WhatsNew.txt',
+        '.codecov.yml',
     ]
     repo_url: str
     commit_hash: str
@@ -354,6 +355,18 @@ class SDL(GitDependency, CmakeBuild):
             'a96677bdf6b4acb84af4ec294e5f60a4e8cbbe03'
         )
 
+class RobinMap(GitDependency, BuildSystem):
+    DEPENDENCY_NAME: str = 'robin-map'
+    def __init__(self):
+        super().__init__(
+            'https://github.com/Tessil/robin-map.git',
+            '4ec1bf19c6a96125ea22062f38c2cf5b958e448e'
+        )
+
+    def build(self):
+        with header_library(self.DEPENDENCY_NAME) as build_path:
+            shutil.copytree(self.install_path / 'include' / 'tsl', build_path, dirs_exist_ok=True)
+
 DEPENDENCIES = {
     'stb': Stb(),
     'imgui': Imgui(),
@@ -361,7 +374,8 @@ DEPENDENCIES = {
     'fmtlib': FmtLib(),
     'volk': Volk(),
     'VulkanMemoryAllocator': VulkanMemoryAllocator(),
-    'SDL': SDL()
+    'SDL': SDL(),
+    'robin-map': RobinMap()
 }
 
 def main():

@@ -20,6 +20,7 @@ target_include_directories(engine PUBLIC
     ${EXTERNAL_HEADER_DIR}/fmt
     ${EXTERNAL_HEADER_DIR}/VulkanMemoryAllocator
     ${EXTERNAL_HEADER_DIR}/volk
+    ${EXTERNAL_HEADER_DIR}/robin-map
 )
 target_compile_features(engine PRIVATE cxx_std_23)
 
