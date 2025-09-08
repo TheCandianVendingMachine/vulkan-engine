@@ -12,7 +12,10 @@ LogLocator::LogLocator() {
 }
 
 auto LogLocator::get(LogNamespaces ns) -> Logger& {
-    return m_loggers.at(ns);
+    auto& logger = m_loggers.at(ns);
+    logger.set_index(m_log_idx);
+    m_log_idx += 1;
+    return logger;
 }
 
 Engine::Engine() {
@@ -31,6 +34,10 @@ Engine& Engine::instance() {
     return *g_ENGINE;
 }
 
+auto Engine::run() -> void {
+    while (true) {
+    }
+}
 auto Engine::startup() -> void {
     logger.get(LogNamespaces::CORE).info("Starting");
 

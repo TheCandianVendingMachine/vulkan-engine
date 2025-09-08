@@ -21,6 +21,9 @@ target_include_directories(engine PUBLIC
     ${EXTERNAL_HEADER_DIR}/VulkanMemoryAllocator
     ${EXTERNAL_HEADER_DIR}/volk
     ${EXTERNAL_HEADER_DIR}/robin-map
+    ${EXTERNAL_DIR}/fastgltf/include
+    ${EXTERNAL_DIR}/fmtlib/include
+    ${EXTERNAL_DIR}/sdl/include
 )
 target_compile_features(engine PRIVATE cxx_std_23)
 
@@ -36,10 +39,10 @@ endif()
 
 target_link_libraries(engine PRIVATE
     Vulkan::Vulkan
-    optimized ${FASTGLTF_LIBRARY_RELEASE} debug ${FASTGLTF_LIBRARY_DEBUG}
-    optimized ${FMTLIB_LIBRARY_RELEASE} debug ${FMTLIB_LIBRARY_DEBUG}
-    optimized ${VOLK_LIBRARY_RELEASE} debug ${VOLK_LIBRARY_DEBUG}
-    optimized ${SDL_LIBRARY_RELEASE} debug ${SDL_LIBRARY_DEBUG}
+    fastgltf::fastgltf
+    fmt::fmt
+    volk::volk
+    SDL3::SDL3
 )
 
 source_group(

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <fmt/format.h>
 #include <vector>
 #include <string>
@@ -27,6 +28,7 @@ namespace logger {
     auto level_to_string(Level level) -> std::string_view;
 
     struct Entry {
+        uint64_t index{};
         Level level{};
         std::string owner{};
         std::string message{};
@@ -88,6 +90,8 @@ class Logger {
         auto last_entries(uint64_t count) const -> std::vector<const logger::Entry*>;
         auto last_entries_of(uint64_t count, logger::Level filter) const -> std::vector<const logger::Entry*>;
 
+        auto set_index(uint64_t index) -> void;
+
         friend class LoggerBuilder;
 
     private:
@@ -95,6 +99,7 @@ class Logger {
         auto append(logger::Level level, std::string&& message) -> void;
 
     private:
+        uint64_t m_log_idx{};
         std::vector<Stream> m_streams{};
         std::deque<logger::Entry> m_entries{};
         std::string m_identifier{};

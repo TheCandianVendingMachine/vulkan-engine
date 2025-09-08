@@ -1,3 +1,5 @@
+#pragma once
+
 #include <engine/logger.h>
 #include <memory>
 #include <robin_map.h>
@@ -12,6 +14,7 @@ class LogLocator {
         auto get(LogNamespaces ns) -> Logger&;
 
     private:
+        uint64_t m_log_idx{};
         tsl::robin_map<LogNamespaces, Logger> m_loggers{};
 };
 
@@ -21,6 +24,8 @@ class Engine {
         ~Engine();
 
         static Engine& instance();
+
+        auto run() -> void;
 
         LogLocator& logger = m_logger;
 

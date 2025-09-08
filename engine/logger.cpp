@@ -110,13 +110,18 @@ auto Logger::last_entries_of(uint64_t count, logger::Level filter) const -> std:
     return entries;
 }
 
+auto Logger::set_index(uint64_t index) -> void {
+    m_log_idx = index;
+}
+
 void Logger::append(logger::Level level, std::string&& message) {
-    logger::Entry entry{ level, m_identifier, std::move(message) };
+    logger::Entry entry{ m_log_idx, level, m_identifier, std::move(message) };
     for (auto stream : m_streams) {
         if (stream.level >= level) {
             fmt::print(stream.file, "{}\n", entry);
             fflush(stream.file);
         }
     }
+    m_log_idx += 1;
     m_entries.push_back(std::move(entry));
 }
