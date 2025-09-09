@@ -25,5 +25,8 @@ add_subdirectory(engine)
 add_subdirectory(game)
 
 if(BUILD_TESTS)
+    set(CATCH_INSTALL_DOCS OFF CACHE BOOL "" FORCE)
+    set(CATCH_INSTALL_EXTRAS ON CACHE BOOL "" FORCE)
+    add_subdirectory(external/Catch2)
     add_subdirectory(tests)
 endif()

@@ -26,109 +26,52 @@ constexpr auto double_abs_bits() -> double {
 
 namespace linalg {
     namespace blas1 {
-        auto axpy(float a, const Vector2<float>& x, Vector2<float>& y) -> Vector2<float> {
-            auto a_pack = simd::pack2_lower(a);
-            auto v_a = _mm_load_ps(&a_pack.x);
-
-            auto x_pack = simd::pack_lower(x);
-            auto v_x = _mm_load_ps(&x_pack.x);
+        auto axpy(const float a, const Vector2<float> x, const Vector2<float> y) -> Vector2<float> {
+            auto v_a1 = (__m128*)(&a);
+            auto v_a = _mm_shuffle_ps(*v_a1, *v_a1, 0b00'00'00'00);
+            auto v_x = _mm_loadl_pi(__m128(), (__m64*)(x.elements));
+            auto v_y = _mm_loadl_pi(__m128(), (__m64*)(y.elements));
             auto v_ax = _mm_mul_ps(v_a, v_x);
-
-            auto y_pack = simd::pack_lower(y);
-            auto v_y = _mm_load_ps(&y_pack.x);
 
             auto v_axpy = _mm_add_ps(v_ax, v_y);
 
-            auto axpy = simd::Pack4f{};
-            _mm_store_ps(&axpy.x, v_axpy);
-
-            return simd::spread_vec2(std::move(axpy)).first;
+            float result[4];
+            _mm_store_ps(result, v_axpy);
+            return Vector2<float>{ result[0], result[1] };
         }
 
-        auto axpy2(float a[2], const Vector2<float> x[2], Vector2<float> y[2]) -> std::pair<Vector2<float>, Vector2<float>> {
-            auto a_pack = simd::Pack4f {
-                a[0], a[0],
-                a[1], a[1]
-            };
-            auto v_a = _mm_load_ps(&a_pack.x);
-            auto x_pack = simd::Pack4f {
-                x[0].x, x[0].y,
-                x[1].x, x[1].y
-            };
-            auto v_x = _mm_load_ps(&x_pack.x);
+        auto scale(const float a, const Vector2<float> x) -> Vector2<float> {
+            auto v_a1 = (__m128*)(&a);
+            auto v_a = _mm_shuffle_ps(*v_a1, *v_a1, 0b00'00'00'00);
+            auto v_x = _mm_loadl_pi(__m128(), (__m64*)(x.elements));
             auto v_ax = _mm_mul_ps(v_a, v_x);
 
-            auto y_pack = simd::Pack4f {
-                y[0].x, y[0].y,
-                y[1].x, y[1].y
-            };
-            auto v_y = _mm_load_ps(&y_pack.x);
-
-            auto v_axpy = _mm_add_ps(v_ax, v_y);
-
-            auto axpy = simd::Pack4f{};
-            _mm_store_ps(&axpy.x, v_axpy);
-
-            return simd::spread_vec2(std::move(axpy));
+            float result[4];
+            _mm_store_ps(result, v_ax);
+            return Vector2<float>{ result[0], result[1] };
         }
 
-        auto scale(float a, const Vector2<float>& x) -> Vector2<float> {
-            auto a_pack = simd::pack4(a);
-            auto v_a = _mm_load_ps(&a_pack.x);
-            auto x_pack = simd::pack_lower(x);
-            auto v_x = _mm_load_ps(&x_pack.x);
-
-            auto v_ax = _mm_mul_ps(v_a, v_x);
-
-            auto ax = simd::Pack4f{};
-            _mm_store_ps(&ax.x, v_ax);
-            return simd::spread_vec2(std::move(ax)).first;
-        }
-
-        auto scale2(float a[2], const Vector2<float> x[2]) -> std::pair<Vector2<float>, Vector2<float>> {
-            auto a_pack = simd::Pack4f {
-                a[0], a[0],
-                a[1], a[1]
-            };
-            auto v_a = _mm_load_ps(&a_pack.x);
-            auto x_pack = simd::Pack4f {
-                x[0].x, x[0].y,
-                x[1].x, x[1].y
-            };
-            auto v_x = _mm_load_ps(&x_pack.x);
-
-            auto v_ax = _mm_mul_ps(v_a, v_x);
-
-            auto ax = simd::Pack4f{};
-            _mm_store_ps(&ax.x, v_ax);
-            return simd::spread_vec2(std::move(ax));
-        }
-
-        auto copy(Vector2<float>& a, const Vector2<float>& b) -> void {
-            std::memcpy(&a.x, &b.x, sizeof(a.elements));
+        auto copy(Vector2<float>& a, const Vector2<float> b) -> void {
+            a = b;
         }
 
         auto swap(Vector2<float>& a, Vector2<float>& b) -> void {
-            auto a_pack = simd::Pack4f {
-                a.x,
-                a.y,
-                b.x,
-                b.y
-            };
-            auto v_x = _mm_load_ps(&a_pack.x);
+            auto v_x = _mm_loadl_pi(__m128(), (__m64*)(a.elements));
+            v_x = _mm_loadh_pi(v_x, (__m64*)(b.elements));
             auto v_y = _mm_shuffle_ps(v_x, v_x, 0b01'00'11'10);
 
             v_x = _mm_xor_ps(v_y, v_x);
             v_y = _mm_xor_ps(v_x, v_y);
             v_x = _mm_xor_ps(v_y, v_x);
 
-            _mm_store_ps(&a_pack.x, v_x);
+            float result[4];
+            _mm_store_ps(result, v_x);
 
-            std::memcpy(&a.x, &a_pack.x, 2 * sizeof(float));
-            std::memcpy(&b.x, &a_pack.z, 2 * sizeof(float));
+            std::memcpy(a.elements, &result[0], 2 * sizeof(float));
+            std::memcpy(b.elements, &result[2], 2 * sizeof(float));
         }
 
-        auto dot(Vector2<float>& a, const Vector2<float>& b) -> float {
+        auto dot(const Vector2<float> a, const Vector2<float> b) -> float {
             auto a_pack = simd::pack_lower(a);
             auto v_a = _mm_load_ps(&a_pack.x);
             auto b_pack = simd::pack_lower(b);
@@ -140,7 +83,7 @@ namespace linalg {
             return _mm_cvtss_f32(v_dot);
         }
 
-        auto component_sum(Vector2<float>& x) -> float {
+        auto component_sum(const Vector2<float> x) -> float {
             auto v_sign_bit = _mm_set_ps1(float_abs_bits());
             auto a_pack = simd::pack_lower(x);
             auto v_a = _mm_load_ps(&a_pack.x);
@@ -151,7 +94,7 @@ namespace linalg {
             return _mm_cvtss_f32(v_sum);
         }
 
-        auto magnitude(Vector2<float>& x) -> float {
+        auto magnitude(const Vector2<float> x) -> float {
             auto a_pack = simd::pack_lower(x);
             auto v_a = _mm_load_ps(&a_pack.x);
             auto v_a2 = _mm_mul_ps(v_a, v_a);
@@ -161,7 +104,7 @@ namespace linalg {
             return _mm_cvtss_f32(v_sqrt);
         }
 
-        auto component_max(Vector2<float>& x) -> float {
+        auto component_max(const Vector2<float> x) -> float {
             auto x_pack = simd::pack_lower(x);
             auto v_x = _mm_load_ps(&x_pack.x);
             auto v_x_shuf = _mm_shuffle_ps(v_x, v_x, 0b00'01'00'01);
@@ -174,7 +117,7 @@ namespace linalg {
 
 namespace linalg {
     namespace blas1 {
-        auto axpy(double a, const Vector2<double>& x, Vector2<double>& y) -> Vector2<double> {
+        auto axpy(const double a, const Vector2<double> x, const Vector2<double> y) -> Vector2<double> {
             auto a_pack = simd::pack2(a);
             auto v_a = _mm_load_pd(&a_pack.x);
 
@@ -193,7 +136,7 @@ namespace linalg {
             return simd::spread_vec2(std::move(axpy));
         }
 
-        auto scale(double a, const Vector2<double>& x) -> Vector2<double> {
+        auto scale(const double a, const Vector2<double>& x) -> Vector2<double> {
             auto a_pack = simd::pack2(a);
             auto v_a = _mm_load_pd(&a_pack.x);
             auto x_pack = simd::pack2(x);
@@ -207,7 +150,7 @@ namespace linalg {
         }
 
         auto copy(Vector2<double>& a, const Vector2<double>& b) -> void {
-            std::memcpy(&a.x, &b.x, sizeof(a.elements));
+            a = b;
         }
 
         auto swap(Vector2<double>& a, Vector2<double>& b) -> void {
@@ -227,7 +170,7 @@ namespace linalg {
             std::memcpy(&b.x, &b_pack.x, 2 * sizeof(double));
         }
 
-        auto dot(Vector2<double>& a, const Vector2<double>& b) -> double {
+        auto dot(const Vector2<double>& a, const Vector2<double>& b) -> double {
             auto a_pack = simd::pack2(a);
             auto v_a = _mm_load_pd(&a_pack.x);
             auto b_pack = simd::pack2(b);
@@ -239,7 +182,7 @@ namespace linalg {
             return _mm_cvtsd_f64(v_dot);
         }
 
-        auto component_sum(Vector2<double>& x) -> double {
+        auto component_sum(const Vector2<double>& x) -> double {
             auto v_sign_bit = _mm_set_pd1(double_abs_bits());
             auto a_pack = simd::pack2(x);
             auto v_a = _mm_load_pd(&a_pack.x);
@@ -250,7 +193,7 @@ namespace linalg {
             return _mm_cvtsd_f64(v_sum);
         }
 
-        auto magnitude(Vector2<double>& x) -> double {
+        auto magnitude(const Vector2<double>& x) -> double {
             auto a_pack = simd::pack2(x);
             auto v_a = _mm_load_pd(&a_pack.x);
             auto v_a2 = _mm_mul_pd(v_a, v_a);
@@ -260,7 +203,7 @@ namespace linalg {
             return _mm_cvtsd_f64(v_sqrt);
         }
 
-        auto component_max(Vector2<double>& x) -> double {
+        auto component_max(const Vector2<double>& x) -> double {
             auto x_pack = simd::pack2(x);
             auto v_x = _mm_load_pd(&x_pack.x);
             auto v_x_shuf = _mm_shuffle_pd(v_x, v_x, 0b01);

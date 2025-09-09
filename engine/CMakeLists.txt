@@ -5,11 +5,13 @@ set(ENGINE_HEADER_PATH
 set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/engine.h"
     "${ENGINE_HEADER_PATH}/logger.h"
+    "${ENGINE_HEADER_PATH}/random.h"
 )
 
 add_library(engine
     engine.cpp
     logger.cpp
+    random.cpp
     ${EXTERNAL_HEADER_DIR}/stb/stb_image_implementation.cpp
     ${HEADER_LIST}
 )

@@ -4,35 +4,21 @@
 
 namespace linalg {
     namespace blas1{
-        auto axpy(float a, const Vector2<float>& x, Vector2<float>& y) -> Vector2<float> {
+        auto axpy(const float a, const Vector2<float> x, const Vector2<float> y) -> Vector2<float> {
             return Vector2<float>{
                 a * x.x + y.x,
                 a * x.y + y.y
             };
         }
 
-        auto axpy2(float a[2], const Vector2<float> x[2], Vector2<float> y[2]) -> std::pair<Vector2<float>, Vector2<float>> {
-            return std::make_pair(
-                axpy(a[0], x[0], y[0]),
-                axpy(a[1], x[1], y[1])
-            );
-        }
-
-        auto scale(float a, const Vector2<float>& x) -> Vector2<float> {
+        auto scale(const float a, const Vector2<float> x) -> Vector2<float> {
             return Vector2<float>{
                 a * x.x,
                 a * x.y
             };
         }
 
-        auto scale2(float a[2], const Vector2<float> x[2]) -> std::pair<Vector2<float>, Vector2<float>> {
-            return std::make_pair(
-                scale(a[0], x[0]),
-                scale(a[1], x[1])
-            );
-        }
-
-        auto copy(Vector2<float>& a, const Vector2<float>& b) -> void {
+        auto copy(Vector2<float>& a, const Vector2<float> b) -> void {
             std::memcpy(&a.x, &b.x, sizeof(a.elements));
         }
 
@@ -41,19 +27,19 @@ namespace linalg {
             std::swap(a.y, b.y);
         }
 
-        auto dot(Vector2<float>& a, const Vector2<float>& b) -> float {
+        auto dot(const Vector2<float> a, const Vector2<float> b) -> float {
             return a.x * b.x + a.y * b.y;
         }
 
-        auto component_sum(Vector2<float>& x) -> float {
+        auto component_sum(const Vector2<float> x) -> float {
             return std::abs(x.x) + std::abs(x.y);
         }
 
-        auto magnitude(Vector2<float>& x) -> float {
+        auto magnitude(const Vector2<float> x) -> float {
             return std::sqrtf(x.x * x.x + x.y * x.y);
         }
 
-        auto component_max(Vector2<float>& x) -> float {
+        auto component_max(const Vector2<float> x) -> float {
             return std::fmaxf(std::abs(x.x), std::abs(x.y));
         }
     }
@@ -62,14 +48,14 @@ namespace linalg {
 
 namespace linalg {
     namespace blas1{
-        auto axpy(double a, const Vector2<double>& x, Vector2<double>& y) -> Vector2<double> {
+        auto axpy(const double a, const Vector2<double> x, const Vector2<double> y) -> Vector2<double> {
             return Vector2<double>{
                 a * x.x + y.x,
                 a * x.y + y.y
             };
         }
 
-        auto scale(double a, const Vector2<double>& x) -> Vector2<double> {
+        auto scale(const double a, const Vector2<double> x) -> Vector2<double> {
             return Vector2<double>{
                 a * x.x,
                 a * x.y
@@ -77,7 +63,7 @@ namespace linalg {
         }
 
         auto copy(Vector2<double>& a, const Vector2<double>& b) -> void {
-            std::memcpy(&a.x, &b.x, sizeof(a.elements));
+            a = b;
         }
 
         auto swap(Vector2<double>& a, Vector2<double>& b) -> void {
@@ -85,19 +71,19 @@ namespace linalg {
             std::swap(a.y, b.y);
         }
 
-        auto dot(Vector2<double>& a, const Vector2<double>& b) -> double {
+        auto dot(const Vector2<double> a, const Vector2<double> b) -> double {
             return a.x * b.x + a.y * b.y;
         }
 
-        auto component_sum(Vector2<double>& x) -> double {
+        auto component_sum(const Vector2<double> x) -> double {
             return std::abs(x.x) + std::abs(x.y);
         }
 
-        auto magnitude(Vector2<double>& x) -> double {
+        auto magnitude(const Vector2<double> x) -> double {
             return std::sqrt(x.x * x.x + x.y * x.y);
         }
 
-        auto component_max(Vector2<double>& x) -> double {
+        auto component_max(const Vector2<double> x) -> double {
             return std::fmax(std::abs(x.x), std::abs(x.y));
         }
     }

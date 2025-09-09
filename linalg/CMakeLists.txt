@@ -32,7 +32,6 @@ endif()
 add_library(linalg_sse SHARED
     matrix_sse.cpp
     vector_sse.cpp
-    simd.cpp
     ${HEADER_LIST}
 )
 target_include_directories(linalg_sse PUBLIC

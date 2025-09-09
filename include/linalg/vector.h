@@ -1,5 +1,6 @@
 #pragma once
 #include <utility>
+#include <cstring>
 
 namespace linalg {
     template<typename T>
@@ -11,27 +12,24 @@ namespace linalg {
                 T y;
             };
         };
-        T* data = elements;
+
+        static inline constexpr auto zero() -> Vector2 {
+            return Vector2(T(0), T(0));
+        }
 
         Vector2(T x, T y) : x(x), y(y) {}
-        Vector2(const Vector2& other) {
-            *this = other;
-        }
-        Vector2(Vector2&& other):
+        Vector2(const Vector2& other) : x(other.x), y(other.y) {}
+        Vector2(Vector2&& other) noexcept :
             x(std::move(other.x)), y(std::move(other.y)) {
         }
-        auto operator=(Vector2 rhs) const -> Vector2& {
-            std::memcpy(data, rhs.data, sizeof(elements));
-            return *this;
-        }
-        auto operator=(const Vector2& rhs) const -> Vector2& {
+        auto operator=(const Vector2& rhs) -> Vector2& {
             if (&rhs == this) {
                 return *this;
             }
-            std::memcpy(data, rhs.data, sizeof(elements));
+            std::memcpy(elements, rhs.elements, sizeof(elements));
             return *this;
         }
-        auto operator=(Vector2&& rhs) const -> Vector2& {
+        auto operator=(Vector2&& rhs) -> Vector2& {
             if (&rhs == this) {
                 return *this;
             }
@@ -51,7 +49,10 @@ namespace linalg {
                 T z;
             };
         };
-        T* data = elements;
+
+        static auto zero() -> Vector3 {
+            return Vector3(T(0), T(0), T(0));
+        }
 
         Vector3(T x, T y, T z) : x(x), y(y), z(z) {}
         Vector3(const Vector3& other) {
@@ -60,18 +61,14 @@ namespace linalg {
         Vector3(Vector3&& other):
             x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)) {
         }
-        auto operator=(Vector3 rhs) const -> Vector3& {
-            std::memcpy(data, rhs.data, sizeof(elements));
-            return *this;
-        }
-        auto operator=(const Vector3& rhs) const -> Vector3& {
+        auto operator=(const Vector3& rhs) -> Vector3& {
             if (&rhs == this) {
                 return *this;
             }
-            std::memcpy(data, rhs.data, sizeof(elements));
+            std::memcpy(elements, rhs.elements, sizeof(elements));
             return *this;
         }
-        auto operator=(Vector3&& rhs) const -> Vector3& {
+        auto operator=(Vector3&& rhs) -> Vector3& {
             if (&rhs == this) {
                 return *this;
             }
@@ -93,27 +90,26 @@ namespace linalg {
                 T w;
             };
         };
-        T* data = elements;
+
+        static auto zero() -> Vector4 {
+            return Vector4(T(0), T(0), T(0), T(0));
+        }
 
         Vector4(T x, T y, T z, T w) : x(x), y(y), z(z), w(w) {}
         Vector4(const Vector4& other) {
             *this = other;
         }
         Vector4(Vector4&& other):
-            x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)), data(std::move(other.data)) {
+            x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)), elements(std::move(other.elements)) {
         }
-        auto operator=(Vector4 rhs) const -> Vector4& {
-            std::memcpy(data, rhs.data, sizeof(elements));
-            return *this;
-        }
-        auto operator=(const Vector4& rhs) const -> Vector4& {
+        auto operator=(const Vector4& rhs) -> Vector4& {
             if (&rhs == this) {
                 return *this;
             }
-            std::memcpy(data, rhs.data, sizeof(elements));
+            std::memcpy(elements, rhs.elements, sizeof(elements));
             return *this;
         }
-        auto operator=(Vector4&& rhs) const -> Vector4& {
+        auto operator=(Vector4&& rhs) -> Vector4& {
             if (&rhs == this) {
                 return *this;
             }
@@ -121,7 +117,7 @@ namespace linalg {
             y = std::move(rhs.y);
             z = std::move(rhs.z);
             w = std::move(rhs.w);
-            data = std::move(rhs.data);
+            elements = std::move(rhs.elements);
             return *this;
         }
     };
