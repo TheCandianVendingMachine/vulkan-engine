@@ -4,24 +4,25 @@
 #include <cstring>
 #include <cmath>
 
-constexpr auto float_abs_bits() -> float {
-    union Uniform {
-        int32_t i;
-        float real;
-    } uniform = Uniform {
-        0x7FFFFFFF
+constexpr auto float_abs_bits() -> __m128i {
+    int32_t bitmask = 0x7FFFFFFF;
+    int32_t uniforms[4] = {
+        bitmask,
+        bitmask,
+        bitmask,
+        bitmask
     };
-    return uniform.real;
+    return *(__m128i*)(&uniforms);
 }
 
-constexpr auto double_abs_bits() -> double {
+constexpr auto double_abs_bits() -> __m128d {
     union Uniform {
         int64_t i;
         double real;
     } uniform = Uniform {
         0x7FFFFFFFFFFFFFFF
     };
-    return uniform.real;
+    return *(__m128d*)(&uniform.real);
 }
 
 namespace linalg {
@@ -72,10 +73,8 @@ namespace linalg {
         }
 
         auto dot(const Vector2<float> a, const Vector2<float> b) -> float {
-            auto a_pack = simd::pack_lower(a);
-            auto v_a = _mm_load_ps(&a_pack.x);
-            auto b_pack = simd::pack_lower(b);
-            auto v_b = _mm_load_ps(&b_pack.x);
+            auto v_a = _mm_loadl_pi(__m128(), (__m64*)(a.elements));
+            auto v_b = _mm_loadl_pi(__m128(), (__m64*)(b.elements));
 
             auto v_ab = _mm_mul_ps(v_a, v_b);
             auto v_ba = _mm_shuffle_ps(v_ab, v_ab, 0b00'01'00'01);
@@ -84,32 +83,18 @@ namespace linalg {
         }
 
         auto component_sum(const Vector2<float> x) -> float {
-            auto v_sign_bit = _mm_set_ps1(float_abs_bits());
-            auto a_pack = simd::pack_lower(x);
-            auto v_a = _mm_load_ps(&a_pack.x);
-
-            auto v_abs = _mm_and_ps(v_a, v_sign_bit);
-            auto v_a_shuf = _mm_shuffle_ps(v_abs, v_abs, 0b00'01'00'01);
-            auto v_sum = _mm_add_ps(v_abs, v_a_shuf);
-            return _mm_cvtss_f32(v_sum);
+            // faster than any SSE
+            return std::abs(x.x) + std::abs(x.y);
         }
 
         auto magnitude(const Vector2<float> x) -> float {
-            auto a_pack = simd::pack_lower(x);
-            auto v_a = _mm_load_ps(&a_pack.x);
-            auto v_a2 = _mm_mul_ps(v_a, v_a);
-            auto v_a_shuf = _mm_shuffle_ps(v_a2, v_a2, 0b00'01'00'01);
-            auto v_sum = _mm_add_ps(v_a2, v_a_shuf);
-            auto v_sqrt = _mm_sqrt_ss(v_sum);
-            return _mm_cvtss_f32(v_sqrt);
+            // faster than any SSE
+            return std::sqrt(x.x * x.x + x.y * x.y);
         }
 
         auto component_max(const Vector2<float> x) -> float {
-            auto x_pack = simd::pack_lower(x);
-            auto v_x = _mm_load_ps(&x_pack.x);
-            auto v_x_shuf = _mm_shuffle_ps(v_x, v_x, 0b00'01'00'01);
-            auto v_max = _mm_max_ps(v_x, v_x_shuf);
-            return _mm_cvtss_f32(v_max);
+            // faster than any SSE
+            return std::fmaxf(std::abs(x.x), std::abs(x.y));
         }
     }
 }
@@ -183,14 +168,15 @@ namespace linalg {
         }
 
         auto component_sum(const Vector2<double>& x) -> double {
-            auto v_sign_bit = _mm_set_pd1(double_abs_bits());
+            /*auto v_sign_bit = _mm_set_pd1(double_abs_bits());
             auto a_pack = simd::pack2(x);
             auto v_a = _mm_load_pd(&a_pack.x);
 
             auto v_abs = _mm_and_pd(v_a, v_sign_bit);
             auto v_a_shuf = _mm_shuffle_pd(v_abs, v_abs, 0b01);
             auto v_sum = _mm_add_pd(v_abs, v_a_shuf);
-            return _mm_cvtsd_f64(v_sum);
+            return _mm_cvtsd_f64(v_sum);*/
+            return 0.0;
         }
 
         auto magnitude(const Vector2<double>& x) -> double {

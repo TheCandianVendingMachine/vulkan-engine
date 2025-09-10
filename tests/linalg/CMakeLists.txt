@@ -1,6 +1,12 @@
 enable_testing()
 
-add_executable(test_linalg_scalar test_vector2_float.cpp)
+add_executable(test_linalg_scalar
+    test_vector2_float.cpp
+    test_vector3_float.cpp
+    test_vector4_float.cpp
+    test_vector2_double.cpp
+    test_vector3_double.cpp
+    test_vector4_double.cpp)
 target_include_directories(test_linalg_scalar PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include

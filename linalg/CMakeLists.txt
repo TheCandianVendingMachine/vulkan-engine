@@ -12,8 +12,10 @@ set(HEADER_LIST
 )
 
 add_library(linalg_scalar SHARED
-    matrix.cpp
-    vector.cpp
+    matrix2.cpp
+    vector2.cpp
+    vector3.cpp
+    vector4.cpp
     ${HEADER_LIST}
 )
 target_include_directories(linalg_scalar PUBLIC

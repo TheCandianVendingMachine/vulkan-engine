@@ -100,7 +100,7 @@ namespace linalg {
             *this = other;
         }
         Vector4(Vector4&& other):
-            x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)), elements(std::move(other.elements)) {
+            x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)), w(std::move(other.w)) {
         }
         auto operator=(const Vector4& rhs) -> Vector4& {
             if (&rhs == this) {

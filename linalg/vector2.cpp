@@ -62,7 +62,7 @@ namespace linalg {
             };
         }
 
-        auto copy(Vector2<double>& a, const Vector2<double>& b) -> void {
+        auto copy(Vector2<double>& a, const Vector2<double> b) -> void {
             a = b;
         }
 
