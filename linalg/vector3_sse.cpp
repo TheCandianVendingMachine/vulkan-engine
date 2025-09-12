@@ -96,3 +96,78 @@ namespace linalg {
         }
     }
 }
+
+namespace linalg {
+    namespace blas1 {
+        auto axpy(const double a, const Vector3<double> x, const Vector3<double> y) -> Vector3<double> {
+            auto v_a1 = (__m128d*)(&a);
+            auto v_a = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
+            auto v_x = _mm_loadu_pd(x.elements);
+            auto v_y = _mm_loadu_pd(y.elements);
+            auto v_ax = _mm_mul_pd(v_a, v_x);
+
+            auto v_axpy = _mm_add_pd(v_ax, v_y);
+
+            double result[2];
+            _mm_store_pd(result, v_axpy);
+            return Vector3<double>{ result[0], result[1], a * x.z + y.z };
+        }
+
+        auto scale(const double a, const Vector3<double> x) -> Vector3<double> {
+            auto v_a1 = (__m128d*)(&a);
+            auto v_a = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
+            auto v_x = _mm_loadu_pd(x.elements);
+            auto v_ax = _mm_mul_pd(v_a, v_x);
+
+            double result[2];
+            _mm_store_pd(result, v_ax);
+            return Vector3<double>{ result[0], result[1], a * x.z };
+        }
+
+        auto copy(Vector3<double>& a, const Vector3<double> b) -> void {
+            a = b;
+        }
+
+        auto swap(Vector3<double>& a, Vector3<double>& b) -> void {
+            auto v_x = _mm_loadu_pd(a.elements);
+            auto v_y = _mm_loadu_pd(b.elements);
+
+            v_x = _mm_xor_pd(v_y, v_x);
+            v_y = _mm_xor_pd(v_x, v_y);
+            v_x = _mm_xor_pd(v_y, v_x);
+
+            double result_a[2];
+            double result_b[2];
+            _mm_store_pd(result_a, v_x);
+            _mm_store_pd(result_b, v_y);
+
+            std::memcpy(a.elements, result_a, 2 * sizeof(double));
+            std::memcpy(b.elements, result_b, 2 * sizeof(double));
+            std::swap(a.z, b.z);
+        }
+
+        auto dot(const Vector3<double> a, const Vector3<double> b) -> double {
+            auto v_a = _mm_loadu_pd(a.elements);
+            auto v_b = _mm_loadu_pd(b.elements);
+
+            auto v_ab = _mm_mul_pd(v_a, v_b);
+            auto v_ba = _mm_shuffle_pd(v_ab, v_ab, 0b00'01'00'01);
+            auto v_dot = _mm_add_pd(v_ab, v_ba);
+            return _mm_cvtsd_f64(v_dot) + a.z * b.z;
+        }
+
+        /* Single vector operations are quicker when not using SSE */
+        auto component_sum(const Vector3<double> x) -> double {
+            return std::abs(x.x) + std::abs(x.y) + std::abs(x.z);
+        }
+
+        auto magnitude(const Vector3<double> x) -> double {
+            return std::sqrt(x.x * x.x + x.y * x.y + x.z * x.z);
+        }
+
+        auto component_max(const Vector3<double> x) -> double {
+            return std::fmax(std::abs(x.x), std::fmax(std::abs(x.y), std::abs(x.z)));
+        }
+    }
+}
+

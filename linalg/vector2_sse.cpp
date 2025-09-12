@@ -165,7 +165,7 @@ namespace linalg {
         }
 
         auto component_max(const Vector2<double> x) -> double {
-            return std::fmaxf(std::abs(x.x), std::abs(x.y));
+            return std::fmax(std::abs(x.x), std::abs(x.y));
         }
     }
 }

@@ -34,6 +34,7 @@ add_library(linalg_sse SHARED
     matrix2_sse.cpp
     vector2_sse.cpp
     vector3_sse.cpp
+    vector4_sse.cpp
     ${HEADER_LIST}
 )
 target_include_directories(linalg_sse PUBLIC
