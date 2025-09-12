@@ -51,9 +51,9 @@ TEST_CASE( "blas1::axpy [Vector3<float>]", "[blas1][Vector3]" ) {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             auto result = linalg::blas1::axpy(a[idx], x[idx], y[idx]);
-            CHECK_THAT( result.x, Catch::Matchers::WithinAbs(a[idx] * x[idx].x + y[idx].x, DESIRED_PRECISION) );
-            CHECK_THAT( result.y, Catch::Matchers::WithinAbs(a[idx] * x[idx].y + y[idx].y, DESIRED_PRECISION) );
-            CHECK_THAT( result.z, Catch::Matchers::WithinAbs(a[idx] * x[idx].z + y[idx].z, DESIRED_PRECISION) );
+            REQUIRE_THAT( result.x, Catch::Matchers::WithinAbs(a[idx] * x[idx].x + y[idx].x, DESIRED_PRECISION) );
+            REQUIRE_THAT( result.y, Catch::Matchers::WithinAbs(a[idx] * x[idx].y + y[idx].y, DESIRED_PRECISION) );
+            REQUIRE_THAT( result.z, Catch::Matchers::WithinAbs(a[idx] * x[idx].z + y[idx].z, DESIRED_PRECISION) );
         }
     }
 }
@@ -81,9 +81,9 @@ TEST_CASE( "blas1::scale [Vector3<float>]", "[blas1][Vector3]" ) {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             auto result = linalg::blas1::scale(a[idx], x[idx]);
-            CHECK_THAT( result.x, Catch::Matchers::WithinAbs(a[idx] * x[idx].x, DESIRED_PRECISION) );
-            CHECK_THAT( result.y, Catch::Matchers::WithinAbs(a[idx] * x[idx].y, DESIRED_PRECISION) );
-            CHECK_THAT( result.z, Catch::Matchers::WithinAbs(a[idx] * x[idx].z, DESIRED_PRECISION) );
+            REQUIRE_THAT( result.x, Catch::Matchers::WithinAbs(a[idx] * x[idx].x, DESIRED_PRECISION) );
+            REQUIRE_THAT( result.y, Catch::Matchers::WithinAbs(a[idx] * x[idx].y, DESIRED_PRECISION) );
+            REQUIRE_THAT( result.z, Catch::Matchers::WithinAbs(a[idx] * x[idx].z, DESIRED_PRECISION) );
         }
     }
 }
@@ -111,9 +111,9 @@ TEST_CASE( "blas1::copy [Vector3<float>]", "[blas1][Vector3]" ) {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             linalg::blas1::copy(x[idx], y[idx]);
-            CHECK_THAT( x[idx].x, Catch::Matchers::WithinAbs(y[idx].x, DESIRED_PRECISION) );
-            CHECK_THAT( x[idx].y, Catch::Matchers::WithinAbs(y[idx].y, DESIRED_PRECISION) );
-            CHECK_THAT( x[idx].z, Catch::Matchers::WithinAbs(y[idx].z, DESIRED_PRECISION) );
+            REQUIRE_THAT( x[idx].x, Catch::Matchers::WithinAbs(y[idx].x, DESIRED_PRECISION) );
+            REQUIRE_THAT( x[idx].y, Catch::Matchers::WithinAbs(y[idx].y, DESIRED_PRECISION) );
+            REQUIRE_THAT( x[idx].z, Catch::Matchers::WithinAbs(y[idx].z, DESIRED_PRECISION) );
         }
     }
 }
@@ -145,12 +145,12 @@ TEST_CASE( "blas1::swap [Vector3<float>]", "[blas1][Vector3]" ) {
             linalg::Vector3<float> x_temp = x[idx];
             linalg::Vector3<float> y_temp = y[idx];
             linalg::blas1::swap(x[idx], y[idx]);
-            CHECK_THAT( x[idx].x, Catch::Matchers::WithinAbs(y_temp.x, DESIRED_PRECISION) );
-            CHECK_THAT( x[idx].y, Catch::Matchers::WithinAbs(y_temp.y, DESIRED_PRECISION) );
-            CHECK_THAT( y[idx].x, Catch::Matchers::WithinAbs(x_temp.x, DESIRED_PRECISION) );
-            CHECK_THAT( y[idx].y, Catch::Matchers::WithinAbs(x_temp.y, DESIRED_PRECISION) );
-            CHECK_THAT( x[idx].z, Catch::Matchers::WithinAbs(y_temp.z, DESIRED_PRECISION) );
-            CHECK_THAT( y[idx].z, Catch::Matchers::WithinAbs(x_temp.z, DESIRED_PRECISION) );
+            REQUIRE_THAT( x[idx].x, Catch::Matchers::WithinAbs(y_temp.x, DESIRED_PRECISION) );
+            REQUIRE_THAT( x[idx].y, Catch::Matchers::WithinAbs(y_temp.y, DESIRED_PRECISION) );
+            REQUIRE_THAT( y[idx].x, Catch::Matchers::WithinAbs(x_temp.x, DESIRED_PRECISION) );
+            REQUIRE_THAT( y[idx].y, Catch::Matchers::WithinAbs(x_temp.y, DESIRED_PRECISION) );
+            REQUIRE_THAT( x[idx].z, Catch::Matchers::WithinAbs(y_temp.z, DESIRED_PRECISION) );
+            REQUIRE_THAT( y[idx].z, Catch::Matchers::WithinAbs(x_temp.z, DESIRED_PRECISION) );
         }
     }
 }
@@ -175,7 +175,7 @@ TEST_CASE( "blas1::dot [Vector3<float>]", "[blas1][Vector3]" ) {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             float result = linalg::blas1::dot(x[idx], y[idx]);
-            CHECK_THAT( result, Catch::Matchers::WithinAbs(x[idx].x * y[idx].x + x[idx].y * y[idx].y + x[idx].z * y[idx].z, DESIRED_PRECISION) );
+            REQUIRE_THAT( result, Catch::Matchers::WithinAbs(x[idx].x * y[idx].x + x[idx].y * y[idx].y + x[idx].z * y[idx].z, DESIRED_PRECISION) );
         }
     }
 }
@@ -204,7 +204,7 @@ TEST_CASE( "blas1::component_sum [Vector3<float>]", "[blas1][Vector3]" ) {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             float result = linalg::blas1::component_sum(x[idx]);
-            CHECK_THAT( result, Catch::Matchers::WithinAbs(std::abs(x[idx].x) + std::abs(x[idx].y) + std::abs(x[idx].z), DESIRED_PRECISION) );
+            REQUIRE_THAT( result, Catch::Matchers::WithinAbs(std::abs(x[idx].x) + std::abs(x[idx].y) + std::abs(x[idx].z), DESIRED_PRECISION) );
         }
     }
 }
@@ -233,7 +233,7 @@ TEST_CASE( "blas1::magnitude [Vector3<float>]", "[blas1][Vector3]" ) {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             float result = linalg::blas1::magnitude(x[idx]);
-            CHECK_THAT( result, Catch::Matchers::WithinAbs(std::sqrt(x[idx].x * x[idx].x + x[idx].y * x[idx].y + x[idx].z * x[idx].z), DESIRED_PRECISION) );
+            REQUIRE_THAT( result, Catch::Matchers::WithinAbs(std::sqrt(x[idx].x * x[idx].x + x[idx].y * x[idx].y + x[idx].z * x[idx].z), DESIRED_PRECISION) );
         }
     }
 }
@@ -264,7 +264,7 @@ TEST_CASE( "blas1::component_max [Vector3<float>]", "[blas1][Vector3]" ) {
             float result = linalg::blas1::component_max(x[idx]);
             float largest1 = std::max(std::abs(x[idx].x), std::abs(x[idx].y));
             float largest2 = std::abs(x[idx].z);
-            CHECK_THAT( result, Catch::Matchers::WithinAbs(std::max(largest1, largest2), DESIRED_PRECISION) );
+            REQUIRE_THAT( result, Catch::Matchers::WithinAbs(std::max(largest1, largest2), DESIRED_PRECISION) );
         }
     }
 }
@@ -294,12 +294,6 @@ TEST_CASE( "blas1 - bench [Vector3<float>]", "[blas1][Vector3][bench]" ) {
         auto x = random_vector(rng);
         auto y = random_vector(rng);
         meter.measure([&] { linalg::blas1::copy(x, y); return x; });
-    };
-    BENCHMARK_ADVANCED("blas1::dot - random")(Catch::Benchmark::Chronometer meter) {
-        auto rng = Random();
-        auto x = random_vector(rng);
-        auto y = random_vector(rng);
-        meter.measure([&] { return linalg::blas1::dot(x, y); });
     };
     BENCHMARK_ADVANCED("blas1::dot - random")(Catch::Benchmark::Chronometer meter) {
         auto rng = Random();

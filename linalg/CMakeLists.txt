@@ -8,7 +8,6 @@ set(HEADER_LIST
     "${LINALG_HEADER_PATH}/matrix.h"
     "${LINALG_HEADER_PATH}/vector.h"
     "${LINALG_HEADER_PATH}/vector_ops.h"
-    "${LINALG_HEADER_PATH}/simd.h"
 )
 
 add_library(linalg_scalar SHARED
@@ -32,8 +31,9 @@ endif()
 
 
 add_library(linalg_sse SHARED
-    matrix_sse.cpp
-    vector_sse.cpp
+    matrix2_sse.cpp
+    vector2_sse.cpp
+    vector3_sse.cpp
     ${HEADER_LIST}
 )
 target_include_directories(linalg_sse PUBLIC
@@ -53,7 +53,6 @@ endif()
 
 
 add_library(linalg_avx SHARED
-    matrix_avx.cpp
     vector_avx.cpp
     ${HEADER_LIST}
 )

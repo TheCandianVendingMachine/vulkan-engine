@@ -1,5 +1,4 @@
 #include "linalg/vector_ops.h"
-#include "linalg/simd.h"
 #include <intrin.h>
 #include <cstring>
 #include <cmath>
@@ -82,18 +81,16 @@ namespace linalg {
             return _mm_cvtss_f32(v_dot);
         }
 
+        /* Single vector operations are quicker when not using SSE */
         auto component_sum(const Vector2<float> x) -> float {
-            // faster than any SSE
             return std::abs(x.x) + std::abs(x.y);
         }
 
         auto magnitude(const Vector2<float> x) -> float {
-            // faster than any SSE
             return std::sqrt(x.x * x.x + x.y * x.y);
         }
 
         auto component_max(const Vector2<float> x) -> float {
-            // faster than any SSE
             return std::fmaxf(std::abs(x.x), std::abs(x.y));
         }
     }
@@ -103,98 +100,72 @@ namespace linalg {
 namespace linalg {
     namespace blas1 {
         auto axpy(const double a, const Vector2<double> x, const Vector2<double> y) -> Vector2<double> {
-            auto a_pack = simd::pack2(a);
-            auto v_a = _mm_load_pd(&a_pack.x);
-
-            auto x_pack = simd::pack2(x);
-            auto v_x = _mm_load_pd(&x_pack.x);
+            auto v_a1 = (__m128d*)(&a);
+            auto v_a = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
+            auto v_x = _mm_loadu_pd(x.elements);
+            auto v_y = _mm_loadu_pd(y.elements);
             auto v_ax = _mm_mul_pd(v_a, v_x);
-
-            auto y_pack = simd::pack2(y);
-            auto v_y = _mm_load_pd(&y_pack.x);
 
             auto v_axpy = _mm_add_pd(v_ax, v_y);
 
-            auto axpy = simd::Pack2d{};
-            _mm_store_pd(&axpy.x, v_axpy);
-
-            return simd::spread_vec2(std::move(axpy));
+            double result[2];
+            _mm_store_pd(result, v_axpy);
+            return Vector2<double>{ result[0], result[1] };
         }
 
-        auto scale(const double a, const Vector2<double>& x) -> Vector2<double> {
-            auto a_pack = simd::pack2(a);
-            auto v_a = _mm_load_pd(&a_pack.x);
-            auto x_pack = simd::pack2(x);
-            auto v_x = _mm_load_pd(&x_pack.x);
-
+        auto scale(const double a, const Vector2<double> x) -> Vector2<double> {
+            auto v_a1 = (__m128d*)(&a);
+            auto v_a = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
+            auto v_x = _mm_loadu_pd(x.elements);
             auto v_ax = _mm_mul_pd(v_a, v_x);
 
-            auto ax = simd::Pack2d{};
-            _mm_store_pd(&ax.x, v_ax);
-            return simd::spread_vec2(std::move(ax));
+            double result[2];
+            _mm_store_pd(result, v_ax);
+            return Vector2<double>{ result[0], result[1] };
         }
 
-        auto copy(Vector2<double>& a, const Vector2<double>& b) -> void {
+        auto copy(Vector2<double>& a, const Vector2<double> b) -> void {
             a = b;
         }
 
         auto swap(Vector2<double>& a, Vector2<double>& b) -> void {
-            auto a_pack = simd::pack2(a);
-            auto v_x = _mm_load_pd(&a_pack.x);
-            auto b_pack = simd::pack2(a);
-            auto v_y = _mm_load_pd(&b_pack.x);
+            auto v_x = _mm_loadu_pd(a.elements);
+            auto v_y = _mm_loadu_pd(b.elements);
 
             v_x = _mm_xor_pd(v_y, v_x);
             v_y = _mm_xor_pd(v_x, v_y);
             v_x = _mm_xor_pd(v_y, v_x);
 
-            _mm_store_pd(&a_pack.x, v_x);
-            _mm_store_pd(&b_pack.x, v_y);
+            double result_a[2];
+            double result_b[2];
+            _mm_store_pd(result_a, v_x);
+            _mm_store_pd(result_b, v_y);
 
-            std::memcpy(&a.x, &a_pack.x, 2 * sizeof(double));
-            std::memcpy(&b.x, &b_pack.x, 2 * sizeof(double));
+            std::memcpy(a.elements, result_a, 2 * sizeof(double));
+            std::memcpy(b.elements, result_b, 2 * sizeof(double));
         }
 
-        auto dot(const Vector2<double>& a, const Vector2<double>& b) -> double {
-            auto a_pack = simd::pack2(a);
-            auto v_a = _mm_load_pd(&a_pack.x);
-            auto b_pack = simd::pack2(b);
-            auto v_b = _mm_load_pd(&b_pack.x);
+        auto dot(const Vector2<double> a, const Vector2<double> b) -> double {
+            auto v_a = _mm_loadu_pd(a.elements);
+            auto v_b = _mm_loadu_pd(b.elements);
 
             auto v_ab = _mm_mul_pd(v_a, v_b);
-            auto v_ba = _mm_shuffle_pd(v_ab, v_ab, 0b01);
+            auto v_ba = _mm_shuffle_pd(v_ab, v_ab, 0b00'01'00'01);
             auto v_dot = _mm_add_pd(v_ab, v_ba);
             return _mm_cvtsd_f64(v_dot);
         }
 
-        auto component_sum(const Vector2<double>& x) -> double {
-            /*auto v_sign_bit = _mm_set_pd1(double_abs_bits());
-            auto a_pack = simd::pack2(x);
-            auto v_a = _mm_load_pd(&a_pack.x);
-
-            auto v_abs = _mm_and_pd(v_a, v_sign_bit);
-            auto v_a_shuf = _mm_shuffle_pd(v_abs, v_abs, 0b01);
-            auto v_sum = _mm_add_pd(v_abs, v_a_shuf);
-            return _mm_cvtsd_f64(v_sum);*/
-            return 0.0;
+        /* Single vector operations are quicker when not using SSE */
+        auto component_sum(const Vector2<double> x) -> double {
+            return std::abs(x.x) + std::abs(x.y);
         }
 
-        auto magnitude(const Vector2<double>& x) -> double {
-            auto a_pack = simd::pack2(x);
-            auto v_a = _mm_load_pd(&a_pack.x);
-            auto v_a2 = _mm_mul_pd(v_a, v_a);
-            auto v_a_shuf = _mm_shuffle_pd(v_a2, v_a2, 0b01);
-            auto v_sum = _mm_add_pd(v_a2, v_a_shuf);
-            auto v_sqrt = _mm_sqrt_pd(v_sum);
-            return _mm_cvtsd_f64(v_sqrt);
+        auto magnitude(const Vector2<double> x) -> double {
+            return std::sqrt(x.x * x.x + x.y * x.y);
         }
 
-        auto component_max(const Vector2<double>& x) -> double {
-            auto x_pack = simd::pack2(x);
-            auto v_x = _mm_load_pd(&x_pack.x);
-            auto v_x_shuf = _mm_shuffle_pd(v_x, v_x, 0b01);
-            auto v_max = _mm_max_pd(v_x, v_x_shuf);
-            return _mm_cvtsd_f64(v_max);
+        auto component_max(const Vector2<double> x) -> double {
+            return std::fmaxf(std::abs(x.x), std::abs(x.y));
         }
     }
 }
