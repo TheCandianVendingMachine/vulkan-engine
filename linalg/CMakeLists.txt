@@ -8,6 +8,7 @@ set(HEADER_LIST
     "${LINALG_HEADER_PATH}/matrix.h"
     "${LINALG_HEADER_PATH}/vector.h"
     "${LINALG_HEADER_PATH}/vector_ops.h"
+    "${LINALG_HEADER_PATH}/matrix_ops.h"
 )
 
 add_library(linalg_scalar SHARED

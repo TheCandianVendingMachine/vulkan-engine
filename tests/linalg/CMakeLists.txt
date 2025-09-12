@@ -6,7 +6,9 @@ add_executable(test_linalg_scalar
     test_vector4_float.cpp
     test_vector2_double.cpp
     test_vector3_double.cpp
-    test_vector4_double.cpp)
+    test_vector4_double.cpp
+    test_matrix2_float.cpp
+    test_matrix2_double.cpp)
 target_include_directories(test_linalg_scalar PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
@@ -16,6 +18,7 @@ target_link_libraries(test_linalg_scalar PRIVATE
     engine
     linalg_scalar
 )
+target_compile_features(test_linalg_scalar PRIVATE cxx_std_23)
 
 add_executable(test_linalg_sse
     test_vector2_float.cpp
@@ -33,6 +36,7 @@ target_link_libraries(test_linalg_sse PRIVATE
     engine
     linalg_sse
 )
+target_compile_features(test_linalg_sse PRIVATE cxx_std_23)
 
 
 add_executable(bench_linalg_scalar
@@ -41,7 +45,9 @@ add_executable(bench_linalg_scalar
     bench_vector4_float.cpp
     bench_vector2_double.cpp
     bench_vector3_double.cpp
-    bench_vector4_double.cpp)
+    bench_vector4_double.cpp
+    bench_matrix2_float.cpp
+    bench_matrix2_double.cpp)
 target_include_directories(bench_linalg_scalar PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
@@ -51,6 +57,7 @@ target_link_libraries(bench_linalg_scalar PRIVATE
     engine
     linalg_scalar
 )
+target_compile_features(bench_linalg_scalar PRIVATE cxx_std_23)
 
 add_executable(bench_linalg_sse
     bench_vector2_float.cpp
@@ -68,6 +75,7 @@ target_link_libraries(bench_linalg_sse PRIVATE
     engine
     linalg_sse
 )
+target_compile_features(bench_linalg_sse PRIVATE cxx_std_23)
 
 
 catch_discover_tests(test_linalg_scalar

@@ -19,9 +19,27 @@ namespace linalg {
                 T a; T b;
                 T c; T d;
             };
+            struct {
+                T m00; T m01;
+                T m10; T m11;
+            };
             T elements[4];
         };
         T* data = elements;
+
+        static auto identity() -> Matrix2 {
+            return Matrix2(
+                T(1), T(0),
+                T(0), T(1)
+            );
+        }
+
+        static auto zero() -> Matrix2 {
+            return Matrix2(
+                T(0), T(0),
+                T(0), T(0)
+            );
+        }
 
         Matrix2(const Matrix2& other) {
             *this = other;
@@ -32,22 +50,21 @@ namespace linalg {
         Matrix2(T r1c1, T r1c2, T r2c1, T r2c2) :
             r1c1(r1c1), r1c2(r1c2), r2c1(r2c1), r2c2(r2c2) {
         }
-        auto operator=(Matrix2 rhs) const -> Matrix2 {
-            std::memcpy(data, rhs.data, sizeof(elements));
-            return *this;
-        }
-        auto operator=(Matrix2& rhs) const -> Matrix2 {
+        auto operator=(const Matrix2& rhs) -> Matrix2& {
             if (&rhs == this) {
                 return *this;
             }
             std::memcpy(data, rhs.data, sizeof(elements));
             return *this;
         }
-        auto operator=(Matrix2&& rhs) const -> Matrix2 {
+        auto operator=(Matrix2&& rhs) -> Matrix2& {
             if (&rhs == this) {
                 return *this;
             }
-            elements = std::move(rhs.elements);
+            r1c1 = std::move(rhs.r1c1);
+            r2c1 = std::move(rhs.r2c1);
+            r1c2 = std::move(rhs.r1c2);
+            r2c2 = std::move(rhs.r2c2);
             data = std::move(rhs.data);
             return *this;
         }
