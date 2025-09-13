@@ -1,7 +1,7 @@
 #include "linalg/matrix_ops.h"
 
 namespace linalg {
-    auto lu_decomposition(const Matrix2<float>& A) -> std::pair<Matrix2<float>, Matrix2<float>> {
+    auto Matrix2LU<float>::from(const Matrix2<float>& A) -> Matrix2LU<float> {
         // Doolittle algorithm without pivoting
         auto L = Matrix2<float>::identity();
         auto U = Matrix2<float>::zero();
@@ -13,9 +13,32 @@ namespace linalg {
 
         U.r2c2 = A.r2c2 - L.r2c1 * U.r1c2;
 
-        return std::make_pair(L, U);
+        return Matrix2LU<float>{ Matrix2<float>(
+            L.r1c1, U.r1c2,
+            L.r2c1, L.r2c2
+        )};
     }
 
+    auto Matrix2LU<double>::from(const Matrix2<double>& A) -> Matrix2LU<double> {
+        // Doolittle algorithm without pivoting
+        auto L = Matrix2<double>::identity();
+        auto U = Matrix2<double>::zero();
+
+        U.r1c1 = A.r1c1;
+        U.r1c2 = A.r1c2;
+
+        L.r2c1 = A.r2c1 / U.r1c1;
+
+        U.r2c2 = A.r2c2 - L.r2c1 * U.r1c2;
+
+        return Matrix2LU<double>{ Matrix2<double>(
+            L.r1c1, U.r1c2,
+            L.r2c1, L.r2c2
+        )};
+    }
+}
+
+namespace linalg {
     namespace blas2 {
         auto matrix_vector_product(const Matrix2<float>& A, const Vector2<float> x) -> Vector2<float> {
             return Vector2<float>{
@@ -37,30 +60,15 @@ namespace linalg {
         }
 
         auto solve(const Matrix2<float>& A, const Vector2<float> b) -> Vector2<float> {
-            auto [L, U] = lu_decomposition(A);
-            auto y = solve_lower_triangular(L, b);
-            return solve_upper_triangular(U, y);
+            auto lu = Matrix2LU<float>::from(A);
+            auto y = solve_lower_triangular(lu.lower(), b);
+            return solve_upper_triangular(lu.upper(), y);
         }
     }
 }
 
 
 namespace linalg {
-    auto lu_decomposition(const Matrix2<double>& A) -> std::pair<Matrix2<double>, Matrix2<double>> {
-        // Doolittle algorithm without pivoting
-        auto L = Matrix2<double>::identity();
-        auto U = Matrix2<double>::zero();
-
-        U.r1c1 = A.r1c1;
-        U.r1c2 = A.r1c2;
-
-        L.r2c1 = A.r2c1 / U.r1c1;
-
-        U.r2c2 = A.r2c2 - L.r2c1 * U.r1c2;
-
-        return std::make_pair(L, U);
-    }
-
     namespace blas2 {
         auto matrix_vector_product(const Matrix2<double>& A, const Vector2<double> x) -> Vector2<double> {
             return Vector2<double>{
@@ -82,9 +90,9 @@ namespace linalg {
         }
 
         auto solve(const Matrix2<double>& A, const Vector2<double> b) -> Vector2<double> {
-            auto [L, U] = lu_decomposition(A);
-            auto y = solve_lower_triangular(L, b);
-            return solve_upper_triangular(U, y);
+            auto lu = Matrix2LU<double>::from(A);
+            auto y = solve_lower_triangular(lu.lower(), b);
+            return solve_upper_triangular(lu.upper(), y);
         }
     }
 }
