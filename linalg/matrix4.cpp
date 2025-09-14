@@ -1,7 +1,7 @@
 #include "linalg/matrix_ops.h"
 
 namespace linalg {
-    3amespace blas2 {
+    namespace blas2 {
         auto matrix_vector_product(const Matrix4<float>& A, const Vector4<float> x) -> Vector4<float> {
             return Vector4<float>{
                 A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z + A.r1c4 * x.w,
