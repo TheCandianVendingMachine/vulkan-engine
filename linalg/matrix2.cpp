@@ -53,7 +53,7 @@ namespace linalg {
 
         auto solve(const Matrix2<float>& A, const Vector2<float> b) -> Vector2<float> {
             auto lu = Matrix2LU<float>::from(A);
-            auto y = solve_lower_triangular(lu.lower(), b);
+            auto y = solve_lower_triangular(lu.lower_unit(), b);
             return solve_upper_triangular(lu.upper(), y);
         }
     }
@@ -83,7 +83,7 @@ namespace linalg {
 
         auto solve(const Matrix2<double>& A, const Vector2<double> b) -> Vector2<double> {
             auto lu = Matrix2LU<double>::from(A);
-            auto y = solve_lower_triangular(lu.lower(), b);
+            auto y = solve_lower_triangular(lu.lower_unit(), b);
             return solve_upper_triangular(lu.upper(), y);
         }
     }

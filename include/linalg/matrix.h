@@ -53,7 +53,7 @@ namespace linalg {
             if (&rhs == this) {
                 return *this;
             }
-            std::memcpy(data, rhs.data, sizeof(elements));
+            std::memcpy(elements, rhs.elements, sizeof(elements));
             return *this;
         }
         auto operator=(Matrix2&& rhs) -> Matrix2& {
@@ -64,7 +64,6 @@ namespace linalg {
             r2c1 = std::move(rhs.r2c1);
             r1c2 = std::move(rhs.r1c2);
             r2c2 = std::move(rhs.r2c2);
-            data = std::move(rhs.data);
             return *this;
         }
     };
@@ -124,7 +123,7 @@ namespace linalg {
             if (&rhs == this) {
                 return *this;
             }
-            std::memcpy(data, rhs.data, sizeof(elements));
+            std::memcpy(elements, rhs.elements, sizeof(elements));
             return *this;
         }
         auto operator=(Matrix3&& rhs) -> Matrix3& {
@@ -215,7 +214,7 @@ namespace linalg {
             if (&rhs == this) {
                 return *this;
             }
-            std::memcpy(data, rhs.data, sizeof(elements));
+            std::memcpy(elements, rhs.elements, sizeof(elements));
             return *this;
         }
         auto operator=(Matrix4&& rhs) -> Matrix4& {
@@ -257,6 +256,12 @@ namespace linalg {
 
         auto lower() -> Matrix2<T> {
             return Matrix2<T>(
+                combined.r1c1,           T(0),
+                combined.r2c1,  combined.r2c2
+            );
+        }
+        auto lower_unit() -> Matrix2<T> {
+            return Matrix2<T>(
                 T(1),           T(0),
                 combined.r2c1,  T(1)
             );
@@ -265,6 +270,12 @@ namespace linalg {
             return Matrix2<T>(
                 combined.r1c1,  combined.r1c2,
                 T(0),           combined.r2c2
+            );
+        }
+        auto upper_unit() -> Matrix2<T> {
+            return Matrix2<T>(
+                T(1),  combined.r1c2,
+                T(0),  T(1)
             );
         }
     };
@@ -279,6 +290,13 @@ namespace linalg {
 
         auto lower() -> Matrix3<T> {
             return Matrix3<T>(
+                combined.r1c1,           T(0),           T(0),
+                combined.r2c1,  combined.r2c2,           T(0),
+                combined.r3c1,  combined.r3c2,  combined.r3c3
+            );
+        }
+        auto lower_unit() -> Matrix3<T> {
+            return Matrix3<T>(
                 T(1),           T(0),           T(0),
                 combined.r2c1,  T(1),           T(0),
                 combined.r3c1,  combined.r3c2,  T(1)
@@ -291,6 +309,13 @@ namespace linalg {
                 T(0),           T(0),           combined.r3c3
             );
         }
+        auto upper_unit() -> Matrix3<T> {
+            return Matrix3<T>(
+                T(1),  combined.r1c2,  combined.r1c3,
+                T(0),           T(1),  combined.r2c3,
+                T(0),           T(0),           T(1)
+            );
+        }
     };
 
     template<typename T>
@@ -301,12 +326,28 @@ namespace linalg {
         Matrix4LU(const Matrix4<T>& LU): combined(LU) {}
         static auto from(const Matrix4<T>& A) -> Matrix4LU;
 
-        auto lower() -> Matrix4<T> {
+        auto lower_unit() -> Matrix4<T> {
             return Matrix4<T>(
                 T(1),           T(0),           T(0),          T(0),
                 combined.r2c1,  T(1),           T(0),          T(0),
                 combined.r3c1,  combined.r3c2,  T(1),          T(0),
                 combined.r4c1,  combined.r4c2,  combined.r4c3, T(1)
+            );
+        }
+        auto lower() -> Matrix4<T> {
+            return Matrix4<T>(
+                combined.r1c1,           T(0),           T(0),          T(0),
+                combined.r2c1,  combined.r2c2,           T(0),          T(0),
+                combined.r3c1,  combined.r3c2,  combined.r3c3,          T(0),
+                combined.r4c1,  combined.r4c2,  combined.r4c3, combined.r4c4
+            );
+        }
+        auto upper_unit() -> Matrix4<T> {
+            return Matrix4<T>(
+                T(1),  combined.r1c2,  combined.r1c3,  combined.r1c4,
+                T(0),           T(1),  combined.r2c3,  combined.r2c4,
+                T(0),           T(0),           T(1),  combined.r3c4,
+                T(0),           T(0),           T(0),           T(1)
             );
         }
         auto upper() -> Matrix4<T> {

@@ -70,7 +70,7 @@ namespace linalg {
 
         auto solve(const Matrix3<float>& A, const Vector3<float> b) -> Vector3<float> {
             auto lu = Matrix3LU<float>::from(A);
-            auto y = solve_lower_triangular(lu.lower(), b);
+            auto y = solve_lower_triangular(lu.lower_unit(), b);
             return solve_upper_triangular(lu.upper(), y);
         }
     }
@@ -102,7 +102,7 @@ namespace linalg {
 
         auto solve(const Matrix3<double>& A, const Vector3<double> b) -> Vector3<double> {
             auto lu = Matrix3LU<double>::from(A);
-            auto y = solve_lower_triangular(lu.lower(), b);
+            auto y = solve_lower_triangular(lu.lower_unit(), b);
             return solve_upper_triangular(lu.upper(), y);
         }
     }

@@ -36,7 +36,27 @@ namespace test_matrix {
     }
 
     TEST_CASE( "Matrix3LU::lower [Matrix3<float>]", "[Matrix3]" ) {
-        SECTION("Single") {
+        SECTION("unit") {
+            linalg::Matrix3LU<float> lu({
+                1.f, 2.f, 3.f,
+                4.f, 5.f, 6.f,
+                7.f, 8.f, 9.f
+            });
+
+            CHECK_THAT( lu.lower_unit().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r1c2, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r1c3, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
+
+            CHECK_THAT( lu.lower_unit().r2c1, Catch::Matchers::WithinAbs(4.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r2c2, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r2c3, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
+
+            CHECK_THAT( lu.lower_unit().r3c1, Catch::Matchers::WithinAbs(7.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r3c2, Catch::Matchers::WithinAbs(8.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r3c3, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+        }
+
+        SECTION("non-unit") {
             linalg::Matrix3LU<float> lu({
                 1.f, 2.f, 3.f,
                 4.f, 5.f, 6.f,
@@ -48,17 +68,37 @@ namespace test_matrix {
             CHECK_THAT( lu.lower().r1c3, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
 
             CHECK_THAT( lu.lower().r2c1, Catch::Matchers::WithinAbs(4.f, DESIRED_PRECISION) );
-            CHECK_THAT( lu.lower().r2c2, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower().r2c2, Catch::Matchers::WithinAbs(5.f, DESIRED_PRECISION) );
             CHECK_THAT( lu.lower().r2c3, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
 
             CHECK_THAT( lu.lower().r3c1, Catch::Matchers::WithinAbs(7.f, DESIRED_PRECISION) );
             CHECK_THAT( lu.lower().r3c2, Catch::Matchers::WithinAbs(8.f, DESIRED_PRECISION) );
-            CHECK_THAT( lu.lower().r3c3, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower().r3c3, Catch::Matchers::WithinAbs(9.f, DESIRED_PRECISION) );
         }
     }
 
     TEST_CASE( "Matrix3LU::upper [Matrix3<float>]", "[Matrix3]" ) {
-        SECTION("Single") {
+        SECTION("unit") {
+            linalg::Matrix3LU<float> lu({
+                1.f, 2.f, 3.f,
+                4.f, 5.f, 6.f,
+                7.f, 8.f, 9.f
+            });
+
+            CHECK_THAT( lu.upper_unit().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.upper_unit().r1c2, Catch::Matchers::WithinAbs(2.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.upper_unit().r1c3, Catch::Matchers::WithinAbs(3.f, DESIRED_PRECISION) );
+
+            CHECK_THAT( lu.upper_unit().r2c1, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.upper_unit().r2c2, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.upper_unit().r2c3, Catch::Matchers::WithinAbs(6.f, DESIRED_PRECISION) );
+
+            CHECK_THAT( lu.upper_unit().r3c1, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.upper_unit().r3c2, Catch::Matchers::WithinAbs(0.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.upper_unit().r3c3, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+        }
+
+        SECTION("non-unit") {
             linalg::Matrix3LU<float> lu({
                 1.f, 2.f, 3.f,
                 4.f, 5.f, 6.f,
@@ -89,14 +129,14 @@ namespace test_matrix {
 
             auto lu = linalg::Matrix3LU<float>::from(A);
 
-            CHECK_THAT( lu.lower().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
-            CHECK_THAT( lu.lower().r2c1, Catch::Matchers::WithinAbs(-2.f, DESIRED_PRECISION) );
-            CHECK_THAT( lu.lower().r3c1, Catch::Matchers::WithinAbs(-2.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r2c1, Catch::Matchers::WithinAbs(-2.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r3c1, Catch::Matchers::WithinAbs(-2.f, DESIRED_PRECISION) );
 
-            CHECK_THAT( lu.lower().r2c2, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
-            CHECK_THAT( lu.lower().r3c2, Catch::Matchers::WithinAbs(-1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r2c2, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r3c2, Catch::Matchers::WithinAbs(-1.f, DESIRED_PRECISION) );
 
-            CHECK_THAT( lu.lower().r3c3, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
+            CHECK_THAT( lu.lower_unit().r3c3, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION) );
 
 
 

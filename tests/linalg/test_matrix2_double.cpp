@@ -33,7 +33,20 @@ auto random_matrix(Random &rng) -> linalg::Matrix2<double> {
 }
 
 TEST_CASE( "Matrix2LU::lower [Matrix2<double>]", "[Matrix2]" ) {
-    SECTION("Single") {
+    SECTION("unit") {
+        linalg::Matrix2LU<double> lu({
+            1.0, 2.f,
+            3.0, 4.f,
+        });
+
+        CHECK_THAT( lu.lower_unit().r1c1, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
+        CHECK_THAT( lu.lower_unit().r1c2, Catch::Matchers::WithinAbs(0.0, DESIRED_PRECISION) );
+
+        CHECK_THAT( lu.lower_unit().r2c1, Catch::Matchers::WithinAbs(3.0, DESIRED_PRECISION) );
+        CHECK_THAT( lu.lower_unit().r2c2, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
+    }
+
+    SECTION("non-unit") {
         linalg::Matrix2LU<double> lu({
             1.0, 2.f,
             3.0, 4.f,
@@ -43,12 +56,25 @@ TEST_CASE( "Matrix2LU::lower [Matrix2<double>]", "[Matrix2]" ) {
         CHECK_THAT( lu.lower().r1c2, Catch::Matchers::WithinAbs(0.0, DESIRED_PRECISION) );
 
         CHECK_THAT( lu.lower().r2c1, Catch::Matchers::WithinAbs(3.0, DESIRED_PRECISION) );
-        CHECK_THAT( lu.lower().r2c2, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
+        CHECK_THAT( lu.lower().r2c2, Catch::Matchers::WithinAbs(4.0, DESIRED_PRECISION) );
     }
 }
 
 TEST_CASE( "Matrix2LU::upper [Matrix2<double>]", "[Matrix2]" ) {
-    SECTION("Single") {
+    SECTION("unit") {
+        linalg::Matrix2LU<double> lu({
+            1.0, 2.f,
+            3.0, 4.f,
+        });
+
+        CHECK_THAT( lu.upper_unit().r1c1, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
+        CHECK_THAT( lu.upper_unit().r1c2, Catch::Matchers::WithinAbs(2.0, DESIRED_PRECISION) );
+
+        CHECK_THAT( lu.upper_unit().r2c1, Catch::Matchers::WithinAbs(0.0, DESIRED_PRECISION) );
+        CHECK_THAT( lu.upper_unit().r2c2, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
+    }
+
+    SECTION("non-unit") {
         linalg::Matrix2LU<double> lu({
             1.0, 2.f,
             3.0, 4.f,
@@ -71,9 +97,9 @@ TEST_CASE( "Matrix2LU::from [Matrix2<double>]", "[Matrix2]" ) {
 
         auto lu = linalg::Matrix2LU<double>::from(A);
 
-        CHECK_THAT( lu.lower().r1c1, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
-        CHECK_THAT( lu.lower().r2c1, Catch::Matchers::WithinAbs(0.5, DESIRED_PRECISION) );
-        CHECK_THAT( lu.lower().r2c2, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
+        CHECK_THAT( lu.lower_unit().r1c1, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
+        CHECK_THAT( lu.lower_unit().r2c1, Catch::Matchers::WithinAbs(0.5, DESIRED_PRECISION) );
+        CHECK_THAT( lu.lower_unit().r2c2, Catch::Matchers::WithinAbs(1.0, DESIRED_PRECISION) );
 
         CHECK_THAT( lu.upper().r1c1, Catch::Matchers::WithinAbs(2.0, DESIRED_PRECISION) );
         CHECK_THAT( lu.upper().r1c2, Catch::Matchers::WithinAbs(5.0, DESIRED_PRECISION) );

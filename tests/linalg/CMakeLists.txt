@@ -10,7 +10,9 @@ add_executable(test_linalg_scalar
     test_matrix2_float.cpp
     test_matrix2_double.cpp
     test_matrix3_float.cpp
-    test_matrix3_double.cpp)
+    test_matrix3_double.cpp
+    test_matrix4_float.cpp
+    test_matrix4_double.cpp)
 target_include_directories(test_linalg_scalar PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
@@ -51,7 +53,9 @@ add_executable(bench_linalg_scalar
     bench_matrix2_float.cpp
     bench_matrix2_double.cpp
     bench_matrix3_float.cpp
-    bench_matrix3_double.cpp)
+    bench_matrix3_double.cpp
+    bench_matrix4_float.cpp
+    bench_matrix4_double.cpp)
 target_include_directories(bench_linalg_scalar PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
