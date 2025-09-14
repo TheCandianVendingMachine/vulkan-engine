@@ -101,7 +101,7 @@ namespace linalg {
             return Matrix3(
                 T(1), T(0), T(0),
                 T(0), T(1), T(0),
-                T(0), T(0), T(1),
+                T(0), T(0), T(1)
             );
         }
 
@@ -177,6 +177,7 @@ namespace linalg {
         Matrix3<T> combined;
 
         Matrix3LU(): combined(Matrix3<T>::zero()) {}
+        Matrix3LU(const Matrix3<T>& LU): combined(LU) {}
         static auto from(const Matrix3<T>& A) -> Matrix3LU;
 
         auto lower() -> Matrix3<T> {

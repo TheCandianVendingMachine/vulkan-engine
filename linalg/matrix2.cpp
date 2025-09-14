@@ -3,38 +3,30 @@
 namespace linalg {
     auto Matrix2LU<float>::from(const Matrix2<float>& A) -> Matrix2LU<float> {
         // Doolittle algorithm without pivoting
-        auto L = Matrix2<float>::identity();
-        auto U = Matrix2<float>::zero();
+        auto LU = Matrix2<float>::identity();
 
-        U.r1c1 = A.r1c1;
-        U.r1c2 = A.r1c2;
+        LU.r1c1 = A.r1c1;
+        LU.r1c2 = A.r1c2;
 
-        L.r2c1 = A.r2c1 / U.r1c1;
+        LU.r2c1 = A.r2c1 / LU.r1c1;
 
-        U.r2c2 = A.r2c2 - L.r2c1 * U.r1c2;
+        LU.r2c2 = A.r2c2 - LU.r2c1 * LU.r1c2;
 
-        return Matrix2LU<float>{ Matrix2<float>(
-            L.r1c1, U.r1c2,
-            L.r2c1, L.r2c2
-        )};
+        return Matrix2LU<float>{ LU };
     }
 
     auto Matrix2LU<double>::from(const Matrix2<double>& A) -> Matrix2LU<double> {
         // Doolittle algorithm without pivoting
-        auto L = Matrix2<double>::identity();
-        auto U = Matrix2<double>::zero();
+        auto LU = Matrix2<double>::identity();
 
-        U.r1c1 = A.r1c1;
-        U.r1c2 = A.r1c2;
+        LU.r1c1 = A.r1c1;
+        LU.r1c2 = A.r1c2;
 
-        L.r2c1 = A.r2c1 / U.r1c1;
+        LU.r2c1 = A.r2c1 / LU.r1c1;
 
-        U.r2c2 = A.r2c2 - L.r2c1 * U.r1c2;
+        LU.r2c2 = A.r2c2 - LU.r2c1 * LU.r1c2;
 
-        return Matrix2LU<double>{ Matrix2<double>(
-            L.r1c1, U.r1c2,
-            L.r2c1, L.r2c2
-        )};
+        return Matrix2LU<double>{ LU };
     }
 }
 

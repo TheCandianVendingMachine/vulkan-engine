@@ -3,8 +3,6 @@
 #include "linalg/vector.h"
 
 namespace linalg {
-    auto lu_decomposition(const Matrix2<float>& A) -> std::pair<Matrix2<float>, Matrix2<float>>;
-    auto lu_decomposition(const Matrix2<double>& A) -> std::pair<Matrix2<double>, Matrix2<double>>;
     namespace blas2 {
         auto matrix_vector_product(const Matrix2<float>& A, const Vector2<float> x) -> Vector2<float>;
         auto solve_lower_triangular(const Matrix2<float>& L, const Vector2<float> b) -> Vector2<float>;
@@ -19,8 +17,6 @@ namespace linalg {
 }
 
 namespace linalg {
-    auto lu_decomposition(const Matrix3<float>& A) -> std::pair<Matrix3<float>, Matrix3<float>>;
-    auto lu_decomposition(const Matrix3<double>& A) -> std::pair<Matrix3<double>, Matrix3<double>>;
     namespace blas2 {
         auto matrix_vector_product(const Matrix3<float>& A, const Vector3<float> x) -> Vector3<float>;
         auto solve_lower_triangular(const Matrix3<float>& L, const Vector3<float> b) -> Vector3<float>;

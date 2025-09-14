@@ -43,7 +43,7 @@ TEST_CASE( "blas2 - bench [Matrix2<double>]", "[blas2][Matrix2][bench]" ) {
     auto rng = Random();
     BENCHMARK_ADVANCED("linalg::lu_decomposition - random")(Catch::Benchmark::Chronometer meter) {
         auto A = random_matrix(rng);
-        meter.measure([&] { return linalg::lu_decomposition(A); });
+        meter.measure([&] { return linalg::Matrix2LU<double>::from(A); });
     };
 
     BENCHMARK_ADVANCED("linalg::blas2::solve_lower_triangular - random")(Catch::Benchmark::Chronometer meter) {

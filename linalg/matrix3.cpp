@@ -1,15 +1,50 @@
 #include "linalg/matrix_ops.h"
 
 namespace linalg {
-    auto lu_decomposition(const Matrix3<float>& A) -> std::pair<Matrix3<float>, Matrix3<float>> {
+    auto Matrix3LU<float>::from(const Matrix3<float>& A) -> Matrix3LU<float> {
         // Doolittle algorithm without pivoting
-        auto L = Matrix3<float>::identity();
-        auto U = Matrix3<float>::zero();
+        auto LU = Matrix3<float>::identity();
 
+        LU.r1c1 = A.r1c1;
+        LU.r1c2 = A.r1c2;
+        LU.r1c3 = A.r1c3;
 
-        return std::make_pair(L, U);
+        LU.r2c1 = A.r2c1 / LU.r1c1;
+        LU.r3c1 = A.r3c1 / LU.r1c1;
+
+        LU.r2c2 = A.r2c2 - LU.r2c1 * LU.r1c2;
+        LU.r2c3 = A.r2c3 - LU.r2c1 * LU.r1c3;
+
+        LU.r3c2 = (A.r3c2 - LU.r3c1 * LU.r1c2) / LU.r2c2;
+        
+        LU.r3c3 = A.r3c3 - LU.r3c1 * LU.r1c3 - LU.r3c2 * LU.r2c3;
+
+        return Matrix3LU<float>{ LU };
     }
 
+    auto Matrix3LU<double>::from(const Matrix3<double>& A) -> Matrix3LU<double> {
+        // Doolittle algorithm without pivoting
+        auto LU = Matrix3<double>::identity();
+
+        LU.r1c1 = A.r1c1;
+        LU.r1c2 = A.r1c2;
+        LU.r1c3 = A.r1c3;
+
+        LU.r2c1 = A.r2c1 / LU.r1c1;
+        LU.r3c1 = A.r3c1 / LU.r1c1;
+
+        LU.r2c2 = A.r2c2 - LU.r2c1 * LU.r1c2;
+        LU.r2c3 = A.r2c3 - LU.r2c1 * LU.r1c3;
+
+        LU.r3c2 = (A.r3c2 - LU.r3c1 * LU.r1c2) / LU.r2c2;
+        
+        LU.r3c3 = A.r3c3 - LU.r3c1 * LU.r1c3 - LU.r3c2 * LU.r2c3;
+
+        return Matrix3LU<double>{ LU };
+    }
+}
+
+namespace linalg {
     namespace blas2 {
         auto matrix_vector_product(const Matrix3<float>& A, const Vector3<float> x) -> Vector3<float> {
             return Vector3<float>{
@@ -34,9 +69,9 @@ namespace linalg {
         }
 
         auto solve(const Matrix3<float>& A, const Vector3<float> b) -> Vector3<float> {
-            auto [L, U] = lu_decomposition(A);
-            auto y = solve_lower_triangular(L, b);
-            return solve_upper_triangular(U, y);
+            auto lu = Matrix3LU<float>::from(A);
+            auto y = solve_lower_triangular(lu.lower(), b);
+            return solve_upper_triangular(lu.upper(), y);
         }
     }
 }

@@ -13,6 +13,7 @@ set(HEADER_LIST
 
 add_library(linalg_scalar SHARED
     matrix2.cpp
+    matrix3.cpp
     vector2.cpp
     vector3.cpp
     vector4.cpp

@@ -8,7 +8,8 @@ add_executable(test_linalg_scalar
     test_vector3_double.cpp
     test_vector4_double.cpp
     test_matrix2_float.cpp
-    test_matrix2_double.cpp)
+    test_matrix2_double.cpp
+    test_matrix3_float.cpp)
 target_include_directories(test_linalg_scalar PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
