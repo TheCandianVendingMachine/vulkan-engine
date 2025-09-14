@@ -76,3 +76,35 @@ namespace linalg {
     }
 }
 
+namespace linalg {
+    namespace blas2 {
+        auto matrix_vector_product(const Matrix3<double>& A, const Vector3<double> x) -> Vector3<double> {
+            return Vector3<double>{
+                A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z,
+                A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z,
+                A.r3c1 * x.x + A.r3c2 * x.y + A.r3c3 * x.z
+            };
+        }
+
+        auto solve_lower_triangular(const Matrix3<double>& L, const Vector3<double> b) -> Vector3<double> {
+            auto x1 = b.x / L.r1c1;
+            auto x2 = (b.y - L.r2c1 * x1) / L.r2c2;
+            auto x3 = (b.z - L.r3c1 * x1 - L.r3c2 * x2) / L.r3c3;
+            return Vector3<double>{ x1, x2, x3 };
+        }
+
+        auto solve_upper_triangular(const Matrix3<double>& U, const Vector3<double> b) -> Vector3<double> {
+            auto x3 = b.z / U.r3c3;
+            auto x2 = (b.y - U.r2c3 * x3) / U.r2c2;
+            auto x1 = (b.x - U.r1c2 * x2 - U.r1c3 * x3) / U.r1c1;
+            return Vector3<double>{ x1, x2, x3 };
+        }
+
+        auto solve(const Matrix3<double>& A, const Vector3<double> b) -> Vector3<double> {
+            auto lu = Matrix3LU<double>::from(A);
+            auto y = solve_lower_triangular(lu.lower(), b);
+            return solve_upper_triangular(lu.upper(), y);
+        }
+    }
+}
+

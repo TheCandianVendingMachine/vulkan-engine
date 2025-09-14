@@ -29,3 +29,17 @@ namespace linalg {
         auto solve(const Matrix3<double>& A, const Vector3<double>b) -> Vector3<double>;
     }
 }
+
+namespace linalg {
+    namespace blas2 {
+        auto matrix_vector_product(const Matrix4<float>& A, const Vector4<float> x) -> Vector4<float>;
+        auto solve_lower_triangular(const Matrix4<float>& L, const Vector4<float> b) -> Vector4<float>;
+        auto solve_upper_triangular(const Matrix4<float>& U, const Vector4<float> b) -> Vector4<float>;
+        auto solve(const Matrix4<float>& A, const Vector4<float>b) -> Vector4<float>;
+
+        auto matrix_vector_product(const Matrix4<double>& A, const Vector4<double> x) -> Vector4<double>;
+        auto solve_lower_triangular(const Matrix4<double>& L, const Vector4<double> b) -> Vector4<double>;
+        auto solve_upper_triangular(const Matrix4<double>& U, const Vector4<double> b) -> Vector4<double>;
+        auto solve(const Matrix4<double>& A, const Vector4<double>b) -> Vector4<double>;
+    }
+}
