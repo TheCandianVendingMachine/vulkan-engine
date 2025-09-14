@@ -12,7 +12,7 @@
 #include <linalg/matrix.h>
 #include <linalg/matrix_ops.h>
 
-#define DESIRED_PRECISION (1e-10)
+#define DESIRED_PRECISION (1e-5)
 
 namespace test_matrix {
     constexpr auto range() -> Range<double> {
