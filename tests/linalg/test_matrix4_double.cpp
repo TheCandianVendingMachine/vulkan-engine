@@ -159,14 +159,14 @@ namespace test_matrix {
 
     TEST_CASE( "Matrix4LU::from [Matrix4<double>]", "[Matrix4]" ) {
         SECTION("Single") {
-            linalg::Matrix4<float> A(
+            linalg::Matrix4<double> A(
                 2.0, -1.0, -2.0, 9.0,
                 -4.0, 6.0, 3.0, -5.0,
                 -4.0, -2.0, 8.0, 0.0,
                 2.0, 1.0, 1.0, -1.0
             );
 
-            auto lu = linalg::Matrix4LU<float>::from(A);
+            auto lu = linalg::Matrix4LU<double>::from(A);
 
             CHECK_THAT( lu.lower().r1c1, Catch::Matchers::WithinAbs(2.0, DESIRED_PRECISION) );
             CHECK_THAT( lu.lower().r2c1, Catch::Matchers::WithinAbs(-4.0, DESIRED_PRECISION) );

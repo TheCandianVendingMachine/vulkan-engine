@@ -34,7 +34,7 @@ endif()
 
 
 add_library(linalg_sse SHARED
-    matrix2_sse.cpp
+    matrix4_sse.cpp
     vector2_sse.cpp
     vector3_sse.cpp
     vector4_sse.cpp

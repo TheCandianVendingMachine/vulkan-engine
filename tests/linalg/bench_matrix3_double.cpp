@@ -51,6 +51,12 @@ namespace bench_matrix3 {
             meter.measure([&] { return linalg::Matrix3LU<double>::from(A); });
         };
 
+        BENCHMARK_ADVANCED("linalg::blas2::matrix_vector_product - random")(Catch::Benchmark::Chronometer meter) {
+            auto A = random_matrix_lower_triangular(rng);
+            auto b = random_vector(rng);
+            meter.measure([&] { return linalg::blas2::matrix_vector_product(A, b); });
+        };
+
         BENCHMARK_ADVANCED("linalg::blas2::solve_lower_triangular - random")(Catch::Benchmark::Chronometer meter) {
             auto A = random_matrix_lower_triangular(rng);
             auto b = random_vector(rng);
