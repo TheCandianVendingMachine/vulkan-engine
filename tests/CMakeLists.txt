@@ -3,3 +3,4 @@ include(CTest)
 include(Catch)
 
 add_subdirectory(linalg)
+add_subdirectory(engine)

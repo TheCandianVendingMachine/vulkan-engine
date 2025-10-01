@@ -3,15 +3,24 @@ set(ENGINE_HEADER_PATH
 )
 
 set(HEADER_LIST
+    "${ENGINE_HEADER_PATH}/bitset.h"
     "${ENGINE_HEADER_PATH}/engine.h"
     "${ENGINE_HEADER_PATH}/logger.h"
     "${ENGINE_HEADER_PATH}/random.h"
+    "${ENGINE_HEADER_PATH}/ecs/entity.h"
+    "${ENGINE_HEADER_PATH}/ecs/component.h"
+    "${ENGINE_HEADER_PATH}/ecs/system.h"
+    "${ENGINE_HEADER_PATH}/ecs/query.h"
 )
 
 add_library(engine
+    bitset.cpp
     engine.cpp
     logger.cpp
     random.cpp
+    ecs/entity.cpp
+    ecs/component.cpp
+    ecs/system.cpp
     ${EXTERNAL_HEADER_DIR}/stb/stb_image_implementation.cpp
     ${HEADER_LIST}
 )
