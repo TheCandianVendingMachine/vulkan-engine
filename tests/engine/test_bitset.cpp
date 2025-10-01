@@ -713,6 +713,26 @@ TEST_CASE( "Bitset::is_subset_of", "[Bitset]" ) {
         bitset.set_to(10, 0);
         REQUIRE(bitset.is_subset_of(superset));
     }
+
+    SECTION("Some bigger out-of-rep zero-set") {
+        auto bitset = Bitset();
+        bitset.set(0);
+        bitset.set(5);
+        bitset.set(6);
+        bitset.set(9);
+        bitset.set_to(5000, 0);
+        REQUIRE(bitset.is_subset_of(superset));
+    }
+
+    SECTION("Some bigger out-of-rep non-zero-set") {
+        auto bitset = Bitset();
+        bitset.set(0);
+        bitset.set(5);
+        bitset.set(6);
+        bitset.set(9);
+        bitset.set(5000);
+        REQUIRE_FALSE(bitset.is_subset_of(superset));
+    }
 }
 
 TEST_CASE( "Bitset::extend", "[Bitset]" ) {
