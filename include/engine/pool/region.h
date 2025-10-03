@@ -8,6 +8,7 @@ struct Allocation {
     T object;
     /*
         Axioms:
+            We only allocate FIRST_FREE nodes
             If state == FIRST_FREE =>
                 - last_free will always equal the distance to the last free block in this sequence
 
@@ -53,14 +54,14 @@ struct Allocation {
                 last_free >= 0
         */
         ForwardJump last_free;
-    } jump = 0;
+    } jump = BackwardJump(0);
     enum class State: std::uint8_t {
         FREE = 0,
         FIRST_FREE,
         IN_USE,
         GRAVESTONE,
     } state = State::FREE;
-    std::uint8_t _padding[alignof(T) - ((sizeof(T) + sizeof(Allocation::Jump) + sizeof(Allocation::State) /* sum of members */) % alignof(T))];
+    std::uint8_t _padding[alignof(Allocation) - ((sizeof(T) + sizeof(Allocation::Jump) + sizeof(Allocation::State) /* sum of members */) % alignof(Allocation))];
 };
 
 template<typename T>
@@ -74,10 +75,11 @@ class Region {
                 using pointer =             value_type*;
                 using reference =           value_type&;
 
-                Iterator(pointer ptr): m_ptr(pointer) {
+                Iterator(pointer ptr): m_ptr(ptr) {
                 }
                 Iterator(const Iterator& rhs) = default;
-                Iterator(const Iterator&& rhs) = default;
+                Iterator(const Iterator&& rhs): m_ptr(std::move(rhs.m_ptr)) {
+                }
 
                 auto operator*() -> reference {
                     return *m_ptr;
@@ -129,7 +131,7 @@ class Region {
         }
 
         auto alive() const -> bool {
-            return m_capacity > 0
+            return m_capacity > 0;
         }
     
         template<typename ...TArgs>
@@ -137,33 +139,25 @@ class Region {
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
-            auto spot = static_cast<Allocation<T*>>(m_pool)[static_cast<size_t>(idx)];
-
-            // Todo:
-            // Update allocations on left and right to make sure axioms hold
-            assert(spot->state != Allocation<T>::State::IN_USE);
-            assert(spot->state != Allocation<T>::State::GRAVESTONE);
+            auto spot = static_cast<Allocation<T*>>(m_pool) + static_cast<size_t>(idx);
+            assert(spot->state == Allocation<T>::State::FIRST_FREE);
 
             switch (spot->state) {
                 case Allocation<T>::State::FIRST_FREE: {
                     auto right = spot + 1;
                     if (right->state == Allocation<T>::State::GRAVESTONE || right->state == Allocation<T>::State::IN_USE) {
-                        
+                        spot->state = Allocation<T>::State::IN_USE;
                     } else if (right->state == Allocation<T>::State::FREE) {
-
+                        spot->state = Allocation<T>::State::IN_USE;
+                        right->state = Allocation<T>::State::FIRST_FREE;
+                        right->jump.last_free = spot->jump.last_free + BackwardJump(1);
                     } else {
                         std::unreachable();
                     }
                 };
                 break;
-                case Allocation<T>::State::FREE: {
-
-                };
-                break;
-                default: {
+                default:
                     std::unreachable();
-                }
-                break;
             }
 
             return new (static_cast<void*>(spot)) T(std::forward<TArgs&&>(args)...);
@@ -223,7 +217,7 @@ class Region {
         }
 
         auto index_of(void* ptr) -> Index {
-            if (ptr < pool) {
+            if (ptr < m_pool) {
                 return Index::gravestone();
             }
             auto idx = Index(ptr - m_pool);
@@ -272,7 +266,7 @@ class Region {
                 }
                 break;
                 case Allocation::State::FIRST_FREE: {
-                    first += static_cast<size_t>(m_ptr->jump.last_free + 1);
+                    first += static_cast<size_t>(first->jump.last_free + 1);
                 }
                 break;
                 default: {
@@ -285,7 +279,7 @@ class Region {
 
         auto end() -> Region<T>::Iterator {
             auto last = static_cast<Allocation*>(m_pool) + m_capacity;
-            assert(laste->state == Allocation::State::GRAVESTONE);
+            assert(last->state == Allocation::State::GRAVESTONE);
             return Region<T>::Iterator(last);
         }
 

@@ -12,7 +12,7 @@ class NewType {
             return this->m_value;
         }
 
-        explicit operator T&() const noexcept {
+        explicit operator T const&() const noexcept {
             return this->m_value;
         }
 
@@ -24,13 +24,8 @@ class NewType {
         T m_value;
 };
 
-template<typename T>
-struct UnderlyingType;
-
 template<typename Tag, typename T>
-struct UnderlyingType<NewType<Tag, T>> {
-    using type = T;
-};
+T underlying_type_impl(NewType<Tag, T>);
 
 template<typename T>
-using underlying_type = typename UnderlyingType<T>::type;
+using underlying_type = decltype(underlying_type_impl(std::declval<T>()));

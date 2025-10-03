@@ -1,6 +1,40 @@
 #pragma once
-#include "newtype.h"
+#include "engine/newtype.h"
 #include <limits>
+
+struct ForwardJump: NewType<ForwardJump, size_t> {
+    using NewType::NewType;
+    auto operator+(const ForwardJump rhs) const -> ForwardJump {
+        using type = underlying_type<ForwardJump>;
+        return ForwardJump(static_cast<type>(*this) + static_cast<type>(rhs));
+    }
+};
+
+struct BackwardJump: NewType<BackwardJump, size_t> {
+    using NewType::NewType;
+    auto operator+(const BackwardJump rhs) const -> BackwardJump {
+        using type = underlying_type<BackwardJump>;
+        return BackwardJump(static_cast<type>(*this) + static_cast<type>(rhs));
+    }
+};
+
+auto operator+(const ForwardJump& lhs, const BackwardJump rhs) -> ForwardJump {
+    using lhs_type = underlying_type<ForwardJump>;
+    using rhs_type = underlying_type<BackwardJump>;
+    if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(lhs)) {
+        return ForwardJump(0);
+    }
+    return ForwardJump(static_cast<lhs_type>(lhs) - static_cast<rhs_type>(rhs));
+}
+
+auto operator+(const BackwardJump& lhs, const ForwardJump rhs) -> BackwardJump {
+    using lhs_type = underlying_type<BackwardJump>;
+    using rhs_type = underlying_type<ForwardJump>;
+    if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(lhs)) {
+        return BackwardJump(0);
+    }
+    return BackwardJump(static_cast<lhs_type>(lhs) - static_cast<rhs_type>(rhs));
+}
 
 struct Index: NewType<Index, size_t> {
     using NewType::NewType;
@@ -35,40 +69,8 @@ struct Handle: NewType<Handle, size_t> {
 
     auto operator++(int) -> Handle {
         using type = underlying_type<Handle>;
-        auto ret = *this;
+        auto temp = *this;
         *this = std::move(Handle(static_cast<type>(*this) + 1));
-        return ret;
-    }
-};
-
-struct ForwardJump: NewType<ForwardJump, size_t> {
-    using NewType::NewType;
-    auto operator+(const ForwardJump rhs) const -> ForwardJump {
-        using type = underlying_type<ForwardJump>;
-        return ForwardJump(static_cast<type>(*this) + static_cast<type>(rhs));
-    }
-    auto operator+(const BackwardJump rhs) const -> ForwardJump {
-        using lhs_type = underlying_type<ForwardJump>;
-        using rhs_type = underlying_type<BackwardJump>;
-        if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(*this)) {
-            return ForwardJump(0);
-        }
-        return ForwardJump(static_cast<lhs_type>(*this) - static_cast<rhs_type>(rhs));
-    }
-};
-
-struct BackwardJump: NewType<BackwardJump, size_t> {
-    using NewType::NewType;
-    auto operator+(const BackwardJump rhs) const -> BackwardJump {
-        using type = underlying_type<BackwardJump>;
-        return BackwardJump(static_cast<type>(*this) + static_cast<type>(rhs));
-    }
-    auto operator+(const ForwardJump rhs) const -> BackwardJump {
-        using lhs_type = underlying_type<BackwardJump>;
-        using rhs_type = underlying_type<ForwardJump>;
-        if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(*this)) {
-            return BackwardJump(0);
-        }
-        return BackwardJump(static_cast<lhs_type>(*this) - static_cast<rhs_type>(rhs));
+        return temp;
     }
 };
