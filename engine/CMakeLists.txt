@@ -11,6 +11,9 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/ecs/component.h"
     "${ENGINE_HEADER_PATH}/ecs/system.h"
     "${ENGINE_HEADER_PATH}/ecs/query.h"
+    "${ENGINE_HEADER_PATH}/pool.h"
+    "${ENGINE_HEADER_PATH}/pool/types.h"
+    "${ENGINE_HEADER_PATH}/pool/region.h"
 )
 
 add_library(engine
