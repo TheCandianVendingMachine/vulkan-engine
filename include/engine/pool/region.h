@@ -156,8 +156,10 @@ class Region {
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
-            auto spot = static_cast<Allocation<T*>>(m_pool) + static_cast<size_t>(idx);
-            assert(spot->state == AllocationState::FIRST_FREE);
+            auto spot = reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(idx);
+            if (spot->state != AllocationState::FIRST_FREE) {
+                return nullptr;
+            }
 
             switch (spot->state) {
                 case AllocationState::FIRST_FREE: {
@@ -165,9 +167,12 @@ class Region {
                     if (right->state == AllocationState::GRAVESTONE || right->state == AllocationState::IN_USE) {
                         spot->state = AllocationState::IN_USE;
                     } else if (right->state == AllocationState::FREE) {
+                        auto last = spot + static_cast<size_t>(spot->jump.last_free);
+
                         spot->state = AllocationState::IN_USE;
                         right->state = AllocationState::FIRST_FREE;
                         right->jump.last_free = spot->jump.last_free + BackwardJump(1);
+                        last->jump.first_free = last->jump.first_free + ForwardJump(1);
                     } else {
                         std::unreachable();
                     }
@@ -204,12 +209,13 @@ class Region {
                     ::free(original);
                     return;
                 }
-
-                auto new_bytes = sizeof(Allocation<T>) * (count - m_capacity - 1);
-                memset(m_block + (m_capacity + 2) * sizeof(Allocation<T>), 0, new_bytes);
             }
 
             m_pool = m_block + alignof(Allocation<T>) - (reinterpret_cast<std::uintptr_t>(m_block) % alignof(Allocation<T>));
+            if (!first_allocation) {
+                auto new_bytes = sizeof(Allocation<T>) * (count - m_capacity - 1);
+                memset(m_pool + (m_capacity + 1) * sizeof(Allocation<T>), 0, new_bytes);
+            }
             auto first = reinterpret_cast<Allocation<T>*>(m_pool);
             auto new_first = first + m_capacity;
             auto new_end = first + count;
@@ -222,18 +228,25 @@ class Region {
                 switch (old_last->state) {
                     case AllocationState::FIRST_FREE: [[fallthrough]];
                     case AllocationState::FREE: {
-                        auto first_jump_idx = old_last_idx - old_last->jump.first_free;
-                        auto old_first = reinterpret_cast<Allocation<T>*>(m_pool + static_cast<size_t>(first_jump_idx));
+                        auto old_first_idx = old_last_idx - old_last->jump.first_free;
+                        auto old_first = reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(old_first_idx);
+                        assert(old_first->state == AllocationState::FIRST_FREE);
                         old_first->jump.last_free = old_first->jump.last_free + ForwardJump(count - m_capacity);
                         new_first->state = AllocationState::FREE;
+
+                        auto last_free_jump = ForwardJump(count - m_capacity - 1);
+                        auto new_last = new_first + static_cast<size_t>(last_free_jump);
+                        assert((new_last + 1)->state == AllocationState::GRAVESTONE);
+                        new_last->jump.first_free = BackwardJump(static_cast<size_t>(old_first->jump.last_free));
                     };
                     break;
                     case AllocationState::IN_USE: {
                         new_first->state = AllocationState::FIRST_FREE;
-                        new_first->jump.last_free = ForwardJump(count - 1);
+                        auto last_free_jump = ForwardJump(count - m_capacity - 1);
+                        new_first->jump.last_free = last_free_jump;
 
-                        auto new_last = new_first + count - 1;
-                        new_last->jump.first_free = BackwardJump(count - 1);
+                        auto new_last = new_first + static_cast<size_t>(last_free_jump);
+                        new_last->jump.first_free = BackwardJump(count - m_capacity - 1);
                     };
                     break;
                     default:
@@ -241,10 +254,11 @@ class Region {
                 }
             } else {
                 new_first->state = AllocationState::FIRST_FREE;
-                new_first->jump.last_free = ForwardJump(count - 1);
+                auto last_free_jump = ForwardJump(count - m_capacity - 1);
+                new_first->jump.last_free = last_free_jump;
 
-                auto new_last = new_first + count - 1;
-                new_last->jump.first_free = BackwardJump(count - 1);
+                auto new_last = new_first + static_cast<size_t>(last_free_jump);
+                new_last->jump.first_free = BackwardJump(count - m_capacity - 1);
             }
 
             m_capacity = count;
@@ -268,7 +282,7 @@ class Region {
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
-            return &(reinterpret_cast<Allocation<T>*>(m_pool)[static_cast<size_t>(idx)]);
+            return reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(idx);
         }
         auto get(Index idx) -> Allocation<T>* {
             if (!m_pool) {
@@ -277,7 +291,7 @@ class Region {
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
-            return &(reinterpret_cast<Allocation<T>*>(m_pool)[static_cast<size_t>(idx)]);
+            return reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(idx);
         }
 
         auto clear() -> void {
@@ -357,21 +371,28 @@ class Region {
                     The allocation at the jump offset must have a backwards jump that equals the current allocation
                 */
                 if (allocation->state == AllocationState::FIRST_FREE) {
+                    // We must only have one FIRST_FREE within a contigious allocation block
                     if (in_free_block) {
                         assert(!in_free_block);
                         return false;
                     }
                     in_free_block = true;
+
+                    // The allocation at the jump offset must be FREE
                     auto last_free = allocation + static_cast<size_t>(allocation->jump.last_free);
                     if (last_free->state != AllocationState::FREE) {
                         assert(last_free->state == AllocationState::FREE);
                         return false;
                     }
+
+                    // The allocation one past the jump offset must be FREE
                     auto next_after_last = last_free + 1;
                     if (next_after_last->state != AllocationState::IN_USE && next_after_last->state != AllocationState::GRAVESTONE) {
                         assert((last_free + 1)->state == AllocationState::FREE);
                         return false;
                     }
+
+                    // The allocation at the jump offset must have a backwards jump that equals the current allocation
                     auto offset_first_free = last_free - static_cast<size_t>(allocation->jump.first_free);
                     if (offset_first_free != allocation) {
                         assert(offset_first_free == allocation);
@@ -384,10 +405,13 @@ class Region {
                     The allocation one past FREE must not be FIRST_FREE
                 */
                 if (allocation->state == AllocationState::FREE) {
+                    // We must be in a FREE block
                     if (!in_free_block) {
                         assert(in_free_block);
                         return false;
                     }
+
+                    // The allocation one past FREE must not be FIRST_FREE
                     auto next_alloc = allocation + 1;
                     if (next_alloc->state == AllocationState::FIRST_FREE) {
                         assert(next_alloc->state == AllocationState::FIRST_FREE);
