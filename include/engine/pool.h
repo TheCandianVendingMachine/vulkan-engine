@@ -86,6 +86,12 @@ class Pool {
                 auto operator<=>(const Iterator& rhs) const {
                     return m_iterator <=> rhs.m_iterator;
                 }
+                auto operator<(const Iterator& rhs) const = default;
+                auto operator<=(const Iterator& rhs) const = default;
+                auto operator>(const Iterator& rhs) const = default;
+                auto operator>=(const Iterator& rhs) const = default;
+                auto operator==(const Iterator& rhs) const = default;
+                auto operator!=(const Iterator& rhs) const = default;
 
             private:
                 Region<T>::Iterator m_iterator;
