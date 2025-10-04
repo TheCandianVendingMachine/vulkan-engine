@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <utility>
 #include <iostream>
+#include <cassert>
 
 enum class AllocationState: std::uint8_t {
     FREE = 0,
@@ -253,8 +254,8 @@ class Region {
             if (ptr < m_pool) {
                 return Index::gravestone();
             }
-            auto idx = Index(ptr - m_pool);
-            if (idx >= m_capacity) {
+            auto idx = Index(reinterpret_cast<std::uintptr_t>(ptr) - reinterpret_cast<std::uintptr_t>(m_pool));
+            if (static_cast<size_t>(idx) >= m_capacity) {
                 return Index::gravestone();
             }
             return idx;
@@ -264,7 +265,7 @@ class Region {
             if (!m_pool) {
                 return nullptr;
             }
-            if (idx >= m_capacity) {
+            if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
             return &(reinterpret_cast<Allocation<T>*>(m_pool)[static_cast<size_t>(idx)]);
@@ -273,7 +274,7 @@ class Region {
             if (!m_pool) {
                 return nullptr;
             }
-            if (idx >= m_capacity) {
+            if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
             return &(reinterpret_cast<Allocation<T>*>(m_pool)[static_cast<size_t>(idx)]);

@@ -51,4 +51,13 @@ TEST_CASE( "Pool::Region::alive", "[Pool][Region]" ) {
         REQUIRE(region.alive());
         REQUIRE(region.do_axioms_hold_());
     }
+    SECTION("Extended") {
+        auto region = Region<TestType>(64);
+        REQUIRE(region.do_axioms_hold_());
+        REQUIRE(region.alive());
+        REQUIRE(region.do_axioms_hold_());
+        region.reserve(128);
+        REQUIRE(region.do_axioms_hold_());
+        REQUIRE(region.alive());
+    }
 }
