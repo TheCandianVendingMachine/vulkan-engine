@@ -198,7 +198,7 @@ class Region {
                 return;
             }
 
-            auto left = get(idx - BackwardJump(1));
+            auto left = get_(idx - BackwardJump(1));
             auto right = get_(idx + ForwardJump(1));
             assert(right != nullptr);
 
@@ -213,6 +213,8 @@ class Region {
                     auto first_free = left - static_cast<size_t>(left->jump.first_free);
                     first_free->jump.last_free = first_free->jump.last_free + right->jump.last_free + ForwardJump(1);
                 } else if (right->state == AllocationState::GRAVESTONE || right->state == AllocationState::IN_USE) {
+                    auto first_free = left - static_cast<size_t>(left->jump.first_free);
+                    first_free->jump.last_free = first_free->jump.last_free + ForwardJump(1);
                     if (left->state == AllocationState::FREE) {
                         current->jump.first_free = left->jump.first_free + BackwardJump(1);
                     } else {
@@ -223,12 +225,13 @@ class Region {
                 }
             } else if (!left || left->state == AllocationState::IN_USE) {
                 if (right->state == AllocationState::FIRST_FREE) {
-                    current->state = AllocationState::FREE;
+                    current->state = AllocationState::FIRST_FREE;
                     right->state = AllocationState::FREE;
 
-                    auto last_free = right + static_cast<size_t>(right->jump.last_free);
+                    auto last_free_jump = right->jump.last_free;
+                    auto last_free = right + static_cast<size_t>(last_free_jump);
                     last_free->jump.first_free = last_free->jump.first_free + BackwardJump(1);
-                    current->jump.last_free = right->jump.last_free + ForwardJump(1);
+                    current->jump.last_free = last_free_jump + ForwardJump(1);
                     
                 } else if (right->state == AllocationState::GRAVESTONE || right->state == AllocationState::IN_USE) {
                     current->state = AllocationState::FIRST_FREE;
@@ -509,6 +512,9 @@ class Region {
         size_t m_capacity = 0;
 
         auto get_(Index idx) const -> Allocation<T>* {
+            if (static_cast<size_t>(idx) >= m_capacity + 1) {
+                return nullptr;
+            }
             return m_pool + static_cast<size_t>(idx);
         }
 };

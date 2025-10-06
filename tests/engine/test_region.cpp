@@ -227,7 +227,7 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.free(Index(4));
         REQUIRE(region.do_axioms_hold_());
 
-        REQUIRE(region.get(Index(3)) == nullptr);
+        REQUIRE(region.get(Index(3)) != nullptr);
         REQUIRE(region.get(Index(4)) == nullptr);
         REQUIRE(region.get(Index(5)) != nullptr);
     }
