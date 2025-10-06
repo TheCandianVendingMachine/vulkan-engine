@@ -156,7 +156,7 @@ class Region {
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
-            auto spot = reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(idx);
+            auto spot = get_(idx);
             if (spot->state != AllocationState::FIRST_FREE) {
                 return nullptr;
             }
@@ -186,11 +186,59 @@ class Region {
         }
 
         auto free(Index idx) {
-            if (static_cast<size_t>(idx) >= m_capacity) {
+            if (!m_pool) {
                 return;
             }
-            // Todo:
-            // Update allocations on left and right to make sure axioms hold
+            if (static_cast<size_t>(idx) > m_capacity) {
+                return;
+            }
+
+            auto current = get_(idx);
+            if (current->state != AllocationState::IN_USE) {
+                return;
+            }
+
+            auto left = get(idx - BackwardJump(1));
+            auto right = get_(idx + ForwardJump(1));
+            assert(right != nullptr);
+
+            if (left && (left->state == AllocationState::FREE || left->state == AllocationState::FIRST_FREE)) {
+                current->state = AllocationState::FREE;
+                if (right->state == AllocationState::FIRST_FREE) {
+                    right->state = AllocationState::FREE;
+
+                    auto last_free = right + static_cast<size_t>(right->jump.last_free);
+                    last_free->jump.first_free = last_free->jump.first_free + left->jump.first_free + BackwardJump(1);
+
+                    auto first_free = left - static_cast<size_t>(left->jump.first_free);
+                    first_free->jump.last_free = first_free->jump.last_free + right->jump.last_free + ForwardJump(1);
+                } else if (right->state == AllocationState::GRAVESTONE || right->state == AllocationState::IN_USE) {
+                    if (left->state == AllocationState::FREE) {
+                        current->jump.first_free = left->jump.first_free + BackwardJump(1);
+                    } else {
+                        current->jump.first_free = BackwardJump(1);
+                    }
+                } else {
+                    std::unreachable();
+                }
+            } else if (!left || left->state == AllocationState::IN_USE) {
+                if (right->state == AllocationState::FIRST_FREE) {
+                    current->state = AllocationState::FREE;
+                    right->state = AllocationState::FREE;
+
+                    auto last_free = right + static_cast<size_t>(right->jump.last_free);
+                    last_free->jump.first_free = last_free->jump.first_free + BackwardJump(1);
+                    current->jump.last_free = right->jump.last_free + ForwardJump(1);
+                    
+                } else if (right->state == AllocationState::GRAVESTONE || right->state == AllocationState::IN_USE) {
+                    current->state = AllocationState::FIRST_FREE;
+                    current->jump.last_free = ForwardJump(0);
+                } else {
+                    std::unreachable();
+                }
+            } else {
+                std::unreachable();
+            }
         }
     
         auto reserve(size_t count) -> void {
@@ -211,12 +259,13 @@ class Region {
                 }
             }
 
-            m_pool = m_block + alignof(Allocation<T>) - (reinterpret_cast<std::uintptr_t>(m_block) % alignof(Allocation<T>));
+            std::uint8_t* pool = m_block + alignof(Allocation<T>) - (reinterpret_cast<std::uintptr_t>(m_block) % alignof(Allocation<T>));
             if (!first_allocation) {
                 auto new_bytes = sizeof(Allocation<T>) * (count - m_capacity - 1);
-                memset(m_pool + (m_capacity + 1) * sizeof(Allocation<T>), 0, new_bytes);
+                memset(pool + (m_capacity + 1) * sizeof(Allocation<T>), 0, new_bytes);
             }
-            auto first = reinterpret_cast<Allocation<T>*>(m_pool);
+            m_pool = reinterpret_cast<Allocation<T>*>(pool);
+            auto first = m_pool;
             auto new_first = first + m_capacity;
             auto new_end = first + count;
             new_end->state = AllocationState::GRAVESTONE;
@@ -224,12 +273,12 @@ class Region {
             if (m_capacity > 0) {
                 assert(new_first->state == AllocationState::GRAVESTONE);
                 auto old_last_idx = Index(m_capacity - 1);
-                auto old_last = reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(old_last_idx);
+                auto old_last = get_(old_last_idx);
                 switch (old_last->state) {
                     case AllocationState::FIRST_FREE: [[fallthrough]];
                     case AllocationState::FREE: {
                         auto old_first_idx = old_last_idx - old_last->jump.first_free;
-                        auto old_first = reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(old_first_idx);
+                        auto old_first = get_(old_first_idx);
                         assert(old_first->state == AllocationState::FIRST_FREE);
                         old_first->jump.last_free = old_first->jump.last_free + ForwardJump(count - m_capacity);
                         new_first->state = AllocationState::FREE;
@@ -265,6 +314,12 @@ class Region {
         }
 
         auto index_of(void* ptr) -> Index {
+            if (!ptr) {
+                return Index::gravestone();
+            }
+            if (!m_pool) {
+                return Index::gravestone();
+            }
             if (ptr < m_pool) {
                 return Index::gravestone();
             }
@@ -282,7 +337,11 @@ class Region {
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
-            return reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(idx);
+            auto allocation = get_(idx);
+            if (allocation->state != AllocationState::IN_USE) {
+                return nullptr;
+            }
+            return allocation;
         }
         auto get(Index idx) -> Allocation<T>* {
             if (!m_pool) {
@@ -291,7 +350,11 @@ class Region {
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return nullptr;
             }
-            return reinterpret_cast<Allocation<T>*>(m_pool) + static_cast<size_t>(idx);
+            auto allocation = get_(idx);
+            if (allocation->state != AllocationState::IN_USE) {
+                return nullptr;
+            }
+            return allocation;
         }
 
         auto clear() -> void {
@@ -317,7 +380,7 @@ class Region {
         }
 
         auto begin() -> Region<T>::Iterator {
-            auto first = reinterpret_cast<Allocation<T>*>(m_pool);
+            auto first = m_pool;
             switch (first->state) {
                 case AllocationState::FREE: {
                     assert(false);
@@ -337,7 +400,7 @@ class Region {
         }
 
         auto end() -> Region<T>::Iterator {
-            auto last = reinterpret_cast<Allocation<T>*>(m_pool) + m_capacity;
+            auto last = m_pool + m_capacity;
             assert(last->state == AllocationState::GRAVESTONE);
             return Region<T>::Iterator(last);
         }
@@ -349,7 +412,7 @@ class Region {
                 assert(m_pool);
                 return false;
             }
-            auto allocation = reinterpret_cast<Allocation<T>*>(m_pool);
+            auto allocation = m_pool;
             // Gravestone required at the end of the pool
             if ((allocation + m_capacity)->state != AllocationState::GRAVESTONE) {
                 assert((allocation + m_capacity)->state == AllocationState::GRAVESTONE);
@@ -360,7 +423,7 @@ class Region {
             while (allocation->state != AllocationState::GRAVESTONE) {
                 // Only one gravestone allowed, only at end
                 if (allocation->state == AllocationState::GRAVESTONE) {
-                    assert((allocation + m_capacity)->state != AllocationState::GRAVESTONE);
+                    assert(allocation->state != AllocationState::GRAVESTONE);
                     return false;
                 }
 
@@ -380,15 +443,15 @@ class Region {
 
                     // The allocation at the jump offset must be FREE
                     auto last_free = allocation + static_cast<size_t>(allocation->jump.last_free);
-                    if (last_free->state != AllocationState::FREE) {
-                        assert(last_free->state == AllocationState::FREE);
+                    if (last_free->state != AllocationState::FREE && last_free->state != AllocationState::FIRST_FREE) {
+                        assert(last_free->state == AllocationState::FREE || last_free->state == AllocationState::FIRST_FREE);
                         return false;
                     }
 
                     // The allocation one past the jump offset must be FREE
                     auto next_after_last = last_free + 1;
                     if (next_after_last->state != AllocationState::IN_USE && next_after_last->state != AllocationState::GRAVESTONE) {
-                        assert((last_free + 1)->state == AllocationState::FREE);
+                        assert(next_after_last->state == AllocationState::IN_USE && next_after_last->state == AllocationState::GRAVESTONE);
                         return false;
                     }
 
@@ -440,8 +503,12 @@ class Region {
         std::uint8_t* m_block = nullptr;
 
         // The block of memory which we use as the pool. Aligned to alignof(T)
-        std::uint8_t* m_pool = nullptr;
+        Allocation<T>* m_pool = nullptr;
 
         // How many objects are allocated
         size_t m_capacity = 0;
+
+        auto get_(Index idx) const -> Allocation<T>* {
+            return m_pool + static_cast<size_t>(idx);
+        }
 };

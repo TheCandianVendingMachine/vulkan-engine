@@ -13,6 +13,8 @@ endif()
 
 set(EXTERNAL_DIR ${PROJECT_SOURCE_DIR}/external)
 set(EXTERNAL_HEADER_DIR ${EXTERNAL_DIR}/include)
+set(OPTIONAL_DIR ${PROJECT_SOURCE_DIR}/optional)
+set(NATVIS_DIR ${OPTIONAL_DIR}/natvis)
 
 option(BUILD_TESTS "Build engine and game tests" ON)
 

@@ -49,6 +49,10 @@ if (MSVC)
         NOMINMAX
         _CRT_SECURE_NO_WARNINGS
     )
+    target_sources(engine INTERFACE
+        $<INSTALL_INTERFACE:${NATVIS_DIR}/pool.natvis>
+        $<BUILD_INTERFACE:${NATVIS_DIR}/pool.natvis>
+    )
 endif()
 
 target_link_libraries(engine PRIVATE

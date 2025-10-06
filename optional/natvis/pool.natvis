@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="Region&lt;*&gt;">
+		<DisplayString>{{ capacity={m_capacity} }}</DisplayString>
+		<Expand>
+			<Item Name="[capacity]" ExcludeView="simple">m_capacity</Item>
+			<Item Name="[block]" ExcludeView="simple">m_block</Item>
+			<ArrayItems>
+				<Size>m_capacity</Size>
+				<ValuePointer>m_pool</ValuePointer>
+			</ArrayItems>
+		</Expand>
+	</Type>
+
+</AutoVisualizer>
