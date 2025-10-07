@@ -583,6 +583,18 @@ TEST_CASE( "Bitset::set", "[Bitset]" ) {
 
         REQUIRE(bitset.size() == 1);
     }
+
+    SECTION("really really large") {
+        auto bitset = Bitset();
+
+        REQUIRE(bitset[0] == 0);
+        bitset.set(0);
+        REQUIRE(bitset[0] == 1);
+        bitset.set(10000);
+        REQUIRE(bitset[10000] == 1);
+
+        REQUIRE(bitset.size() == 10001);
+    }
 }
 
 TEST_CASE( "Bitset::set_to", "[Bitset]" ) {
