@@ -73,7 +73,13 @@ template<typename T>
 class Region {
     public:
         Region() = default;
-        Region(Region&& rhs) = default;
+        Region(Region&& rhs):
+            m_block(std::move(rhs.m_block)),
+            m_pool(std::move(rhs.m_pool)),
+            m_free_list(std::move(rhs.m_free_list)),
+            m_capacity(std::move(rhs.m_capacity)) {
+            rhs.m_block = nullptr;
+        }
         Region(size_t capacity) {
             reserve(capacity);
         }
@@ -202,6 +208,7 @@ class Region {
             if (current->state != AllocationState::IN_USE) {
                 return;
             }
+            current->object.~T();
 
             auto left = get_(idx - BackwardJump(1));
             auto right = get_(idx + ForwardJump(1));

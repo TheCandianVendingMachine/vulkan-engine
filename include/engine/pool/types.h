@@ -60,7 +60,7 @@ struct Index: NewType<Index, size_t>, Orderable<Index>, Hashable<Index> {
     }
 };
 
-struct Handle: NewType<Handle, size_t>, Orderable<Index>, Hashable<Index> {
+struct Handle: NewType<Handle, size_t>, Orderable<Handle>, Hashable<Handle> {
     using NewType::NewType;
 
     auto operator++(int) -> Handle {
