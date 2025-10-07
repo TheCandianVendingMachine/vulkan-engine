@@ -121,10 +121,6 @@ class Pool {
             }
             m_region.reserve(count);
             m_handles.reserve(count);
-            m_free_list.reserve(count);
-            for (auto idx = this->m_capacity; idx < count; idx++) {
-                m_free_list.emplace_back(count - idx - 1);
-            }
         }
 
         template<typename ...TArgs>
@@ -132,7 +128,7 @@ class Pool {
             if (!m_region.alive()) {
                 *this = std::move(Pool(DefaultCount));
             }
-            if (m_free_list.empty()) {
+            if (m_region.get_free_index() == Index::gravestone()) {
                 this->reserve(this->m_size * GrowthFactor);
             }
 
@@ -205,8 +201,6 @@ class Pool {
 
     private:
         Region m_region<T>{};
-
-        std::vector<Index> m_free_list{};
         tsl::robin_map<Handle, Index> m_handles{};
 
         size_t m_size = 0;

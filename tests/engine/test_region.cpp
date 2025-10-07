@@ -240,7 +240,7 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(4));
         region.emplace(Index(5));
         region.emplace(Index(6));
-
+        REQUIRE(region.do_axioms_hold_());
 
         region.free(Index(2));
         region.free(Index(4));

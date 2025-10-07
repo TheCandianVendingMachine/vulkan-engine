@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/newtype.h"
 #include <limits>
+#include <utility>
 
 struct ForwardJump: NewType<ForwardJump, size_t> {
     using NewType::NewType;
@@ -36,16 +37,11 @@ auto operator+(const BackwardJump& lhs, const ForwardJump rhs) -> BackwardJump {
     return BackwardJump(static_cast<lhs_type>(lhs) - static_cast<rhs_type>(rhs));
 }
 
-struct Index: NewType<Index, size_t> {
+struct Index: NewType<Index, size_t>, Orderable<Index>, Hashable<Index> {
     using NewType::NewType;
     static auto gravestone() -> Index {
         using type = underlying_type<Index>;
         return Index(std::numeric_limits<type>::max());
-    }
-
-    auto operator<=>(const Index& rhs) const {
-        using type = underlying_type<Index>;
-        return static_cast<type>(*this) <=> static_cast<type>(rhs);
     }
 
     auto operator+(const ForwardJump rhs) const -> Index {
@@ -64,7 +60,7 @@ struct Index: NewType<Index, size_t> {
     }
 };
 
-struct Handle: NewType<Handle, size_t> {
+struct Handle: NewType<Handle, size_t>, Orderable<Index>, Hashable<Index> {
     using NewType::NewType;
 
     auto operator++(int) -> Handle {
@@ -73,4 +69,11 @@ struct Handle: NewType<Handle, size_t> {
         *this = std::move(Handle(static_cast<type>(*this) + 1));
         return temp;
     }
+};
+
+template<>
+struct std::hash<Index>: Hashable<Index> {
+};
+template<>
+struct std::hash<Handle>: Hashable<Handle> {
 };

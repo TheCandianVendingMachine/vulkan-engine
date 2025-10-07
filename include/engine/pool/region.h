@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/pool/types.h"
+#include "robin_set.h"
 #include <cstdint>
 #include <utility>
 #include <iostream>
@@ -160,6 +161,7 @@ class Region {
             if (spot->state != AllocationState::FIRST_FREE) {
                 return nullptr;
             }
+            m_free_list.erase(idx);
 
             switch (spot->state) {
                 case AllocationState::FIRST_FREE: {
@@ -170,6 +172,8 @@ class Region {
                         auto last = spot + static_cast<size_t>(spot->jump.last_free);
 
                         spot->state = AllocationState::IN_USE;
+
+                        m_free_list.insert(idx + ForwardJump(1));
                         right->state = AllocationState::FIRST_FREE;
                         right->jump.last_free = spot->jump.last_free + BackwardJump(1);
                         last->jump.first_free = last->jump.first_free + ForwardJump(1);
@@ -205,6 +209,7 @@ class Region {
             if (left && (left->state == AllocationState::FREE || left->state == AllocationState::FIRST_FREE)) {
                 current->state = AllocationState::FREE;
                 if (right->state == AllocationState::FIRST_FREE) {
+                    m_free_list.erase(idx + ForwardJump(1));
                     right->state = AllocationState::FREE;
 
                     auto last_free = right + static_cast<size_t>(right->jump.last_free);
@@ -225,7 +230,10 @@ class Region {
                 }
             } else if (!left || left->state == AllocationState::IN_USE) {
                 if (right->state == AllocationState::FIRST_FREE) {
+                    m_free_list.insert(idx);
                     current->state = AllocationState::FIRST_FREE;
+
+                    m_free_list.erase(idx + ForwardJump(1));
                     right->state = AllocationState::FREE;
 
                     auto last_free_jump = right->jump.last_free;
@@ -234,6 +242,7 @@ class Region {
                     current->jump.last_free = last_free_jump + ForwardJump(1);
                     
                 } else if (right->state == AllocationState::GRAVESTONE || right->state == AllocationState::IN_USE) {
+                    m_free_list.insert(idx);
                     current->state = AllocationState::FIRST_FREE;
                     current->jump.last_free = ForwardJump(0);
                 } else {
@@ -280,8 +289,7 @@ class Region {
                 switch (old_last->state) {
                     case AllocationState::FIRST_FREE: [[fallthrough]];
                     case AllocationState::FREE: {
-                        auto old_first_idx = old_last_idx - old_last->jump.first_free;
-                        auto old_first = get_(old_first_idx);
+                        auto old_first = get_(old_last_idx - old_last->jump.first_free);
                         assert(old_first->state == AllocationState::FIRST_FREE);
                         old_first->jump.last_free = old_first->jump.last_free + ForwardJump(count - m_capacity);
                         new_first->state = AllocationState::FREE;
@@ -293,6 +301,7 @@ class Region {
                     };
                     break;
                     case AllocationState::IN_USE: {
+                        m_free_list.emplace(m_capacity);
                         new_first->state = AllocationState::FIRST_FREE;
                         auto last_free_jump = ForwardJump(count - m_capacity - 1);
                         new_first->jump.last_free = last_free_jump;
@@ -305,6 +314,7 @@ class Region {
                         std::unreachable();
                 }
             } else {
+                m_free_list.emplace(m_capacity);
                 new_first->state = AllocationState::FIRST_FREE;
                 auto last_free_jump = ForwardJump(count - m_capacity - 1);
                 new_first->jump.last_free = last_free_jump;
@@ -326,7 +336,7 @@ class Region {
             if (ptr < m_pool) {
                 return Index::gravestone();
             }
-            auto idx = Index(reinterpret_cast<std::uintptr_t>(ptr) - reinterpret_cast<std::uintptr_t>(m_pool));
+            auto idx = (Index((reinterpret_cast<std::uintptr_t>(ptr) - reinterpret_cast<std::uintptr_t>(m_pool)) / sizeof(Allocation<T>)));
             if (static_cast<size_t>(idx) >= m_capacity) {
                 return Index::gravestone();
             }
@@ -435,6 +445,7 @@ class Region {
                     The allocation at the jump offset must be FREE
                     The allocation one past the jump offset must be FREE
                     The allocation at the jump offset must have a backwards jump that equals the current allocation
+                    The FIRST_FREE allocation index must be within the free list
                 */
                 if (allocation->state == AllocationState::FIRST_FREE) {
                     // We must only have one FIRST_FREE within a contigious allocation block
@@ -464,11 +475,18 @@ class Region {
                         assert(offset_first_free == allocation);
                         return false;
                     }
+
+                    // The FIRST_FREE allocation index must be within the free list
+                    if (!m_free_list.contains(this->index_of(allocation))) {
+                        assert(m_free_list.contains(this->index_of(allocation)));
+                        return false;
+                    }
                 }
 
                 /*
                     We must be in a FREE block
                     The allocation one past FREE must not be FIRST_FREE
+                    Non FIRST_FREE allocations must never be within the free list
                 */
                 if (allocation->state == AllocationState::FREE) {
                     // We must be in a FREE block
@@ -483,14 +501,28 @@ class Region {
                         assert(next_alloc->state == AllocationState::FIRST_FREE);
                         return false;
                     }
+
+                    // Non FIRST_FREE allocations must never be within the free list
+                    if (m_free_list.contains(this->index_of(allocation))) {
+                        assert(!m_free_list.contains(this->index_of(allocation)));
+                        return false;
+                    }
                 }
 
-                // The allocation past IN_USE must be not be FREE
+                /*
+                    The allocation past IN_USE must be not be FREE
+                    Non FIRST_FREE allocations must never be within the free list
+                */
                 if (allocation->state == AllocationState::IN_USE) {
                     in_free_block = false;
                     auto next_alloc = allocation + 1;
                     if (next_alloc->state == AllocationState::FREE) {
                         assert(next_alloc->state == AllocationState::FREE);
+                        return false;
+                    }
+                    // Non FIRST_FREE allocations must never be within the free list
+                    if (m_free_list.contains(this->index_of(allocation))) {
+                        assert(!m_free_list.contains(this->index_of(allocation)));
                         return false;
                     }
                 }
@@ -499,6 +531,13 @@ class Region {
             }
 
             return true;
+        }
+
+        auto get_free_index() -> Index {
+            if (m_free_list.empty()) {
+                return Index::gravestone();
+            }
+            return *m_free_list.begin();
         }
 
     private:
@@ -510,6 +549,10 @@ class Region {
 
         // How many objects are allocated
         size_t m_capacity = 0;
+        
+
+        // Indices of FIRST_FREE blocks
+        tsl::robin_set<Index> m_free_list;
 
         auto get_(Index idx) const -> Allocation<T>* {
             if (static_cast<size_t>(idx) >= m_capacity + 1) {

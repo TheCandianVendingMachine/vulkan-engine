@@ -3,6 +3,7 @@ enable_testing()
 add_executable(test_engine
     test_bitset.cpp
     test_region.cpp
+    test_pool.cpp
     )
 target_include_directories(test_engine PUBLIC
     ${PROJECT_SOURCE_DIR}/include

@@ -7,6 +7,7 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/engine.h"
     "${ENGINE_HEADER_PATH}/logger.h"
     "${ENGINE_HEADER_PATH}/random.h"
+    "${ENGINE_HEADER_PATH}/newtype.h"
     "${ENGINE_HEADER_PATH}/ecs/entity.h"
     "${ENGINE_HEADER_PATH}/ecs/component.h"
     "${ENGINE_HEADER_PATH}/ecs/system.h"
@@ -52,6 +53,8 @@ if (MSVC)
     target_sources(engine INTERFACE
         $<INSTALL_INTERFACE:${NATVIS_DIR}/pool.natvis>
         $<BUILD_INTERFACE:${NATVIS_DIR}/pool.natvis>
+        $<INSTALL_INTERFACE:${NATVIS_DIR}/tsl-robin-map.natvis>
+        $<BUILD_INTERFACE:${NATVIS_DIR}/tsl-robin-map.natvis>
     )
 endif()
 

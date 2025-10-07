@@ -4,6 +4,7 @@
 		<DisplayString>{{ capacity={m_capacity} }}</DisplayString>
 		<Expand>
 			<Item Name="[capacity]" ExcludeView="simple">m_capacity</Item>
+			<Item Name="[free list]" ExcludeView="simple">m_free_list</Item>
 			<Item Name="[block]" ExcludeView="simple">m_block</Item>
 			<ArrayItems>
 				<Size>m_capacity + 1</Size>
