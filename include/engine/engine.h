@@ -11,8 +11,8 @@ namespace ENGINE_NS {
 
     class LogLocator {
         public:
-            LogLocator();
-            auto get(LogNamespaces ns) -> Logger&;
+            ENGINE_API LogLocator();
+            ENGINE_API auto get(LogNamespaces ns) -> Logger&;
 
         private:
             uint64_t m_log_idx{};
@@ -21,18 +21,18 @@ namespace ENGINE_NS {
 
     class Engine {
         public:
-            Engine();
-            ~Engine();
+            ENGINE_API Engine();
+            ENGINE_API ~Engine();
 
-            static Engine& instance();
+            ENGINE_API static Engine& instance();
 
-            auto run() -> void;
+            ENGINE_API auto run() -> void;
 
             LogLocator& logger = m_logger;
 
         private:
-            auto startup() -> void;
-            auto shutdown() -> void;
+            ENGINE_API auto startup() -> void;
+            ENGINE_API auto shutdown() -> void;
     
         private:
             bool m_running = false;

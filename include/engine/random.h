@@ -18,14 +18,14 @@ namespace ENGINE_NS {
     class Random {
     public:
         template<typename T>
-        auto range(Range<T> range = Range<T>::none()) -> T;
+        ENGINE_API auto range(Range<T> range = Range<T>::none()) -> T;
 
-        Random();
-        Random(uint64_t seed);
-        Random(const Random& other);
-        Random(Random&& other) noexcept;
-        auto operator=(const Random& other)->Random&;
-        auto operator=(Random&& other) noexcept -> Random&;
+        ENGINE_API Random();
+        ENGINE_API Random(uint64_t seed);
+        ENGINE_API Random(const Random& other);
+        ENGINE_API Random(Random&& other) noexcept;
+        ENGINE_API auto operator=(const Random& other) -> Random&;
+        ENGINE_API auto operator=(Random&& other) noexcept  -> Random&;
 
     private:
         std::array<uint64_t, 4> m_state;

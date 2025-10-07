@@ -18,15 +18,15 @@ namespace ENGINE_NS {
             INFO        = 1 << 0,
         };
 
-        Level operator&(Level lhs, Level rhs);
-        Level operator|(Level lhs, Level rhs);
-        bool operator==(Level lhs, Level rhs);
-        bool operator<(Level lhs, Level rhs);
-        bool operator<=(Level lhs, Level rhs);
-        bool operator>(Level lhs, Level rhs);
-        bool operator>=(Level lhs, Level rhs);
+        ENGINE_API Level operator&(Level lhs, Level rhs);
+        ENGINE_API Level operator|(Level lhs, Level rhs);
+        ENGINE_API bool operator==(Level lhs, Level rhs);
+        ENGINE_API bool operator<(Level lhs, Level rhs);
+        ENGINE_API bool operator<=(Level lhs, Level rhs);
+        ENGINE_API bool operator>(Level lhs, Level rhs);
+        ENGINE_API bool operator>=(Level lhs, Level rhs);
 
-        auto level_to_string(Level level) -> std::string_view;
+        ENGINE_API auto level_to_string(Level level) -> std::string_view;
 
         struct Entry {
             uint64_t index{};
@@ -71,10 +71,10 @@ namespace ENGINE_NS {
                 this->append(level, std::move(message));
             }
 
-            auto last_entries(uint64_t count) const -> std::vector<const logger::Entry*>;
-            auto last_entries_of(uint64_t count, logger::Level filter) const -> std::vector<const logger::Entry*>;
+            ENGINE_API auto last_entries(uint64_t count) const -> std::vector<const logger::Entry*>;
+            ENGINE_API auto last_entries_of(uint64_t count, logger::Level filter) const -> std::vector<const logger::Entry*>;
 
-            auto set_index(uint64_t index) -> void;
+            ENGINE_API auto set_index(uint64_t index) -> void;
 
             friend class LoggerBuilder;
 
@@ -91,11 +91,11 @@ namespace ENGINE_NS {
 
     class LoggerBuilder {
         public:
-            LoggerBuilder() = default;
+            ENGINE_API LoggerBuilder() = default;
 
-            auto with_identifier(std::string&& identifier) -> LoggerBuilder&;
-            auto with_stream(Stream stream) -> LoggerBuilder&;
-            auto build() -> Logger;
+            ENGINE_API auto with_identifier(std::string&& identifier) -> LoggerBuilder&;
+            ENGINE_API auto with_stream(Stream stream) -> LoggerBuilder&;
+            ENGINE_API auto build() -> Logger;
 
         private:
             std::string m_identifier{};

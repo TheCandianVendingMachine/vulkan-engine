@@ -9,41 +9,41 @@ namespace ENGINE_NS {
         public:
             using UnderlyingBitRepresentation = std::uint64_t;
 
-            Bitset() = default;
-            Bitset(size_t bitcount);
-            Bitset(const Bitset &other) = default;
-            Bitset(Bitset &&other) = default;
+            ENGINE_API Bitset() = default;
+            ENGINE_API Bitset(size_t bitcount);
+            ENGINE_API Bitset(const Bitset &other) = default;
+            ENGINE_API Bitset(Bitset &&other) = default;
         
-            auto operator=(const Bitset& rhs) -> Bitset& = default;
-            auto operator=(Bitset&& rhs) -> Bitset& = default;
+            ENGINE_API auto operator=(const Bitset& rhs) -> Bitset& = default;
+            ENGINE_API auto operator=(Bitset&& rhs) -> Bitset& = default;
 
-            auto operator|(const Bitset& rhs) const -> Bitset;
-            auto operator&(const Bitset& rhs) const -> Bitset;
-            auto operator^(const Bitset& rhs) const -> Bitset;
-            auto operator==(const Bitset& rhs) const -> bool;
+            ENGINE_API auto operator|(const Bitset& rhs) const -> Bitset;
+            ENGINE_API auto operator&(const Bitset& rhs) const -> Bitset;
+            ENGINE_API auto operator^(const Bitset& rhs) const -> Bitset;
+            ENGINE_API auto operator==(const Bitset& rhs) const -> bool;
 
-            auto operator|=(const Bitset& rhs) -> Bitset&;
-            auto operator&=(const Bitset& rhs) -> Bitset&;
-            auto operator^=(const Bitset& rhs) -> Bitset&;
+            ENGINE_API auto operator|=(const Bitset& rhs) -> Bitset&;
+            ENGINE_API auto operator&=(const Bitset& rhs) -> Bitset&;
+            ENGINE_API auto operator^=(const Bitset& rhs) -> Bitset&;
 
-            auto operator[](size_t idx) const -> std::uint8_t;
+            ENGINE_API auto operator[](size_t idx) const -> std::uint8_t;
 
-            auto bit_or(const Bitset& rhs) const -> Bitset;
-            auto bit_and(const Bitset& rhs) const -> Bitset;
-            auto bit_xor(const Bitset& rhs) const -> Bitset;
-            auto bit_equals(const Bitset& rhs) const -> bool;
+            ENGINE_API auto bit_or(const Bitset& rhs) const -> Bitset;
+            ENGINE_API auto bit_and(const Bitset& rhs) const -> Bitset;
+            ENGINE_API auto bit_xor(const Bitset& rhs) const -> Bitset;
+            ENGINE_API auto bit_equals(const Bitset& rhs) const -> bool;
 
-            auto get(size_t idx) const -> std::uint8_t;
+            ENGINE_API auto get(size_t idx) const -> std::uint8_t;
 
-            auto flip(size_t idx) -> void;
-            auto set(size_t idx) -> void;
-            auto set_to(size_t idx, std::uint8_t bit) -> void;
-            auto clear(size_t idx) -> void;
+            ENGINE_API auto flip(size_t idx) -> void;
+            ENGINE_API auto set(size_t idx) -> void;
+            ENGINE_API auto set_to(size_t idx, std::uint8_t bit) -> void;
+            ENGINE_API auto clear(size_t idx) -> void;
 
-            auto size() const -> size_t;
-            auto is_subset_of(const Bitset& superset) const -> bool;
+            ENGINE_API auto size() const -> size_t;
+            ENGINE_API auto is_subset_of(const Bitset& superset) const -> bool;
 
-            auto extend(size_t bitcount) -> void;
+            ENGINE_API auto extend(size_t bitcount) -> void;
 
             constexpr static auto bits_to_representation_count(size_t bitcount) -> size_t {
                 auto bytes = (bitcount + 8 - 1) / 8;
