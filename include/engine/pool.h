@@ -9,6 +9,9 @@
 #include <iterator>
 #include <compare>
 
+template<typename T, size_t DefaultCount = 512, size_t GrowthFactor = 2>
+class Pool;
+
 template<typename T>
 class Borrow {
     public:
@@ -45,7 +48,7 @@ class Borrow {
         friend class Pool<T>;
 };
 
-template<typename T, size_t DefaultCount = 512, size_t GrowthFactor = 2>
+template<typename T, size_t DefaultCount, size_t GrowthFactor>
 class Pool {
     public:
         class Iterator {
@@ -86,20 +89,20 @@ class Pool {
                 auto operator<=>(const Iterator& rhs) const {
                     return m_iterator <=> rhs.m_iterator;
                 }
-                auto operator<(const Iterator& rhs) const = default;
-                auto operator<=(const Iterator& rhs) const = default;
-                auto operator>(const Iterator& rhs) const = default;
-                auto operator>=(const Iterator& rhs) const = default;
-                auto operator==(const Iterator& rhs) const = default;
-                auto operator!=(const Iterator& rhs) const = default;
+                auto operator<(const Iterator& rhs) const -> bool = default;
+                auto operator<=(const Iterator& rhs) const -> bool = default;
+                auto operator>(const Iterator& rhs) const -> bool = default;
+                auto operator>=(const Iterator& rhs) const -> bool = default;
+                auto operator==(const Iterator& rhs) const -> bool = default;
+                auto operator!=(const Iterator& rhs) const -> bool = default;
 
             private:
                 Region<T>::Iterator m_iterator;
         };
 
         Pool() = default;
-        Pool(const Pool&& rhs) = default;
-        auto operator=(const Pool&& rhs) -> Pool& = default;
+        Pool(Pool&& rhs) = default;
+        auto operator=(Pool&& rhs) -> Pool& = default;
 
         Pool(size_t initial_count) {
             this->reserve(initial_count);
@@ -133,7 +136,7 @@ class Pool {
             }
 
             auto this_handle = m_current_handle++;
-            auto this_index = m_free_list.pop_back();
+            auto this_index = m_region.get_free_index();
             m_region.emplace(this_index, std::forward<TArgs&&>(args)...);
 
             m_handles.insert({ this_handle, this_index });
@@ -152,7 +155,6 @@ class Pool {
             object.get().~T();
             auto index = object.index();
             m_region.free(index);
-            m_free_list.emplace_back(index);
             m_handles.erase(object.m_handle);
             m_size -= 1;
         }
@@ -200,7 +202,7 @@ class Pool {
         }
 
     private:
-        Region m_region<T>{};
+        Region<T> m_region{};
         tsl::robin_map<Handle, Index> m_handles{};
 
         size_t m_size = 0;

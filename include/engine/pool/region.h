@@ -189,6 +189,7 @@ class Region {
             return new (static_cast<void*>(spot)) T(std::forward<TArgs&&>(args)...);
         }
 
+
         auto free(Index idx) {
             if (!m_pool) {
                 return;
@@ -465,7 +466,7 @@ class Region {
                     // The allocation one past the jump offset must be FREE
                     auto next_after_last = last_free + 1;
                     if (next_after_last->state != AllocationState::IN_USE && next_after_last->state != AllocationState::GRAVESTONE) {
-                        assert(next_after_last->state == AllocationState::IN_USE && next_after_last->state == AllocationState::GRAVESTONE);
+                        assert(next_after_last->state == AllocationState::IN_USE || next_after_last->state == AllocationState::GRAVESTONE);
                         return false;
                     }
 

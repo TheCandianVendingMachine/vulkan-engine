@@ -5,21 +5,21 @@
 
 struct ForwardJump: NewType<ForwardJump, size_t> {
     using NewType::NewType;
-    auto operator+(const ForwardJump rhs) const -> ForwardJump {
+    friend auto operator+(const ForwardJump &lhs, const ForwardJump &rhs) -> ForwardJump {
         using type = underlying_type<ForwardJump>;
-        return ForwardJump(static_cast<type>(*this) + static_cast<type>(rhs));
+        return ForwardJump(static_cast<type>(lhs) + static_cast<type>(rhs));
     }
 };
 
 struct BackwardJump: NewType<BackwardJump, size_t> {
     using NewType::NewType;
-    auto operator+(const BackwardJump rhs) const -> BackwardJump {
+    friend auto operator+(const BackwardJump& lhs, const BackwardJump& rhs) -> BackwardJump {
         using type = underlying_type<BackwardJump>;
-        return BackwardJump(static_cast<type>(*this) + static_cast<type>(rhs));
+        return BackwardJump(static_cast<type>(lhs) + static_cast<type>(rhs));
     }
 };
 
-auto operator+(const ForwardJump& lhs, const BackwardJump rhs) -> ForwardJump {
+inline auto operator+(const ForwardJump& lhs, const BackwardJump rhs) -> ForwardJump {
     using lhs_type = underlying_type<ForwardJump>;
     using rhs_type = underlying_type<BackwardJump>;
     if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(lhs)) {
@@ -28,7 +28,7 @@ auto operator+(const ForwardJump& lhs, const BackwardJump rhs) -> ForwardJump {
     return ForwardJump(static_cast<lhs_type>(lhs) - static_cast<rhs_type>(rhs));
 }
 
-auto operator+(const BackwardJump& lhs, const ForwardJump rhs) -> BackwardJump {
+inline auto operator+(const BackwardJump& lhs, const ForwardJump rhs) -> BackwardJump {
     using lhs_type = underlying_type<BackwardJump>;
     using rhs_type = underlying_type<ForwardJump>;
     if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(lhs)) {
@@ -44,19 +44,19 @@ struct Index: NewType<Index, size_t>, Orderable<Index>, Hashable<Index> {
         return Index(std::numeric_limits<type>::max());
     }
 
-    auto operator+(const ForwardJump rhs) const -> Index {
+    friend auto operator+(const Index &lhs, const ForwardJump &rhs) -> Index {
         using lhs_type = underlying_type<Index>;
         using rhs_type = underlying_type<ForwardJump>;
-        return Index(static_cast<lhs_type>(*this) + static_cast<rhs_type>(rhs));
+        return Index(static_cast<lhs_type>(lhs) + static_cast<rhs_type>(rhs));
     }
 
-    auto operator-(const BackwardJump rhs) const -> Index {
+    friend auto operator-(const Index& lhs, const BackwardJump& rhs) -> Index {
         using lhs_type = underlying_type<Index>;
         using rhs_type = underlying_type<BackwardJump>;
-        if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(*this)) {
+        if (static_cast<rhs_type>(rhs) > static_cast<lhs_type>(lhs)) {
             return Index::gravestone();
         }
-        return Index(static_cast<lhs_type>(*this) - static_cast<rhs_type>(rhs));
+        return Index(static_cast<lhs_type>(lhs) - static_cast<rhs_type>(rhs));
     }
 };
 
