@@ -1,5 +1,7 @@
 #include <engine/engine.h>
 
+using namespace::ENGINE_NS;
+
 LogLocator::LogLocator() {
     m_loggers = {
         {

@@ -6,6 +6,8 @@
 
 #include <engine/pool.h>
 
+using namespace::ENGINE_NS;
+
 TEST_CASE("Pool::Pool", "[Pool]") {
 	SECTION("Empty") {
 		auto pool = Pool<int>();

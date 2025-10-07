@@ -1,12 +1,11 @@
 #pragma once
-#include "newtype.h"
+#include "engine/meta_defines.h"
+#include "engine/newtype.h"
 
-class Uid: NewType<Uid, size_t> {
+class Uid: ENGINE_NS::NewType<Uid, size_t>, ENGINE_NS::Eq<Uid>, ENGINE_NS::Hashable<Uid> {
     using NewType::NewType;
-
-    inline auto operator==(const Uid& rhs) const -> bool {
-        using type = underlying_type<Uid>;
-        return static_cast<const type&>(*this) == static_cast<const type&>(rhs);
-    }
 };
 
+template<>
+struct std::hash<Uid>: ENGINE_NS::Hashable<Uid> {
+};

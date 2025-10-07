@@ -2,6 +2,8 @@
 #include <chrono>
 #include <cstring>
 
+using namespace::ENGINE_NS;
+
 template<> auto Random::range<int8_t>(Range<int8_t> range) -> int8_t {
     return static_cast<int8_t>(random_value() % (range.upper - range.lower + 1)) + range.lower;
 }

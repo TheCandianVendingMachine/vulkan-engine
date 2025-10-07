@@ -2,6 +2,8 @@
 #include <ranges>
 #include <cstdio>
 
+using namespace::ENGINE_NS;
+
 logger::Level logger::operator&(logger::Level lhs, logger::Level rhs) {
     return logger::Level(uint8_t(lhs) & uint8_t(rhs));
 }

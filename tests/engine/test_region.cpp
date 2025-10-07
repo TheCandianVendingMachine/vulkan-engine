@@ -6,6 +6,8 @@
 
 #include <engine/pool/region.h>
 
+using namespace::ENGINE_NS;
+
 struct TestType {
     int a = 52;
     float b = 3.14159f;

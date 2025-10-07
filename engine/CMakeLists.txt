@@ -3,11 +3,13 @@ set(ENGINE_HEADER_PATH
 )
 
 set(HEADER_LIST
+    "${ENGINE_HEADER_PATH}/meta_defines.h"
     "${ENGINE_HEADER_PATH}/bitset.h"
     "${ENGINE_HEADER_PATH}/engine.h"
     "${ENGINE_HEADER_PATH}/logger.h"
     "${ENGINE_HEADER_PATH}/random.h"
     "${ENGINE_HEADER_PATH}/newtype.h"
+    "${ENGINE_HEADER_PATH}/ecs/defines.h"
     "${ENGINE_HEADER_PATH}/ecs/entity.h"
     "${ENGINE_HEADER_PATH}/ecs/component.h"
     "${ENGINE_HEADER_PATH}/ecs/system.h"
@@ -28,6 +30,10 @@ add_library(engine
     ${EXTERNAL_HEADER_DIR}/stb/stb_image_implementation.cpp
     ${HEADER_LIST}
 )
+target_compile_definitions(engine PRIVATE
+    IS_ENGINE
+)
+
 target_include_directories(engine PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_HEADER_DIR}

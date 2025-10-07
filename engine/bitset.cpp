@@ -1,6 +1,8 @@
 #include "engine/bitset.h"
 #include <cassert>
 
+using namespace::ENGINE_NS;
+
 Bitset::Bitset(size_t bitcount) : m_set(Bitset::bits_to_representation_count(bitcount)), m_bitcount(bitcount) {
 }
 

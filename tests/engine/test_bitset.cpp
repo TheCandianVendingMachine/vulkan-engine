@@ -6,6 +6,8 @@
 
 #include <engine/bitset.h>
 
+using namespace::ENGINE_NS;
+
 TEST_CASE( "Bitset::Bitset", "[Bitset]" ) {
     SECTION("Default constructor") {
         auto bitset = Bitset();
