@@ -17,6 +17,12 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/pool.h"
     "${ENGINE_HEADER_PATH}/pool/types.h"
     "${ENGINE_HEADER_PATH}/pool/region.h"
+    "${ENGINE_HEADER_PATH}/reflection/type.h"
+    "${ENGINE_HEADER_PATH}/reflection/type_float.h"
+    "${ENGINE_HEADER_PATH}/reflection/type_int8.h"
+    "${ENGINE_HEADER_PATH}/reflection/type_int16.h"
+    "${ENGINE_HEADER_PATH}/reflection/type_int32.h"
+    "${ENGINE_HEADER_PATH}/reflection/type_int64.h"
 )
 
 add_library(engine
@@ -27,6 +33,7 @@ add_library(engine
     ecs/entity.cpp
     ecs/component.cpp
     ecs/system.cpp
+    reflection/type.cpp
     ${EXTERNAL_HEADER_DIR}/stb/stb_image_implementation.cpp
     ${HEADER_LIST}
 )

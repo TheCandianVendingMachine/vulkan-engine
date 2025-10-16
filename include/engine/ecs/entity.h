@@ -11,15 +11,15 @@ namespace ENGINE_NS {
             Uid id;
         };
 
-        struct ComponentMap {
+        struct Map {
             Bitset assigned_components;
         };
 
         class EntityStore {
-        public:
-        private:
-            Pool<Entity> m_entities;
-            tsl::robin_map<Uid, ComponentMap> m_components;
+            public:
+            private:
+                Pool<Entity> m_entities;
+                tsl::robin_map<Uid, Map> m_components;
         };
     }
 }
