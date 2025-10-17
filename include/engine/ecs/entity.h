@@ -8,7 +8,7 @@
 namespace ENGINE_NS {
     namespace ecs {
         struct Entity {
-            Uid id;
+            EntityUid id;
         };
 
         struct Map {
@@ -19,7 +19,7 @@ namespace ENGINE_NS {
             public:
             private:
                 Pool<Entity> m_entities;
-                tsl::robin_map<Uid, Map> m_components;
+                tsl::robin_map<EntityUid, Map> m_components;
         };
     }
 }

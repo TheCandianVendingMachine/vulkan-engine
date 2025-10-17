@@ -326,7 +326,7 @@ namespace ENGINE_NS {
 #define REFLECT_START(Tbase) \
 	struct Meta {\
 		using Underlying = Tbase; \
-		const std::string name = STR(Tbase); \
+		static constexpr const char* name = STR(Tbase); \
 		Underlying& base; \
 		explicit inline Meta(Underlying& from): base(from) { \
 		} \

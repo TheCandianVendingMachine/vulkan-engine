@@ -1,7 +1,7 @@
 #include <iostream>
 #include <engine/engine.h>
 #include <engine/reflection/type.h>
-
+#include <engine/ecs/component.h>
 
 struct Example {
 	int a;
@@ -19,21 +19,33 @@ struct Example {
 	REFLECT_END;
 };
 
-int main() {
-	auto a = Example{
-		5,
-		-7,
-		3.14159f,
-		2.71828182846,
-		static_cast<unsigned int>(-1)
-	};
+struct TestComponent: engine::ecs::Component {
+	int value = 0;
+	REFLECT_START(TestComponent)
+		REFLECT_MEMBER(value),
+	REFLECT_END;
+};
 
-	auto meta = Example::Meta(a);
-	std::cout << "Object " << meta.name << "\n";
-	for (auto& member : meta.members()) {
-		std::cout << "\t" << member.meta.type_info->name() << " " << member.meta.name << " = " << member.to_human_string() << "\n";
+int main() {
+	auto component_register = engine::ecs::ComponentRegister{};
+	component_register.register_component<TestComponent>();
+
+	auto store = engine::ecs::ComponentStore<TestComponent>{};
+	store.create(EntityUid(0));
+	store.create(EntityUid(5));
+	store.create(EntityUid(6));
+
+	static_cast<TestComponent*>(store.fetch_mut(EntityUid(0)))->value = 5;
+	static_cast<TestComponent*>(store.fetch_mut(EntityUid(5)))->value = -50;
+	static_cast<TestComponent*>(store.fetch_mut(EntityUid(6)))->value = 15;
+
+	for (auto& component : store.fetch_mut({ EntityUid(0), EntityUid(5), EntityUid(6) })) {
+		auto meta = TestComponent::Meta(*static_cast<TestComponent*>(component));
+		std::cout << "Component: " << meta.name << "\n";
+		for (auto member : meta.members()) {
+			std::cout << "\t" << member.meta.name << ": " << member.meta.type_info->name() << " = " << member.to_string() << "\n";
+		}
 	}
-	std::cout << std::endl;
 
     return 0;
 }

@@ -35,6 +35,49 @@ namespace ENGINE_NS {
 
 
     template<class NewType>
+    struct PreIncrement {
+        friend auto operator++(NewType& rhs) -> NewType& {
+            using type = underlying_type<NewType>;
+            rhs = NewType(static_cast<type>(rhs) + 1);
+            return rhs;
+        }
+    };
+    template<class NewType>
+    struct PostIncrement {
+        friend auto operator++(NewType& lhs, int) -> NewType {
+            using type = underlying_type<NewType>;
+            auto old = lhs;
+            lhs = NewType(static_cast<type>(lhs) + 1);
+            return old;
+        }
+    };
+    template<class NewType>
+    struct Increment: PreIncrement<NewType>, PostIncrement<NewType> {
+    };
+
+
+    template<class NewType>
+    struct PreDecrement {
+        friend auto operator--(NewType& rhs) -> NewType& {
+            using type = underlying_type<NewType>;
+            rhs = NewType(static_cast<type>(rhs) - 1);
+            return rhs;
+        }
+    };
+    template<class NewType>
+    struct PostDecrement {
+        friend auto operator--(NewType& lhs, int) -> NewType {
+            using type = underlying_type<NewType>;
+            auto old = lhs;
+            lhs = NewType(static_cast<type>(lhs) - 1);
+            return old;
+        }
+    };
+    template<class NewType>
+    struct Decrement: PreDecrement<NewType>, PostDecrement<NewType> {
+    };
+
+    template<class NewType>
     struct Lt {
         friend auto operator<(const NewType& lhs, const NewType& rhs) -> bool {
             using type = underlying_type<NewType>;

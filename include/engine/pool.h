@@ -3,12 +3,7 @@
 #include "engine/pool/types.h"
 #include "engine/pool/region.h"
 #include "robin-map/robin_map.h"
-#include "robin-map/robin_set.h"
-#include <cstddef>
-#include <memory>
-#include <vector>
 #include <iterator>
-#include <compare>
 #include <optional>
 
 namespace ENGINE_NS {
@@ -23,7 +18,7 @@ namespace ENGINE_NS {
                     return this->get();
                 }
                 auto get() -> std::optional<T*> {
-                    return this->m_owner.get(*this);
+                    return this->m_owner->get(*this);
                 }
 
                 auto operator*() const -> std::optional<const T*> {
@@ -33,14 +28,14 @@ namespace ENGINE_NS {
                     return this->get();
                 }
                 auto get() const -> std::optional<const T*> {
-                    return this->m_owner.get(*this);
+                    return this->m_owner->get(*this);
                 }
 
                 auto index() -> Index {
-                    return this->m_owner.index_of(*this);
+                    return this->m_owner->index_of(*this);
                 }
                 auto index() const -> Index {
-                    return this->m_owner.index_of(*this);
+                    return this->m_owner->index_of(*this);
                 }
 
                 explicit operator T&() {
@@ -50,11 +45,36 @@ namespace ENGINE_NS {
                 explicit operator T const&() const {
                     return *this->get().value_or(nullptr);
                 }
-    
-            private:
-                Borrow(Handle handle, Pool<T>& pool): m_owner(pool), m_handle(handle) {}
 
-                Pool<T>& m_owner;
+                Borrow(const Borrow& rhs): m_owner(rhs.m_owner), m_handle(rhs.m_handle) {
+                }
+                Borrow(Borrow&& rhs): m_owner(std::move(rhs.m_owner)), m_handle(std::move(rhs.m_handle)) {
+                }
+                friend auto operator==(const Borrow<T>& lhs, const Borrow<T>& rhs) -> bool {
+                    return lhs.handle == rhs.handle && lhs.m_owner == rhs.m_owner;
+                }
+                auto operator=(const Borrow<T>& rhs) -> Borrow<T>& {
+                    if (&rhs == this) {
+                        return *this;
+                    }
+                    this->m_owner = rhs.m_owner;
+                    this->m_handle = rhs.m_handle;
+                    return *this;
+                }
+                auto operator=(Borrow<T>&& rhs) -> Borrow<T>& {
+                    if (&rhs == this) {
+                        return *this;
+                    }
+                    this->m_owner = std::move(rhs.m_owner);
+                    this->m_handle = std::move(rhs.m_handle);
+                    return *this;
+                }
+
+                const Handle& handle = m_handle;
+            private:
+                Borrow(Handle handle, Pool<T>& pool): m_owner(&pool), m_handle(handle) {}
+
+                Pool<T>* m_owner;
                 Handle m_handle;
 
                 template<typename, size_t, size_t>
@@ -112,6 +132,7 @@ namespace ENGINE_NS {
 
                 private:
                     Region<T>::Iterator m_iterator;
+
             };
 
             Pool() = default;
@@ -152,13 +173,13 @@ namespace ENGINE_NS {
                 if (!m_region.alive()) {
                     return;
                 }
-                if (!m_handles.contains(object.m_handle)) {
+                if (!m_handles.contains(object.handle)) {
                     return;
                 }
 
                 auto index = object.index();
                 m_region.free(index);
-                m_handles.erase(object.m_handle);
+                m_handles.erase(object.handle);
                 m_size -= 1;
             }
 
@@ -171,10 +192,10 @@ namespace ENGINE_NS {
             }
 
             auto index_of(pool::Borrow<T> object) -> Index {
-                if (!m_handles.contains(object.m_handle)) {
+                if (!m_handles.contains(object.handle)) {
                     return Index::gravestone();
                 }
-                return m_handles.at(object.m_handle);
+                return m_handles.at(object.handle);
             }
 
             auto operator[](Index idx) -> std::optional<T*> {
@@ -184,9 +205,9 @@ namespace ENGINE_NS {
                 return std::optional<T*>(&this->m_region.get(idx)->object);
             }
             auto get(pool::Borrow<T> object) -> std::optional<T*> {
-                if (!m_handles.contains(object.m_handle)) {
+                if (!m_handles.contains(object.handle)) {
                     return std::nullopt;
-                }            auto index = m_handles.at(object.m_handle);
+                }            auto index = m_handles.at(object.handle);
                 return (*this)[index];
             }
 
@@ -219,3 +240,10 @@ namespace ENGINE_NS {
             Handle m_current_handle{};
     };
 }
+
+template<typename T>
+struct std::hash<ENGINE_NS::pool::Borrow<T>> {
+    auto operator()(const ENGINE_NS::pool::Borrow<T>& rhs) const noexcept -> std::size_t {
+        return rhs.handle.hash();
+    }
+};
