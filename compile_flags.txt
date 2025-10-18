@@ -1,0 +1,7 @@
+-std=c++23
+-Wall
+-Wpedantic
+-Werror
+-Wno-gnu-binary-literal
+-I./include
+-I./external
