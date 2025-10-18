@@ -1,5 +1,9 @@
 #include "linalg/vector_ops.h"
-#include <intrin.h>
+#ifdef __GNUG__
+    #include <immintrin.h>
+#else
+    #include <intrin.h>
+#endif
 #include <cstring>
 #include <cmath>
 

@@ -1,11 +1,8 @@
 #pragma once
 #include "engine/meta_defines.h"
-#include "robin_map.h"
 #include <cstdint>
-#include <type_traits>
 #include <utility>
 #include <string>
-#include <array>
 #include <memory>
 
 namespace ENGINE_NS {
@@ -25,7 +22,7 @@ namespace ENGINE_NS {
 			static constexpr auto name() -> const char*;
 			static auto as_string(const T& var) -> std::string;
 			static auto as_human_string(const T& var) -> std::string {
-				return Atom<T>::as_string();
+				return Type<T>::as_string(var);
 			}
 
 			static auto construct() -> T;
@@ -46,29 +43,29 @@ namespace ENGINE_NS {
 
 		template<typename T>
 		struct Variable {
-			using Type = Type<T>;
+			using TypeVar = Type<T>;
 			T* inner_ = nullptr;
 
 			inline constexpr auto type_name() const -> const char* {
-				return Type::name();
+				return TypeVar::name();
 			}
 			inline constexpr auto type_size() const -> size_t {
-				return Type::size();
+				return TypeVar::size();
 			}
 			inline constexpr auto type_alignment() const -> size_t {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			inline auto as_string() const -> std::string {
-				return Type::as_string(*inner_);
+				return TypeVar::as_string(*inner_);
 			}
 			inline auto as_human_string() const -> std::string {
-				return Type::as_human_string(*inner_);
+				return TypeVar::as_human_string(*inner_);
 			}
 			inline auto read() const -> const T& {
-				return Type::cast_from_ptr(inner_);
+				return TypeVar::cast_from_ptr(inner_);
 			}
 			inline auto write() -> T& {
-				return Type::cast_from_ptr(inner_);
+				return TypeVar::cast_from_ptr(inner_);
 			}
 		};
 	}
@@ -98,194 +95,194 @@ namespace ENGINE_NS {
 
 		class RuntimeTypeInt8: public RuntimeType {
 		public:
-			using Type = Type<std::int8_t>;
+			using TypeVar = Type<std::int8_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 		class RuntimeTypeInt16: public RuntimeType {
 		public:
-			using Type = Type<std::int16_t>;
+			using TypeVar = Type<std::int16_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 		class RuntimeTypeInt32: public RuntimeType {
 		public:
-			using Type = Type<std::int32_t>;
+			using TypeVar = Type<std::int32_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 		class RuntimeTypeInt64: public RuntimeType {
 		public:
-			using Type = Type<std::int64_t>;
+			using TypeVar = Type<std::int64_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 
 		class RuntimeTypeUInt8: public RuntimeType {
 		public:
-			using Type = Type<std::uint8_t>;
+			using TypeVar = Type<std::uint8_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 		class RuntimeTypeUInt16: public RuntimeType {
 		public:
-			using Type = Type<std::uint16_t>;
+			using TypeVar = Type<std::uint16_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 		class RuntimeTypeUInt32: public RuntimeType {
 		public:
-			using Type = Type<std::uint32_t>;
+			using TypeVar = Type<std::uint32_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 		class RuntimeTypeUInt64: public RuntimeType {
 		public:
-			using Type = Type<std::uint64_t>;
+			using TypeVar = Type<std::uint64_t>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 
 		class RuntimeTypeFloat32: public RuntimeType {
 		public:
-			using Type = Type<float>;
+			using TypeVar = Type<float>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 		class RuntimeTypeFloat64: public RuntimeType {
 		public:
-			using Type = Type<double>;
+			using TypeVar = Type<double>;
 			virtual auto to_string(const void* data) const -> std::string override final {
-				return Type::as_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto to_human_string(const void* data) const -> std::string override final {
-				return Type::as_human_string(*static_cast<const underlying_type<Type>*>(data));
+				return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
 			}
 			virtual auto size() const -> size_t override final {
-				return Type::size();
+				return TypeVar::size();
 			}
 			virtual auto alignment() const -> size_t override final {
-				return Type::alignment();
+				return TypeVar::alignment();
 			}
 			virtual auto name() const -> const char* override final {
-				return Type::name();
+				return TypeVar::name();
 			}
 		};
 
@@ -294,6 +291,10 @@ namespace ENGINE_NS {
 			const std::size_t offset_ = 0;
 			const std::string name = "";
 			const std::shared_ptr<RuntimeType> type_info = nullptr;
+
+            Member() = default;
+            Member(std::size_t offset, std::string name, std::shared_ptr<RuntimeType> type_info);
+            Member(const Member& rhs);
 
 			auto into_runtime(const void* owner) const -> RuntimeMember;
 			inline auto operator=(const Member& rhs) -> Member& {
@@ -323,6 +324,8 @@ namespace ENGINE_NS {
 	}
 }
 
+#include <array>
+#include <type_traits>
 #define REFLECT_START(Tbase) \
 	struct Meta {\
 		using Underlying = Tbase; \

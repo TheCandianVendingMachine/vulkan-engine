@@ -1,0 +1,5 @@
+if(EXISTS "/home/bailey/Development/vulkan-engine/tests/linalg/test_linalg_scalar-b12d07c_tests.cmake")
+  include("/home/bailey/Development/vulkan-engine/tests/linalg/test_linalg_scalar-b12d07c_tests.cmake")
+else()
+  add_test(test_linalg_scalar_NOT_BUILT-b12d07c test_linalg_scalar_NOT_BUILT-b12d07c)
+endif()

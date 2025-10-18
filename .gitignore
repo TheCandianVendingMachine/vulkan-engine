@@ -1,6 +1,8 @@
 targets/
 external/
 .vscode
+DartConfiguration.tcl
+compile_commands.json
 
 ##### Windows
 # Windows thumbnail cache files

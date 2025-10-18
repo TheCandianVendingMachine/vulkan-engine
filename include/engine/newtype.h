@@ -1,7 +1,13 @@
 #pragma once
 #include "engine/meta_defines.h"
+#include <cstdint>
 #include <type_traits>
 #include <utility>
+
+namespace std {
+    template<class Key>
+    struct hash;
+}
 
 namespace ENGINE_NS {
     template<class Tag, typename T>

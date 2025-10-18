@@ -11,7 +11,7 @@
 
 namespace ENGINE_NS {
     namespace logger {
-        enum class Level : uint8_t {
+        enum class Level : std::uint8_t {
             DEBUG       = 1 << 3,
             ERROR       = 1 << 2,
             WARNING     = 1 << 1,
@@ -29,7 +29,7 @@ namespace ENGINE_NS {
         ENGINE_API auto level_to_string(Level level) -> std::string_view;
 
         struct Entry {
-            uint64_t index{};
+            std::uint64_t index{};
             Level level{};
             std::string owner{};
             std::string message{};

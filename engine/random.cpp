@@ -1,6 +1,5 @@
 #include <engine/random.h>
 #include <chrono>
-#include <cstring>
 
 using namespace::ENGINE_NS;
 

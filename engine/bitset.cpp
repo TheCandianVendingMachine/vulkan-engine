@@ -24,21 +24,21 @@ auto Bitset::operator==(const Bitset& rhs) const -> bool {
 
 auto Bitset::operator|=(const Bitset& rhs) -> Bitset& {
     if (&rhs != this) {
-        *this = std::move(this->bit_or(rhs));
+        *this = this->bit_or(rhs);
     }
     return *this;
 }
 
 auto Bitset::operator&=(const Bitset& rhs) -> Bitset& {
     if (&rhs != this) {
-        *this = std::move(this->bit_and(rhs));
+        *this = this->bit_and(rhs);
     }
     return *this;
 }
 
 auto Bitset::operator^=(const Bitset& rhs) -> Bitset& {
     if (&rhs != this) {
-        *this = std::move(this->bit_xor(rhs));
+        *this = this->bit_xor(rhs);
     }
     return *this;
 }
@@ -52,7 +52,7 @@ auto Bitset::bit_or(const Bitset& rhs) const -> Bitset {
     auto& bigger = (this->size() > rhs.size()) ? *this : rhs;
 
     auto combined = bigger;
-    for (auto idx = 0; idx < smaller.m_set.size(); idx++) {
+    for (std::size_t idx = 0; idx < smaller.m_set.size(); idx++) {
         assert(combined.m_set.size() > idx);
         assert(smaller.m_set.size() > idx);
         combined.m_set[idx] |= smaller.m_set[idx];
@@ -66,7 +66,7 @@ auto Bitset::bit_and(const Bitset& rhs) const -> Bitset{
     auto& bigger = (this->size() > rhs.size()) ? *this : rhs;
 
     auto combined = bigger;
-    for (auto idx = 0; idx < smaller.m_set.size(); idx++) {
+    for (std::size_t idx = 0; idx < smaller.m_set.size(); idx++) {
         assert(combined.m_set.size() > idx);
         assert(smaller.m_set.size() > idx);
         combined.m_set[idx] &= smaller.m_set[idx];
@@ -84,7 +84,7 @@ auto Bitset::bit_xor(const Bitset& rhs) const -> Bitset {
     auto& bigger = (this->size() > rhs.size()) ? *this : rhs;
 
     auto combined = bigger;
-    for (auto idx = 0; idx < smaller.m_set.size(); idx++) {
+    for (std::size_t idx = 0; idx < smaller.m_set.size(); idx++) {
         assert(combined.m_set.size() > idx);
         assert(smaller.m_set.size() > idx);
         combined.m_set[idx] ^= smaller.m_set[idx];
@@ -98,7 +98,7 @@ auto Bitset::bit_equals(const Bitset& rhs) const -> bool {
         return false;
     }
 
-    for (auto idx = 0; idx < this->m_set.size(); idx++) {
+    for (std::size_t idx = 0; idx < this->m_set.size(); idx++) {
         assert(this->m_set.size() > idx);
         assert(rhs.m_set.size() > idx);
 
@@ -117,7 +117,7 @@ auto Bitset::get(size_t idx) const -> std::uint8_t {
     }
     auto set = this->_get_bitset_at_index(idx);
     idx = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
-    
+
     auto bit = static_cast<std::uint8_t>(set >> idx) & 1;
     return bit;
 }
@@ -185,7 +185,7 @@ auto Bitset::is_subset_of(const Bitset& superset) const -> bool {
         }
     }
 
-    for (auto idx = 0; idx < std::min(this->m_set.size(), superset.m_set.size()); idx++) {
+    for (std::size_t idx = 0; idx < std::min(this->m_set.size(), superset.m_set.size()); idx++) {
         assert(this->m_set.size() > idx);
         assert(superset.m_set.size() > idx);
 
@@ -205,7 +205,7 @@ auto Bitset::extend(size_t bitcount) -> void {
         this->m_set.reserve(new_size_count);
 
         auto pushes_needed = new_size_count - this->m_set.size();
-        for (auto idx = 0; idx < pushes_needed; idx++) {
+        for (std::size_t idx = 0; idx < pushes_needed; idx++) {
             this->m_set.emplace_back(0);
         }
     }

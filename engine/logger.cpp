@@ -66,8 +66,10 @@ auto LoggerBuilder::build() -> Logger {
     return Logger(m_identifier, std::move(m_streams));
 }
 
-Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams)
-    : m_identifier(identifier), m_streams(std::move(streams)) {}
+Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams):
+    m_streams(std::move(streams)),
+    m_identifier(identifier) {
+}
 
 auto Logger::last_entries(uint64_t count) const -> std::vector<const logger::Entry*>{
     if (count == 0) {

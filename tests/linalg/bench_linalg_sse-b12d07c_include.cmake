@@ -1,0 +1,5 @@
+if(EXISTS "/home/bailey/Development/vulkan-engine/tests/linalg/bench_linalg_sse-b12d07c_tests.cmake")
+  include("/home/bailey/Development/vulkan-engine/tests/linalg/bench_linalg_sse-b12d07c_tests.cmake")
+else()
+  add_test(bench_linalg_sse_NOT_BUILT-b12d07c bench_linalg_sse_NOT_BUILT-b12d07c)
+endif()

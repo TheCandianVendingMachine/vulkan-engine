@@ -324,7 +324,7 @@ namespace linalg {
 
         Matrix4LU(): combined(Matrix4<T>::zero()) {}
         Matrix4LU(const Matrix4<T>& LU): combined(LU) {}
-        static auto from(const Matrix4<T>& A) -> Matrix4LU;
+        static auto from(const Matrix4<T>& A) -> Matrix4LU<T>;
 
         auto lower_unit() -> Matrix4<T> {
             return Matrix4<T>(

@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <utility>
 #include <cassert>
+#include <cstring>
 
 namespace ENGINE_NS {
     enum class AllocationState: std::uint8_t {

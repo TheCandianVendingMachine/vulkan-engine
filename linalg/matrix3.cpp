@@ -1,6 +1,7 @@
 #include "linalg/matrix_ops.h"
 
 namespace linalg {
+    template<>
     auto Matrix3LU<float>::from(const Matrix3<float>& A) -> Matrix3LU<float> {
         // Doolittle algorithm without pivoting
         auto LU = Matrix3<float>::identity();
@@ -22,6 +23,7 @@ namespace linalg {
         return Matrix3LU<float>{ LU };
     }
 
+    template<>
     auto Matrix3LU<double>::from(const Matrix3<double>& A) -> Matrix3LU<double> {
         // Doolittle algorithm without pivoting
         auto LU = Matrix3<double>::identity();

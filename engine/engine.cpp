@@ -10,7 +10,7 @@ LogLocator::LogLocator() {
                 .with_stream({ stdout, logger::Level::DEBUG })
                 .build()
         }
-    };    
+    };
 }
 
 auto LogLocator::get(LogNamespaces ns) -> Logger& {

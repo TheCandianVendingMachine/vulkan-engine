@@ -1,10 +1,11 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include "engine/newtype.h"
+#include <cstdint>
 #include <limits>
 
 namespace ENGINE_NS {
-    struct ForwardJump: NewType<ForwardJump, size_t> {
+    struct ForwardJump: NewType<ForwardJump, std::size_t> {
         using NewType::NewType;
         friend auto operator+(const ForwardJump &lhs, const ForwardJump &rhs) -> ForwardJump {
             using type = underlying_type<ForwardJump>;
@@ -12,7 +13,7 @@ namespace ENGINE_NS {
         }
     };
 
-    struct BackwardJump: NewType<BackwardJump, size_t> {
+    struct BackwardJump: NewType<BackwardJump, std::size_t> {
         using NewType::NewType;
         friend auto operator+(const BackwardJump& lhs, const BackwardJump& rhs) -> BackwardJump {
             using type = underlying_type<BackwardJump>;
@@ -38,7 +39,7 @@ namespace ENGINE_NS {
         return BackwardJump(static_cast<lhs_type>(lhs) - static_cast<rhs_type>(rhs));
     }
 
-    struct Index: NewType<Index, size_t>, Orderable<Index>, Hashable<Index> {
+    struct Index: NewType<Index, std::size_t>, Orderable<Index>, Hashable<Index> {
         using NewType::NewType;
         static auto gravestone() -> Index {
             using type = underlying_type<Index>;
@@ -61,7 +62,7 @@ namespace ENGINE_NS {
         }
     };
 
-    struct Handle: NewType<Handle, size_t>, Orderable<Handle>, Hashable<Handle> {
+    struct Handle: NewType<Handle, std::size_t>, Orderable<Handle>, Hashable<Handle> {
         using NewType::NewType;
 
         auto operator++(int) -> Handle {
@@ -73,9 +74,14 @@ namespace ENGINE_NS {
     };
 }
 
-template<>
-struct std::hash<ENGINE_NS::Index>: ENGINE_NS::Hashable<ENGINE_NS::Index> {
-};
-template<>
-struct std::hash<ENGINE_NS::Handle>: ENGINE_NS::Hashable<ENGINE_NS::Handle> {
-};
+namespace std {
+    template<class Key>
+    struct hash;
+
+    template<>
+    struct hash<ENGINE_NS::Index>: ENGINE_NS::Hashable<ENGINE_NS::Index> {
+    };
+    template<>
+    struct hash<ENGINE_NS::Handle>: ENGINE_NS::Hashable<ENGINE_NS::Handle> {
+    };
+}

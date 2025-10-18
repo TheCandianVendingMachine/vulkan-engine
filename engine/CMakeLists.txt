@@ -4,6 +4,7 @@ set(ENGINE_HEADER_PATH
 
 set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/meta_defines.h"
+    "${ENGINE_HEADER_PATH}/stb_image_write_wrapped.h"
     "${ENGINE_HEADER_PATH}/bitset.h"
     "${ENGINE_HEADER_PATH}/engine.h"
     "${ENGINE_HEADER_PATH}/logger.h"
@@ -26,6 +27,7 @@ set(HEADER_LIST
 )
 
 add_library(engine
+    stb_image_implementation.cpp
     bitset.cpp
     engine.cpp
     logger.cpp
@@ -34,7 +36,6 @@ add_library(engine
     ecs/component.cpp
     ecs/system.cpp
     reflection/type.cpp
-    ${EXTERNAL_HEADER_DIR}/stb/stb_image_implementation.cpp
     ${HEADER_LIST}
 )
 target_compile_definitions(engine PRIVATE
@@ -58,6 +59,8 @@ target_compile_features(engine PRIVATE cxx_std_23)
 if (MSVC)
     target_compile_options(engine PRIVATE
         /utf-8
+        /W4
+        /WX
     )
     target_compile_definitions(engine PRIVATE
         NOMINMAX
@@ -68,6 +71,13 @@ if (MSVC)
         $<BUILD_INTERFACE:${NATVIS_DIR}/pool.natvis>
         $<INSTALL_INTERFACE:${NATVIS_DIR}/tsl-robin-map.natvis>
         $<BUILD_INTERFACE:${NATVIS_DIR}/tsl-robin-map.natvis>
+    )
+else()
+    target_compile_options(engine PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Werror
     )
 endif()
 
