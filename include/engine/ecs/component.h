@@ -1,8 +1,8 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include "engine/ecs/defines.h"
+#include "engine/ecs/query.h"
 #include "engine/pool.h"
-#include <algorithm>
 #include <robin_map.h>
 #include <string>
 #include <type_traits>
