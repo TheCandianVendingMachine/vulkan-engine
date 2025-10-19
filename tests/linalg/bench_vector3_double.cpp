@@ -8,19 +8,13 @@
 
 #define DESIRED_PRECISION (1e-10)
 
-constexpr auto range() -> Range<double> {
-    return Range<double>{ -250000.0, 250000.f };
+constexpr auto range() -> Range<double> { return Range<double>{-250000.0, 250000.f}; }
+
+auto random_vector(Random& rng) -> linalg::Vector3<double> {
+    return linalg::Vector3<double>{rng.range(range()), rng.range(range()), rng.range(range())};
 }
 
-auto random_vector(Random &rng) -> linalg::Vector3<double> {
-    return linalg::Vector3<double>{
-        rng.range(range()),
-        rng.range(range()),
-        rng.range(range())
-    };
-}
-
-TEST_CASE( "blas1 - bench [Vector3<double>]", "[blas1][Vector3][bench]" ) {
+TEST_CASE("blas1 - bench [Vector3<double>]", "[blas1][Vector3][bench]") {
     auto rng = Random();
     BENCHMARK_ADVANCED("blas1::axpy - random")(Catch::Benchmark::Chronometer meter) {
         auto a = rng.range<double>(range());
@@ -36,17 +30,26 @@ TEST_CASE( "blas1 - bench [Vector3<double>]", "[blas1][Vector3][bench]" ) {
     BENCHMARK_ADVANCED("blas1::copy - random")(Catch::Benchmark::Chronometer meter) {
         auto x = random_vector(rng);
         auto y = random_vector(rng);
-        meter.measure([&] { linalg::blas1::copy(x, y); return x; });
+        meter.measure([&] {
+            linalg::blas1::copy(x, y);
+            return x;
+        });
     };
     BENCHMARK_ADVANCED("blas1::swap - random")(Catch::Benchmark::Chronometer meter) {
         auto x = random_vector(rng);
         auto y = random_vector(rng);
-        meter.measure([&] { linalg::blas1::copy(x, y); return x; });
+        meter.measure([&] {
+            linalg::blas1::copy(x, y);
+            return x;
+        });
     };
     BENCHMARK_ADVANCED("blas1::dot - random")(Catch::Benchmark::Chronometer meter) {
         auto x = random_vector(rng);
         auto y = random_vector(rng);
-        meter.measure([&] { linalg::blas1::copy(x, y); return x; });
+        meter.measure([&] {
+            linalg::blas1::copy(x, y);
+            return x;
+        });
     };
     BENCHMARK_ADVANCED("blas1::component_sum - random")(Catch::Benchmark::Chronometer meter) {
         auto x = random_vector(rng);

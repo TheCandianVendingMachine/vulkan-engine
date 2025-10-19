@@ -1,12 +1,12 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <catch2/generators/catch_generators_random.hpp>
-#include <catch2/catch_test_macros.hpp>
 
 #include <engine/pool.h>
 
-using namespace::ENGINE_NS;
+using namespace ::ENGINE_NS;
 
 TEST_CASE("Pool::Pool", "[Pool]") {
     SECTION("Empty") {
@@ -23,7 +23,7 @@ TEST_CASE("Pool::Pool", "[Pool]") {
     }
     SECTION("Move Constructor") {
         auto pool_base = Pool<int>(5);
-        auto pool = Pool(std::move(pool_base));
+        auto pool      = Pool(std::move(pool_base));
 
         REQUIRE(pool.size() == 0);
         REQUIRE(pool.capacity() == 5);
@@ -57,7 +57,7 @@ TEST_CASE("Pool::reserve", "[Pool]") {
 TEST_CASE("Pool::allocate", "[Pool]") {
     SECTION("Empty, single") {
         auto pool = Pool<int>();
-        auto obj = pool.allocate();
+        auto obj  = pool.allocate();
 
         REQUIRE(pool.size() == 1);
     }
@@ -90,7 +90,7 @@ TEST_CASE("Pool::allocate", "[Pool]") {
     }
     SECTION("Init, single") {
         auto pool = Pool<int>(10);
-        auto obj = pool.allocate();
+        auto obj  = pool.allocate();
 
         REQUIRE(pool.size() == 1);
     }
@@ -126,7 +126,7 @@ TEST_CASE("Pool::allocate", "[Pool]") {
 TEST_CASE("Pool::free", "[Pool]") {
     SECTION("single") {
         auto pool = Pool<int>();
-        auto obj = pool.allocate();
+        auto obj  = pool.allocate();
         pool.free(obj);
 
         REQUIRE(pool.size() == 0);
@@ -161,6 +161,5 @@ TEST_CASE("Pool::free", "[Pool]") {
             }
             idx += 1;
         }
-
     }
 }

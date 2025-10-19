@@ -8,84 +8,55 @@
 
 #define DESIRED_PRECISION (1e-10f)
 
-constexpr auto range() -> Range<float> {
-    return Range<float>{ -250000.f, 250000.f };
-}
+constexpr auto range() -> Range<float> { return Range<float>{-250000.f, 250000.f}; }
 
-TEST_CASE( "blas1 - bench [Vector2<float>]", "[blas1][Vector2][bench]" ) {
+TEST_CASE("blas1 - bench [Vector2<float>]", "[blas1][Vector2][bench]") {
     auto rng = Random();
     BENCHMARK_ADVANCED("blas1::axpy - random")(Catch::Benchmark::Chronometer meter) {
         auto a = rng.range<float>(range());
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
-        auto y = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+        auto y = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
         meter.measure([&] { return linalg::blas1::axpy(a, x, y); });
     };
     BENCHMARK_ADVANCED("blas1::scale - random")(Catch::Benchmark::Chronometer meter) {
         auto a = rng.range<float>(range());
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
         meter.measure([&] { return linalg::blas1::scale(a, x); });
     };
     BENCHMARK_ADVANCED("blas1::copy - random")(Catch::Benchmark::Chronometer meter) {
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
-        auto y = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
-        meter.measure([&] { linalg::blas1::copy(x, y); return x; });
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+        auto y = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+        meter.measure([&] {
+            linalg::blas1::copy(x, y);
+            return x;
+        });
     };
     BENCHMARK_ADVANCED("blas1::swap - random")(Catch::Benchmark::Chronometer meter) {
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
-        auto y = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
-        meter.measure([&] { linalg::blas1::copy(x, y); return x; });
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+        auto y = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+        meter.measure([&] {
+            linalg::blas1::copy(x, y);
+            return x;
+        });
     };
     BENCHMARK_ADVANCED("blas1::dot - random")(Catch::Benchmark::Chronometer meter) {
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
-        auto y = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
-        meter.measure([&] { linalg::blas1::copy(x, y); return x; });
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+        auto y = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+        meter.measure([&] {
+            linalg::blas1::copy(x, y);
+            return x;
+        });
     };
     BENCHMARK_ADVANCED("blas1::component_sum - random")(Catch::Benchmark::Chronometer meter) {
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
         meter.measure([&] { return linalg::blas1::component_sum(x); });
     };
     BENCHMARK_ADVANCED("blas1::magnitude - random")(Catch::Benchmark::Chronometer meter) {
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
         meter.measure([&] { return linalg::blas1::magnitude(x); });
     };
     BENCHMARK_ADVANCED("blas1::component_max - random")(Catch::Benchmark::Chronometer meter) {
-        auto x = linalg::Vector2<float>{
-            rng.range(range()),
-            rng.range(range())
-        };
+        auto x = linalg::Vector2<float>{rng.range(range()), rng.range(range())};
         meter.measure([&] { return linalg::blas1::component_max(x); });
     };
 }

@@ -1,8 +1,8 @@
 #include "engine/logger.h"
-#include <ranges>
 #include <cstdio>
+#include <ranges>
 
-using namespace::ENGINE_NS;
+using namespace ::ENGINE_NS;
 
 logger::Level logger::operator&(logger::Level lhs, logger::Level rhs) {
     return logger::Level(uint8_t(lhs) & uint8_t(rhs));
@@ -28,11 +28,16 @@ bool logger::operator>=(logger::Level lhs, logger::Level rhs) {
 
 auto logger::level_to_string(Level level) -> std::string_view {
     switch (level) {
-        case Level::ERROR:      return "ERROR";
-        case Level::WARNING:    return "WARNING";
-        case Level::INFO:       return "INFO";
-        case Level::DEBUG:      return "DEBUG";
-        default:                return "UNKNOWN";
+        case Level::ERROR:
+            return "ERROR";
+        case Level::WARNING:
+            return "WARNING";
+        case Level::INFO:
+            return "INFO";
+        case Level::DEBUG:
+            return "DEBUG";
+        default:
+            return "UNKNOWN";
     }
 }
 
@@ -44,7 +49,8 @@ auto fmt::formatter<logger::Entry>::format(logger::Entry entry, fmt::format_cont
     return entry_to_context(ctx, entry);
 }
 
-auto fmt::formatter<const logger::Entry&>::format(const logger::Entry& entry, fmt::format_context& ctx) const -> fmt::format_context::iterator {
+auto fmt::formatter<const logger::Entry&>::format(const logger::Entry& entry, fmt::format_context& ctx) const
+    -> fmt::format_context::iterator {
     return entry_to_context(ctx, entry);
 }
 
@@ -66,19 +72,17 @@ auto LoggerBuilder::build() -> Logger {
     return Logger(m_identifier, std::move(m_streams));
 }
 
-Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams):
-    m_streams(std::move(streams)),
-    m_identifier(identifier) {
+Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams) : m_streams(std::move(streams)), m_identifier(identifier) {
 }
 
-auto Logger::last_entries(uint64_t count) const -> std::vector<const logger::Entry*>{
+auto Logger::last_entries(uint64_t count) const -> std::vector<const logger::Entry*> {
     if (count == 0) {
         return {};
     }
     std::size_t maxCount = std::min(m_entries.size(), size_t(count));
     std::vector<const logger::Entry*> entries(maxCount);
     uint64_t currentCount = 0;
-    for (const auto &entry : std::ranges::reverse_view{m_entries}) {
+    for (const auto& entry : std::ranges::reverse_view{m_entries}) {
         entries[maxCount - currentCount - 1] = &entry;
         currentCount += 1;
         if (currentCount >= count) {
@@ -92,10 +96,10 @@ auto Logger::last_entries_of(uint64_t count, logger::Level filter) const -> std:
     if (count == 0) {
         return {};
     }
-    count = std::min(uint64_t(m_entries.size()), count);
-    auto entries = std::vector<const logger::Entry*>(std::size_t(count));
+    count                 = std::min(uint64_t(m_entries.size()), count);
+    auto entries          = std::vector<const logger::Entry*>(std::size_t(count));
     uint64_t currentCount = 0;
-    for (const auto &entry : std::ranges::reverse_view{m_entries}) {
+    for (const auto& entry : std::ranges::reverse_view{m_entries}) {
         if (entry.level <= filter) {
             entries[std::size_t(count - currentCount - 1)] = &entry;
             currentCount += 1;
@@ -119,7 +123,7 @@ auto Logger::set_index(uint64_t index) -> void {
 }
 
 void Logger::append(logger::Level level, std::string&& message) {
-    logger::Entry entry{ m_log_idx, level, m_identifier, std::move(message) };
+    logger::Entry entry{m_log_idx, level, m_identifier, std::move(message)};
     for (auto stream : m_streams) {
         if (stream.level >= level) {
             fmt::print(stream.file, "{}\n", entry);

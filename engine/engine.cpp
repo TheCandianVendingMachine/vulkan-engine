@@ -1,15 +1,10 @@
 #include <engine/engine.h>
 
-using namespace::ENGINE_NS;
+using namespace ::ENGINE_NS;
 
 LogLocator::LogLocator() {
     m_loggers = {
-        {
-            LogNamespaces::CORE, LoggerBuilder()
-                .with_identifier("ENGINE")
-                .with_stream({ stdout, logger::Level::DEBUG })
-                .build()
-        }
+      {LogNamespaces::CORE, LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build()}
     };
 }
 

@@ -1,34 +1,34 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <catch2/generators/catch_generators_random.hpp>
-#include <catch2/catch_test_macros.hpp>
 
 #include <engine/pool/region.h>
 
-using namespace::ENGINE_NS;
+using namespace ::ENGINE_NS;
 
 struct TestType {
-    int a = 52;
-    float b = 3.14159f;
-    const char *c = "Hello, world!";
+        int a         = 52;
+        float b       = 3.14159f;
+        const char* c = "Hello, world!";
 };
 
 struct TestTypeConstructor {
-    int a = 52;
-    float b = 3.14159f;
-    const char* c = "Hello, world!";
-    TestTypeConstructor(int a, float b, const char* c): a(a), b(b), c(c) {
-    }
+        int a         = 52;
+        float b       = 3.14159f;
+        const char* c = "Hello, world!";
+        TestTypeConstructor(int a, float b, const char* c) : a(a), b(b), c(c) {
+        }
 };
 
 struct alignas(32) TestTypeAligned {
-    int a = -2358;
-    float b = 2.71f;
-    const char *c = "Aligned, world!";
+        int a         = -2'358;
+        float b       = 2.71f;
+        const char* c = "Aligned, world!";
 };
 
-TEST_CASE( "Pool::Region::capacity", "[Pool][Region]" ) {
+TEST_CASE("Pool::Region::capacity", "[Pool][Region]") {
     SECTION("Not Initialised") {
         auto region = Region<TestType>();
         REQUIRE(region.capacity() == 0);
@@ -50,7 +50,7 @@ TEST_CASE( "Pool::Region::capacity", "[Pool][Region]" ) {
     }
 }
 
-TEST_CASE( "Pool::Region::alive", "[Pool][Region]" ) {
+TEST_CASE("Pool::Region::alive", "[Pool][Region]") {
     SECTION("Not Initialised") {
         auto region = Region<TestType>();
         REQUIRE_FALSE(region.alive());
@@ -130,13 +130,13 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
     SECTION("Not Initialised") {
         auto region = Region<TestType>();
         region.free(Index(0));
-        region.free(Index(1000));
+        region.free(Index(1'000));
     }
     SECTION("Initialised, no objects") {
         auto region = Region<TestType>(10);
         region.free(Index(0));
         REQUIRE(region.do_axioms_hold_());
-        region.free(Index(1000));
+        region.free(Index(1'000));
         REQUIRE(region.do_axioms_hold_());
     }
     SECTION("Initialised") {
@@ -148,7 +148,7 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
 
         region.free(Index(0));
         REQUIRE(region.do_axioms_hold_());
-        region.free(Index(1000));
+        region.free(Index(1'000));
         REQUIRE(region.do_axioms_hold_());
 
         REQUIRE(region.get(Index(0)) == nullptr);
@@ -225,7 +225,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(4));
         region.emplace(Index(5));
 
-
         region.free(Index(4));
         REQUIRE(region.do_axioms_hold_());
 
@@ -255,7 +254,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(0));
         region.emplace(Index(1));
 
-
         region.free(Index(0));
         REQUIRE(region.do_axioms_hold_());
 
@@ -270,7 +268,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(3));
         region.emplace(Index(4));
 
-
         region.free(Index(4));
         REQUIRE(region.do_axioms_hold_());
 
@@ -280,7 +277,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
     SECTION("Beginning, no neigbour") {
         auto region = Region<TestType>(10);
         region.emplace(Index(0));
-
 
         region.free(Index(0));
         REQUIRE(region.do_axioms_hold_());
@@ -294,7 +290,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(2));
         region.emplace(Index(3));
 
-
         region.free(Index(3));
         REQUIRE(region.do_axioms_hold_());
 
@@ -303,7 +298,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
     SECTION("Emplace after free") {
         auto region = Region<TestType>(10);
         region.emplace(Index(0));
-
 
         region.free(Index(0));
         REQUIRE(region.do_axioms_hold_());
@@ -329,7 +323,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(8));
         region.emplace(Index(9));
 
-
         region.free(Index(9));
         REQUIRE(region.do_axioms_hold_());
     }
@@ -345,7 +338,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(7));
         region.emplace(Index(8));
         region.emplace(Index(9));
-
 
         region.free(Index(5));
         REQUIRE(region.do_axioms_hold_());
@@ -363,7 +355,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(8));
         region.emplace(Index(9));
 
-
         region.free(Index(7));
         REQUIRE(region.do_axioms_hold_());
     }
@@ -378,7 +369,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(6));
         region.emplace(Index(7));
         region.emplace(Index(8));
-
 
         region.free(Index(8));
         REQUIRE(region.do_axioms_hold_());
@@ -395,7 +385,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(7));
         region.emplace(Index(8));
 
-
         region.free(Index(4));
         REQUIRE(region.do_axioms_hold_());
     }
@@ -411,7 +400,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(7));
         region.emplace(Index(8));
 
-
         region.free(Index(6));
         REQUIRE(region.do_axioms_hold_());
     }
@@ -422,7 +410,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(2));
         region.emplace(Index(3));
         region.emplace(Index(4));
-
 
         region.free(Index(4));
         REQUIRE(region.do_axioms_hold_());
@@ -435,7 +422,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(3));
         region.emplace(Index(4));
 
-
         region.free(Index(0));
         REQUIRE(region.do_axioms_hold_());
     }
@@ -446,7 +432,6 @@ TEST_CASE("Pool::Region::free", "[Pool][Region]") {
         region.emplace(Index(2));
         region.emplace(Index(3));
         region.emplace(Index(4));
-
 
         region.free(Index(2));
         REQUIRE(region.do_axioms_hold_());

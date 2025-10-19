@@ -1,14 +1,14 @@
 #include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
 #include <catch2/generators/catch_generators_adapters.hpp>
 #include <catch2/generators/catch_generators_random.hpp>
-#include <catch2/catch_test_macros.hpp>
 
 #include <engine/bitset.h>
 
-using namespace::ENGINE_NS;
+using namespace ::ENGINE_NS;
 
-TEST_CASE( "Bitset::Bitset", "[Bitset]" ) {
+TEST_CASE("Bitset::Bitset", "[Bitset]") {
     SECTION("Default constructor") {
         auto bitset = Bitset();
         REQUIRE(bitset.size() == 0);
@@ -19,8 +19,8 @@ TEST_CASE( "Bitset::Bitset", "[Bitset]" ) {
             REQUIRE(bitset.size() == 56);
         }
         {
-            auto bitset = Bitset(6000);
-            REQUIRE(bitset.size() == 6000);
+            auto bitset = Bitset(6'000);
+            REQUIRE(bitset.size() == 6'000);
         }
     }
     SECTION("Copy constructor") {
@@ -64,7 +64,7 @@ TEST_CASE( "Bitset::Bitset", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::operator=", "[Bitset]" ) {
+TEST_CASE("Bitset::operator=", "[Bitset]") {
     SECTION("Non-move") {
         auto bitset_original = Bitset();
         bitset_original.set(0);
@@ -116,7 +116,7 @@ TEST_CASE( "Bitset::operator=", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::bit_or", "[Bitset]" ) {
+TEST_CASE("Bitset::bit_or", "[Bitset]") {
     SECTION("Method") {
         auto bitset_1 = Bitset();
         bitset_1.set(0);
@@ -206,7 +206,7 @@ TEST_CASE( "Bitset::bit_or", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::bit_and", "[Bitset]" ) {
+TEST_CASE("Bitset::bit_and", "[Bitset]") {
     SECTION("Method") {
         auto bitset_1 = Bitset();
         bitset_1.set(0);
@@ -296,7 +296,7 @@ TEST_CASE( "Bitset::bit_and", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::bit_xor", "[Bitset]" ) {
+TEST_CASE("Bitset::bit_xor", "[Bitset]") {
     SECTION("Method") {
         auto bitset_1 = Bitset();
         bitset_1.set(0);
@@ -386,7 +386,7 @@ TEST_CASE( "Bitset::bit_xor", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::bit_equals", "[Bitset]" ) {
+TEST_CASE("Bitset::bit_equals", "[Bitset]") {
     SECTION("Method") {
         SECTION("Equals") {
             auto bitset_1 = Bitset();
@@ -424,7 +424,7 @@ TEST_CASE( "Bitset::bit_equals", "[Bitset]" ) {
             bitset_2.set(0);
             bitset_2.set(8);
             bitset_2.set(16);
-            bitset_2.set(5000);
+            bitset_2.set(5'000);
 
             REQUIRE_FALSE(bitset_1.bit_equals(bitset_2));
         }
@@ -433,7 +433,7 @@ TEST_CASE( "Bitset::bit_equals", "[Bitset]" ) {
             bitset_1.set(0);
             bitset_1.set(8);
             bitset_1.set(16);
-            bitset_1.set(5000);
+            bitset_1.set(5'000);
 
             auto bitset_2 = Bitset();
             bitset_2.set(0);
@@ -480,7 +480,7 @@ TEST_CASE( "Bitset::bit_equals", "[Bitset]" ) {
             bitset_2.set(0);
             bitset_2.set(8);
             bitset_2.set(16);
-            bitset_2.set(5000);
+            bitset_2.set(5'000);
 
             REQUIRE_FALSE(bitset_1 == bitset_2);
         }
@@ -489,7 +489,7 @@ TEST_CASE( "Bitset::bit_equals", "[Bitset]" ) {
             bitset_1.set(0);
             bitset_1.set(8);
             bitset_1.set(16);
-            bitset_1.set(5000);
+            bitset_1.set(5'000);
 
             auto bitset_2 = Bitset();
             bitset_2.set(0);
@@ -501,20 +501,20 @@ TEST_CASE( "Bitset::bit_equals", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::get", "[Bitset]" ) {
+TEST_CASE("Bitset::get", "[Bitset]") {
     SECTION("Method") {
         auto bitset = Bitset();
         bitset.set(0);
         bitset.set(1);
         bitset.set(2);
         bitset.set(200);
-        
+
         REQUIRE(bitset.get(0) == 1);
         REQUIRE(bitset.get(1) == 1);
         REQUIRE(bitset.get(2) == 1);
         REQUIRE(bitset.get(3) == 0);
         REQUIRE(bitset.get(200) == 1);
-        REQUIRE(bitset.get(5000) == 0);
+        REQUIRE(bitset.get(5'000) == 0);
     }
 
     SECTION("Operator") {
@@ -523,17 +523,17 @@ TEST_CASE( "Bitset::get", "[Bitset]" ) {
         bitset.set(1);
         bitset.set(2);
         bitset.set(200);
-        
+
         REQUIRE(bitset[0] == 1);
         REQUIRE(bitset[1] == 1);
         REQUIRE(bitset[2] == 1);
         REQUIRE(bitset[3] == 0);
         REQUIRE(bitset[200] == 1);
-        REQUIRE(bitset[5000] == 0);
+        REQUIRE(bitset[5'000] == 0);
     }
 }
 
-TEST_CASE( "Bitset::flip", "[Bitset]" ) {
+TEST_CASE("Bitset::flip", "[Bitset]") {
     SECTION("in-range") {
         auto bitset = Bitset(1);
 
@@ -559,7 +559,7 @@ TEST_CASE( "Bitset::flip", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::set", "[Bitset]" ) {
+TEST_CASE("Bitset::set", "[Bitset]") {
     SECTION("in-range") {
         auto bitset = Bitset(1);
 
@@ -590,14 +590,14 @@ TEST_CASE( "Bitset::set", "[Bitset]" ) {
         REQUIRE(bitset[0] == 0);
         bitset.set(0);
         REQUIRE(bitset[0] == 1);
-        bitset.set(10000);
-        REQUIRE(bitset[10000] == 1);
+        bitset.set(10'000);
+        REQUIRE(bitset[10'000] == 1);
 
-        REQUIRE(bitset.size() == 10001);
+        REQUIRE(bitset.size() == 10'001);
     }
 }
 
-TEST_CASE( "Bitset::set_to", "[Bitset]" ) {
+TEST_CASE("Bitset::set_to", "[Bitset]") {
     SECTION("in-range") {
         auto bitset = Bitset(1);
 
@@ -633,7 +633,7 @@ TEST_CASE( "Bitset::set_to", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::clear", "[Bitset]" ) {
+TEST_CASE("Bitset::clear", "[Bitset]") {
     SECTION("in-range") {
         auto bitset = Bitset(1);
 
@@ -669,7 +669,7 @@ TEST_CASE( "Bitset::clear", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::size", "[Bitset]" ) {
+TEST_CASE("Bitset::size", "[Bitset]") {
     SECTION("Empty set") {
         auto bitset = Bitset();
         REQUIRE(bitset.size() == 0);
@@ -681,7 +681,7 @@ TEST_CASE( "Bitset::size", "[Bitset]" ) {
     }
 }
 
-TEST_CASE( "Bitset::is_subset_of", "[Bitset]" ) {
+TEST_CASE("Bitset::is_subset_of", "[Bitset]") {
     auto superset = Bitset();
     superset.set(0);
     superset.set(5);
@@ -734,7 +734,7 @@ TEST_CASE( "Bitset::is_subset_of", "[Bitset]" ) {
         bitset.set(5);
         bitset.set(6);
         bitset.set(9);
-        bitset.set_to(5000, 0);
+        bitset.set_to(5'000, 0);
         REQUIRE(bitset.is_subset_of(superset));
     }
 
@@ -744,12 +744,12 @@ TEST_CASE( "Bitset::is_subset_of", "[Bitset]" ) {
         bitset.set(5);
         bitset.set(6);
         bitset.set(9);
-        bitset.set(5000);
+        bitset.set(5'000);
         REQUIRE_FALSE(bitset.is_subset_of(superset));
     }
 }
 
-TEST_CASE( "Bitset::extend", "[Bitset]" ) {
+TEST_CASE("Bitset::extend", "[Bitset]") {
     auto bitset = Bitset();
     REQUIRE(bitset.size() == 0);
 

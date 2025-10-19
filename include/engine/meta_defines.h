@@ -1,11 +1,11 @@
 #pragma once
 
-#define STR(arg) #arg
+#define STR(arg)        #arg
 
-#define ENGINE_NAME engine
+#define ENGINE_NAME     engine
 #define ENGINE_NAME_STR STR(ENGINE_NAME)
 
-#define ENGINE_NS ENGINE_NAME
+#define ENGINE_NS       ENGINE_NAME
 
 #ifdef IS_DYNAMIC
     #ifdef IS_ENGINE

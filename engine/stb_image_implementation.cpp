@@ -3,4 +3,3 @@
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "engine/stb_image_write_wrapped.h"
-

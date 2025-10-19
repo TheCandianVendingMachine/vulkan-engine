@@ -3,43 +3,47 @@
 
 #include <engine/random.h>
 
-#include <linalg/vector.h>
 #include <linalg/matrix.h>
 #include <linalg/matrix_ops.h>
+#include <linalg/vector.h>
 
-constexpr auto range() -> Range<double> {
-    return Range<double>{ -250000.0, 250000.0 };
-}
+constexpr auto range() -> Range<double> { return Range<double>{-250000.0, 250000.0}; }
 
-auto random_vector(Random &rng) -> linalg::Vector2<double> {
+auto random_vector(Random& rng) -> linalg::Vector2<double> {
     return linalg::Vector2<double>{
         rng.range(range()),
         rng.range(range()),
     };
 }
 
-auto random_matrix(Random &rng) -> linalg::Matrix2<double> {
+auto random_matrix(Random& rng) -> linalg::Matrix2<double> {
     return linalg::Matrix2<double>{
-        rng.range(range()), rng.range(range()),
-        rng.range(range()), rng.range(range()),
+        rng.range(range()),
+        rng.range(range()),
+        rng.range(range()),
+        rng.range(range()),
     };
 }
 
-auto random_matrix_lower_triangular(Random &rng) -> linalg::Matrix2<double> {
+auto random_matrix_lower_triangular(Random& rng) -> linalg::Matrix2<double> {
     return linalg::Matrix2<double>{
-        rng.range(range()), 0.0,
-        rng.range(range()), rng.range(range()),
+        rng.range(range()),
+        0.0,
+        rng.range(range()),
+        rng.range(range()),
     };
 }
 
-auto random_matrix_upper_triangular(Random &rng) -> linalg::Matrix2<double> {
+auto random_matrix_upper_triangular(Random& rng) -> linalg::Matrix2<double> {
     return linalg::Matrix2<double>{
-        rng.range(range()), rng.range(range()),
-        0.0,                rng.range(range()),
+        rng.range(range()),
+        rng.range(range()),
+        0.0,
+        rng.range(range()),
     };
 }
 
-TEST_CASE( "blas2 - bench [Matrix2<double>]", "[blas2][Matrix2][bench]" ) {
+TEST_CASE("blas2 - bench [Matrix2<double>]", "[blas2][Matrix2][bench]") {
     auto rng = Random();
     BENCHMARK_ADVANCED("linalg::lu_decomposition - random")(Catch::Benchmark::Chronometer meter) {
         auto A = random_matrix(rng);
