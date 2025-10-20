@@ -25,6 +25,8 @@ class ComponentRegister {
             return component_gid_by_name(T::Meta::name);
         }
 
+        auto query() -> QueryBuilder;
+
     private:
         ComponentGid counter_ = ComponentGid(0);
         tsl::robin_map<std::string, ComponentGid> register_;

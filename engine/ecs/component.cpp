@@ -16,6 +16,10 @@ auto ENGINE_NS::ecs::ComponentRegister::component_gid_by_name(std::string_view n
     return std::optional<ComponentGid>{register_.at(std::string(name))};
 }
 
+auto ENGINE_NS::ecs::ComponentRegister::query() -> QueryBuilder {
+    return QueryBuilder(*this);
+}
+
 auto ENGINE_NS::ecs::ComponentStoreInterface::fetch_mut(const std::vector<EntityUid>& entities) -> std::vector<Component*> {
     auto components = fetch(entities);
     std::vector<Component*> mutable_components{};

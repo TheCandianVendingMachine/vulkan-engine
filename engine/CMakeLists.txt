@@ -35,6 +35,7 @@ add_library(engine
     ecs/entity.cpp
     ecs/component.cpp
     ecs/system.cpp
+    ecs/query.cpp
     reflection/type.cpp
     ${HEADER_LIST}
 )

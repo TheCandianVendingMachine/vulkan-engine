@@ -1,8 +1,8 @@
 #pragma once
 #include "engine/logger.h"
 #include "engine/meta_defines.h"
-#include <robin_map.h>
 #include <memory>
+#include <robin_map.h>
 
 namespace ENGINE_NS {
 enum class LogNamespaces {

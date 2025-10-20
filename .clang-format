@@ -29,7 +29,6 @@ AlignConsecutiveShortCaseStatements:
   Enabled: true
   AcrossEmptyLines: true
   AcrossComments: true
-  AlignCaseArrows: true
   AlignCaseColons: false
 AlignOperands: Align
 AlignTrailingComments:

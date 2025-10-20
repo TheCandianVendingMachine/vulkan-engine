@@ -30,6 +30,8 @@ int main() {
     auto component_register = engine::ecs::ComponentRegister{};
     component_register.register_component<TestComponent>();
 
+    auto query = component_register.query().select("TestComponent2").build();
+
     auto store = engine::ecs::ComponentStore<TestComponent>{};
     store.create(EntityUid(0));
     store.create(EntityUid(5));
