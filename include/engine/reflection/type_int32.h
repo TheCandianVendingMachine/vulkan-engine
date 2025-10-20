@@ -1,3 +1,5 @@
+#include <fmt/format.h>
+
 template <>
 struct ENGINE_NS::reflection::Type<std::uint32_t> : ENGINE_NS::reflection::Atom<std::uint32_t> {
         using Inner = std::uint32_t;

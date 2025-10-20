@@ -1,3 +1,5 @@
+#include <fmt/format.h>
+
 template <>
 struct ENGINE_NS::reflection::Type<float> : ENGINE_NS::reflection::Atom<float> {
         using Inner = float;

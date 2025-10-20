@@ -118,7 +118,7 @@ auto Bitset::get(size_t idx) const -> std::uint8_t {
     auto set = this->_get_bitset_at_index(idx);
     idx      = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
 
-    auto bit = static_cast<std::uint8_t>(set >> idx) & 1;
+    std::uint8_t bit = static_cast<std::uint8_t>(set >> idx) & static_cast<std::uint8_t>(1);
     return bit;
 }
 
@@ -129,7 +129,7 @@ auto Bitset::flip(size_t idx) -> void {
     auto& set = this->_get_bitset_at_index(idx);
     idx       = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
 
-    set       = set ^ (1 << idx);
+    set       = set ^ (static_cast<std::uint64_t>(1) << idx);
 }
 
 auto Bitset::set(size_t idx) -> void {
@@ -139,7 +139,7 @@ auto Bitset::set(size_t idx) -> void {
     auto& set = this->_get_bitset_at_index(idx);
     idx       = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
 
-    set       = set | (1 << idx);
+    set       = set | (static_cast<std::uint64_t>(1) << idx);
 }
 
 auto Bitset::set_to(size_t idx, std::uint8_t bit) -> void {
@@ -150,7 +150,7 @@ auto Bitset::set_to(size_t idx, std::uint8_t bit) -> void {
     idx       = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
 
     set       = set & ~(1 << idx);
-    set       = set | (bit << idx);
+    set       = set | (static_cast<std::uint64_t>(bit) << idx);
 }
 
 auto Bitset::clear(size_t idx) -> void {

@@ -61,6 +61,8 @@ if (MSVC)
         /utf-8
         /W4
         /WX
+        /external:anglebrackets
+        /external:W0
     )
     target_compile_definitions(engine PRIVATE
         NOMINMAX

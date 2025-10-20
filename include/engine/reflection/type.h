@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <utility>
 
 namespace ENGINE_NS {
 namespace reflection {
@@ -76,7 +75,6 @@ struct Variable {
 #include "engine/reflection/type_int32.h"
 #include "engine/reflection/type_int64.h"
 #include "engine/reflection/type_int8.h"
-#include "fmt/format.h"
 
 namespace ENGINE_NS {
 namespace reflection {
@@ -348,7 +346,6 @@ struct RuntimeMember {
     inline auto members() const -> decltype(auto) {                                                                                        \
         auto members = static_members();                                                                                                   \
         auto owner   = this;                                                                                                               \
-        auto i       = 0;                                                                                                                  \
         auto arr     = std::array<ENGINE_NS::reflection::RuntimeMember, members.size()>{};                                                 \
         std::transform(members.cbegin(), members.cend(), arr.begin(),                                                                      \
                        [owner](const ENGINE_NS::reflection::Member& member) -> ENGINE_NS::reflection::RuntimeMember {                      \
