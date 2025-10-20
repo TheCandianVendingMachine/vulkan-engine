@@ -53,13 +53,13 @@ class ComponentStore : public ComponentStoreInterface {
             if (!assignment_.contains(component)) {
                 return;
             }
-            auto borrow = assignment_.at(component);
+            auto& borrow = assignment_.at(component);
             components_.free(borrow);
         }
         virtual auto fetch(const std::vector<EntityUid>& entities) const -> std::vector<const Component*> {
             std::vector<const Component*> components;
             for (auto& entity : entities) {
-                auto borrow = assignment_.at(entity);
+                auto& borrow = assignment_.at(entity);
                 components.emplace_back(borrow.get().value());
             }
             return components;

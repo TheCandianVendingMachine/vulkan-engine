@@ -57,6 +57,7 @@ auto Bitset::bit_or(const Bitset& rhs) const -> Bitset {
         assert(smaller.m_set.size() > idx);
         combined.m_set[idx] |= smaller.m_set[idx];
     }
+    combined.hash_ = combined.hash_ ^ ~(combined.hash_ | ~smaller.hash_);
 
     return combined;
 }
@@ -75,6 +76,7 @@ auto Bitset::bit_and(const Bitset& rhs) const -> Bitset {
         assert(combined.m_set.size() > idx);
         combined.m_set[idx] = 0;
     }
+    combined.hash_ = combined.hash_ ^ ~(combined.hash_ & ~smaller.hash_);
 
     return combined;
 }
@@ -89,6 +91,7 @@ auto Bitset::bit_xor(const Bitset& rhs) const -> Bitset {
         assert(smaller.m_set.size() > idx);
         combined.m_set[idx] ^= smaller.m_set[idx];
     }
+    combined.hash_ = combined.hash_ ^ ~(combined.hash_ ^ ~smaller.hash_);
 
     return combined;
 }
@@ -115,8 +118,8 @@ auto Bitset::get(size_t idx) const -> std::uint8_t {
     if (idx >= this->size()) {
         return 0;
     }
-    auto set = this->_get_bitset_at_index(idx);
-    idx      = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
+    auto set         = this->_get_bitset_at_index(idx);
+    idx              = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
 
     std::uint8_t bit = static_cast<std::uint8_t>(set >> idx) & static_cast<std::uint8_t>(1);
     return bit;
@@ -126,8 +129,11 @@ auto Bitset::flip(size_t idx) -> void {
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
+    hash_     = hash_ ^ idx;
+
     auto& set = this->_get_bitset_at_index(idx);
     idx       = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
+    hash_     = hash_ ^ (static_cast<std::uint64_t>(hash_) << idx);
 
     set       = set ^ (static_cast<std::uint64_t>(1) << idx);
 }
@@ -136,8 +142,11 @@ auto Bitset::set(size_t idx) -> void {
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
+    hash_     = hash_ ^ idx;
+
     auto& set = this->_get_bitset_at_index(idx);
     idx       = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
+    hash_     = hash_ | (static_cast<std::uint64_t>(1) << idx);
 
     set       = set | (static_cast<std::uint64_t>(1) << idx);
 }
@@ -146,8 +155,11 @@ auto Bitset::set_to(size_t idx, std::uint8_t bit) -> void {
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
+    hash_     = hash_ ^ idx;
+
     auto& set = this->_get_bitset_at_index(idx);
     idx       = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
+    hash_     = hash_ ^ (static_cast<std::uint64_t>(1) << idx);
 
     set       = set & ~(1 << idx);
     set       = set | (static_cast<std::uint64_t>(bit) << idx);
@@ -157,10 +169,13 @@ auto Bitset::clear(size_t idx) -> void {
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
+    hash_     = hash_ ^ idx;
+
     auto& set = this->_get_bitset_at_index(idx);
     idx       = idx % (8 * sizeof(Bitset::UnderlyingBitRepresentation));
+    hash_     = hash_ & (static_cast<std::uint64_t>(1) << idx);
 
-    set       = set & ~(1 << idx);
+    set       = set & ~(static_cast<std::uint64_t>(1) << idx);
 }
 
 auto Bitset::size() const -> size_t {

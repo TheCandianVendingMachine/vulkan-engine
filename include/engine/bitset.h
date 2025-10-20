@@ -52,9 +52,26 @@ class Bitset {
 
     private:
         std::vector<UnderlyingBitRepresentation> m_set;
-        size_t m_bitcount = 0;
+        size_t m_bitcount   = 0;
+
+        std::uint64_t hash_ = 0;
 
         auto _get_bitset_at_index(std::size_t idx) -> std::uint64_t&;
         auto _get_bitset_at_index(std::size_t idx) const -> std::uint64_t;
+
+        template <typename T>
+        friend struct std::hash;
 };
 } // namespace ENGINE_NS
+
+namespace std {
+template <class Key>
+struct hash;
+
+template <>
+struct hash<ENGINE_NS::Bitset> {
+        auto operator()(const ENGINE_NS::Bitset& bitset) -> std::size_t {
+            return bitset.hash_;
+        }
+};
+} // namespace std
