@@ -18,7 +18,7 @@ struct Map {
 
 class EntityStore {
     public:
-    auto entities_by_query(const Query& query) const -> std::vector<EntityUid>;
+        auto entities_by_query(const Query& query) const -> std::vector<EntityUid>;
 
     private:
         Pool<Entity> m_entities{};
