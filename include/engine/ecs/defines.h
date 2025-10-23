@@ -26,15 +26,15 @@ struct ComponentId :
 };
 
 namespace std {
-template <class Key>
-struct hash;
+    template <class Key>
+    struct hash;
 
-template <>
-struct hash<EntityUid> : ENGINE_NS::Hashable<EntityUid> {};
+    template <>
+    struct hash<EntityUid> : ENGINE_NS::Hashable<EntityUid> {};
 
-template <>
-struct hash<ComponentId> : ENGINE_NS::Hashable<ComponentId> {};
+    template <>
+    struct hash<ComponentId> : ENGINE_NS::Hashable<ComponentId> {};
 
-template <>
-struct hash<ComponentGid> : ENGINE_NS::Hashable<ComponentGid> {};
+    template <>
+    struct hash<ComponentGid> : ENGINE_NS::Hashable<ComponentGid> {};
 } // namespace std

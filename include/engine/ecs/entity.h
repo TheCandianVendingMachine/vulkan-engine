@@ -9,49 +9,49 @@
 namespace ENGINE_NS {
     namespace ecs {
         struct Map {
-            Bitset assigned_components;
+                Bitset assigned_components;
 
-            friend auto operator==(const Map& lhs, const Map& rhs) -> bool {
-                return lhs.assigned_components == rhs.assigned_components;
-            }
+                friend auto operator==(const Map& lhs, const Map& rhs) -> bool {
+                    return lhs.assigned_components == rhs.assigned_components;
+                }
         };
-    }
-}
+    } // namespace ecs
+} // namespace ENGINE_NS
 namespace std {
-    template<class Key>
+    template <class Key>
     struct hash;
-    template<>
+    template <>
     struct hash<ENGINE_NS::ecs::Map> {
-        auto operator()(const ENGINE_NS::ecs::Map& map) const noexcept -> size_t {
-            return map.assigned_components.hash_;
-        }
+            auto operator()(const ENGINE_NS::ecs::Map& map) const noexcept -> size_t {
+                return map.assigned_components.hash_;
+            }
     };
-}
+} // namespace std
 
 namespace ENGINE_NS {
-namespace ecs {
-struct EntityAllocation {
-        EntityUid entity;
-        const Map& map;
+    namespace ecs {
+        struct EntityAllocation {
+                EntityUid entity;
+                const Map& map;
 
-    private:
-        friend class EntityStore;
-        EntityAllocation(EntityUid entity, const Map& map);
-};
+            private:
+                friend class EntityStore;
+                EntityAllocation(EntityUid entity, const Map& map);
+        };
 
-class EntityStore {
-    public:
-        auto create(const Query& query) -> EntityAllocation;
-        auto destroy(EntityUid entity);
-        auto entities_by_query(const Query& query) const -> std::vector<EntityUid>;
+        class EntityStore {
+            public:
+                auto create(const Query& query) -> EntityAllocation;
+                auto destroy(EntityUid entity);
+                auto entities_by_query(const Query& query) const -> std::vector<EntityUid>;
 
-    private:
-        EntityUid m_current_entity{};
+            private:
+                EntityUid m_current_entity{};
 
-        Pool<EntityUid> m_entities{};
-        tsl::robin_map<EntityUid, pool::Borrow<EntityUid>> m_uid_borrows{};
-        tsl::robin_map<Map, std::vector<EntityUid>> m_entities_with_components{};
-};
-} // namespace ecs
+                Pool<EntityUid> m_entities{};
+                tsl::robin_map<EntityUid, pool::Borrow<EntityUid>> m_uid_borrows{};
+                tsl::robin_map<Map, std::vector<EntityUid>> m_entities_with_components{};
+        };
+    } // namespace ecs
 } // namespace ENGINE_NS
 

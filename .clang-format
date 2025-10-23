@@ -9,6 +9,13 @@ Language: Cpp
 AccessModifierOffset: 0
 # Force pointers to the type for C++.
 Standard: Latest
+NamespaceIndentation: All
+MaxEmptyLinesToKeep: 2
+#NumericLiteralCase:
+#  ExponentLetter: Lower
+#  HexDigit: Upper
+#  Prefix: Lower
+#  Suffix: Lower
 DerivePointerAlignment: false
 PointerAlignment: Left
 AlignAfterOpenBracket: Align
