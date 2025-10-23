@@ -20,7 +20,7 @@ auto ENGINE_NS::ecs::ComponentRegister::component_gid_by_name(std::string_view n
     return std::optional<ComponentGid>{register_.at(std::string(name))};
 }
 
-auto ENGINE_NS::ecs::ComponentRegister::query() -> QueryBuilder {
+auto ENGINE_NS::ecs::ComponentRegister::query() const -> QueryBuilder {
     return QueryBuilder(*this);
 }
 

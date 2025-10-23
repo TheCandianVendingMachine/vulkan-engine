@@ -28,10 +28,10 @@ namespace ENGINE_NS {
 
             private:
                 Bitset query_{};
-                ComponentRegister& component_register_;
+                const ComponentRegister& component_register_;
 
                 friend class ComponentRegister;
-                QueryBuilder(ComponentRegister& component_register);
+                QueryBuilder(const ComponentRegister& component_register);
         };
     } // namespace ecs
 } // namespace ENGINE_NS

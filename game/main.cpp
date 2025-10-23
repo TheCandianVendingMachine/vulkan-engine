@@ -23,7 +23,10 @@ class EcsWorld {
 
         auto create_entity(const engine::ecs::Query& query) -> engine::ecs::EntityUid {
             auto allocation = entities_.create(query);
-            allocation.map.assigned_components.get_set();
+            for (auto idx : allocation.map.assigned_components.set_bits()) {
+                auto gid = engine::ecs::ComponentGid(idx);
+                stores_.at(gid)->create(allocation.entity);
+            }
             return allocation.entity;
         }
 
@@ -41,7 +44,7 @@ int main() {
     world.register_component<engine::ecs::predefined::UidComponent>();
 
     auto query = world.component_register.query().select<TestComponent>().select("UidComponent").build();
-    auto ent1  = world.entities.create(query);
+    auto ent1  = world.create_entity(query);
 
     return 0;
 }

@@ -227,6 +227,19 @@ auto Bitset::extend(size_t bitcount) -> void {
     m_bitcount += bitcount;
 }
 
+ENGINE_API auto ENGINE_NS::Bitset::set_bits() const -> std::vector<size_t> {
+    auto bits  = std::vector<size_t>{};
+    size_t idx = 0;
+    for (auto bitset : this->m_set) {
+        for (size_t i = 0; i < sizeof(UnderlyingBitRepresentation) * 8; idx++, i++) {
+            if (((bitset >> i) & 1) == 1) {
+                bits.push_back(idx);
+            }
+        }
+    }
+    return bits;
+}
+
 auto Bitset::_get_bitset_at_index(std::size_t idx) -> std::uint64_t& {
     auto idx_bytes = idx / 8;
     auto position  = idx_bytes / sizeof(Bitset::UnderlyingBitRepresentation);

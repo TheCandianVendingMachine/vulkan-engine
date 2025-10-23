@@ -29,7 +29,7 @@ namespace ENGINE_NS {
                     return component_gid_by_name(T::Meta::name);
                 }
 
-                auto query() -> QueryBuilder;
+                auto query() const -> QueryBuilder;
 
             private:
                 ComponentGid counter_ = ComponentGid(0);

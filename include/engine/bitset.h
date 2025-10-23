@@ -1,7 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include <cstdint>
-#include <initializer_list>
 #include <vector>
 
 namespace ENGINE_NS {
@@ -44,6 +43,8 @@ namespace ENGINE_NS {
             ENGINE_API auto is_subset_of(const Bitset& superset) const -> bool;
 
             ENGINE_API auto extend(size_t bitcount) -> void;
+
+            ENGINE_API auto set_bits() const -> std::vector<size_t>;
 
             constexpr static auto bits_to_representation_count(size_t bitcount) -> size_t {
                 auto bytes = (bitcount + 8 - 1) / 8;
