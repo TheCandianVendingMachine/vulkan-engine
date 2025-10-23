@@ -42,7 +42,7 @@ int main() {
     static_cast<TestComponent*>(store.fetch_mut(EntityUid(6)))->value = 15;
 
     for (auto& component : store.fetch_mut({ EntityUid(0), EntityUid(5), EntityUid(6) })) {
-        auto meta = TestComponent::Meta(*static_cast<TestComponent*>(component));
+        auto meta = static_cast<TestComponent*>(component)->meta();
         std::cout << "Component: " << meta.name << "\n";
         for (auto member : meta.members()) {
             std::cout << "\t" << member.meta.name << ": " << member.meta.type_info->name() << " = " << member.to_string() << "\n";

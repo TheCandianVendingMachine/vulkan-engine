@@ -361,4 +361,8 @@ struct RuntimeMember {
         }                                                                                                                                  \
         std::unreachable();                                                                                                                \
     }                                                                                                                                      \
+    }                                                                                                                                      \
+    ;                                                                                                                                      \
+    auto meta() -> Meta {                                                                                                                  \
+        return Meta(*this);                                                                                                                \
     }
