@@ -46,6 +46,9 @@ class ComponentStoreInterface {
 template <typename T>
 class ComponentStore : public ComponentStoreInterface {
     public:
+        static constexpr auto name() -> const char* {
+            return T::Meta::name;
+        }
         virtual auto create(EntityUid assigned) -> void {
             assignment_.insert({assigned, components_.allocate()});
         }

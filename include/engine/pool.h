@@ -5,6 +5,7 @@
 #include <iterator>
 #include <optional>
 #include <robin_map.h>
+#include <utility>
 
 namespace ENGINE_NS {
 template <typename T, size_t DefaultCount = 512, size_t GrowthFactor = 2>
@@ -150,6 +151,23 @@ class Pool {
             }
             m_region.reserve(count);
             m_handles.reserve(count);
+        }
+
+        auto allocate(T&& object) -> pool::Borrow<T> {
+            if (!m_region.alive()) {
+                this->reserve(DefaultCount);
+            }
+            if (m_region.get_free_index() == Index::gravestone()) {
+                this->reserve(this->m_size * GrowthFactor);
+            }
+
+            auto this_handle = m_current_handle++;
+            auto this_index  = m_region.get_free_index();
+            m_region.emplace(this_index, std::move(object));
+
+            m_handles.insert({this_handle, this_index});
+            m_size += 1;
+            return pool::Borrow<T>(this_handle, *this);
         }
 
         template <typename... TArgs>

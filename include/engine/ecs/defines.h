@@ -2,7 +2,11 @@
 #include "engine/meta_defines.h"
 #include "engine/newtype.h"
 
-struct EntityUid : ENGINE_NS::NewType<EntityUid, std::size_t>, ENGINE_NS::Eq<EntityUid>, ENGINE_NS::Hashable<EntityUid> {
+struct EntityUid :
+    ENGINE_NS::NewType<EntityUid, std::size_t>,
+    ENGINE_NS::Eq<EntityUid>,
+    ENGINE_NS::Hashable<EntityUid>,
+    ENGINE_NS::Increment<EntityUid> {
         using NewType::NewType;
 };
 

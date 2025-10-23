@@ -70,8 +70,8 @@ struct hash;
 
 template <>
 struct hash<ENGINE_NS::Bitset> {
-        auto operator()(const ENGINE_NS::Bitset& bitset) -> std::size_t {
-            return bitset.hash_;
-        }
+    auto operator()(const ENGINE_NS::Bitset& bitset) const noexcept -> std::size_t {
+        return bitset.hash_;
+    }
 };
 } // namespace std
