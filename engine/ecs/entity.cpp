@@ -30,5 +30,9 @@ auto ENGINE_NS::ecs::EntityStore::entities_by_query(const Query& query) const ->
     return matching_entities;
 }
 
+auto ENGINE_NS::ecs::EntityStore::bundle(EntityUid entity) -> Bundle {
+    return Bundle(entity);
+}
+
 ENGINE_NS::ecs::EntityAllocation::EntityAllocation(EntityUid entity, const Map& map) : entity(entity), map(map) {
 }

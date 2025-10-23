@@ -10,6 +10,7 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/logger.h"
     "${ENGINE_HEADER_PATH}/random.h"
     "${ENGINE_HEADER_PATH}/newtype.h"
+    "${ENGINE_HEADER_PATH}/ecs/default.h"
     "${ENGINE_HEADER_PATH}/ecs/defines.h"
     "${ENGINE_HEADER_PATH}/ecs/entity.h"
     "${ENGINE_HEADER_PATH}/ecs/component.h"
@@ -32,6 +33,7 @@ add_library(engine
     engine.cpp
     logger.cpp
     random.cpp
+    ecs/default.cpp
     ecs/entity.cpp
     ecs/component.cpp
     ecs/system.cpp

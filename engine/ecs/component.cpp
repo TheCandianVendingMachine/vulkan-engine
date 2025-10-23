@@ -1,6 +1,11 @@
 #include "engine/ecs/component.h"
+#include "engine/ecs/default.h"
 #include "engine/ecs/defines.h"
 #include "engine/meta_defines.h"
+
+ENGINE_NS::ecs::ComponentRegister::ComponentRegister() {
+    this->register_component<predefined::UidComponent>();
+}
 
 auto ENGINE_NS::ecs::ComponentRegister::register_component_by_name(std::string_view name) -> ComponentGid {
     auto current_gid = counter_;
@@ -9,7 +14,7 @@ auto ENGINE_NS::ecs::ComponentRegister::register_component_by_name(std::string_v
     return current_gid;
 }
 
-auto ENGINE_NS::ecs::ComponentRegister::component_gid_by_name(std::string_view name) -> std::optional<ComponentGid> {
+auto ENGINE_NS::ecs::ComponentRegister::component_gid_by_name(std::string_view name) const -> std::optional<ComponentGid> {
     if (!register_.contains(std::string(name))) {
         return std::nullopt;
     }
@@ -32,4 +37,7 @@ auto ENGINE_NS::ecs::ComponentStoreInterface::fetch_mut(const std::vector<Entity
 
 auto ENGINE_NS::ecs::ComponentStoreInterface::fetch_mut(EntityUid entity) -> Component* {
     return const_cast<Component*>(fetch(entity));
+}
+
+ENGINE_NS::ecs::Bundle::Bundle(EntityUid entity) : entity_(entity) {
 }

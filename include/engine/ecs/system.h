@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/ecs/component.h"
 #include "engine/ecs/query.h"
 #include "engine/meta_defines.h"
 
@@ -12,9 +13,9 @@ namespace ENGINE_NS {
                 }
                 virtual auto deinitialise() -> void {
                 }
-                virtual auto tick() -> void {
+                virtual auto tick(std::vector<Bundle>& bundles) -> void {
                 }
-                virtual auto fixed_tick(double dt) -> void {
+                virtual auto fixed_tick(double dt, std::vector<Bundle>& bundles) -> void {
                 }
         };
     } // namespace ecs

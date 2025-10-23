@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/bitset.h"
+#include "engine/ecs/component.h"
 #include "engine/ecs/defines.h"
 #include "engine/ecs/query.h"
 #include "engine/meta_defines.h"
@@ -44,6 +45,8 @@ namespace ENGINE_NS {
                 auto create(const Query& query) -> EntityAllocation;
                 auto destroy(EntityUid entity);
                 auto entities_by_query(const Query& query) const -> std::vector<EntityUid>;
+
+                auto bundle(EntityUid entity) -> Bundle;
 
             private:
                 EntityUid m_current_entity{};
