@@ -20,6 +20,10 @@ namespace ENGINE_NS {
         class QueryBuilder {
             public:
                 auto select(std::string_view name) -> QueryBuilder&;
+                template <typename T>
+                auto select() -> QueryBuilder& {
+                    return this->select(T::Meta::name);
+                }
                 auto build() -> Query;
 
             private:

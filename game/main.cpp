@@ -1,18 +1,11 @@
 #include <engine/ecs/component.h>
+#include <engine/ecs/default.h>
+#include <engine/ecs/defines.h>
+#include <engine/ecs/entity.h>
 #include <engine/engine.h>
 #include <engine/reflection/type.h>
 #include <iostream>
-
-struct Example {
-        int a;
-        int b;
-        float c;
-        double d;
-        unsigned int e;
-
-        REFLECT_START(Example)
-        REFLECT_MEMBER(a), REFLECT_MEMBER(b), REFLECT_MEMBER(c), REFLECT_MEMBER(d), REFLECT_MEMBER(e) REFLECT_END;
-};
+#include <robin_map.h>
 
 struct TestComponent : engine::ecs::Component {
         int value = 0;
@@ -20,28 +13,35 @@ struct TestComponent : engine::ecs::Component {
         REFLECT_MEMBER(value), REFLECT_END;
 };
 
-int main() {
-    auto component_register = engine::ecs::ComponentRegister{};
-    component_register.register_component<TestComponent>();
-
-    auto query = component_register.query().select("TestComponent").select("UidComponent").build();
-
-    auto store = engine::ecs::ComponentStore<TestComponent>(component_register);
-    store.create(EntityUid(0));
-    store.create(EntityUid(5));
-    store.create(EntityUid(6));
-
-    static_cast<TestComponent*>(store.fetch_mut(EntityUid(0)))->value = 5;
-    static_cast<TestComponent*>(store.fetch_mut(EntityUid(5)))->value = -50;
-    static_cast<TestComponent*>(store.fetch_mut(EntityUid(6)))->value = 15;
-
-    for (auto& component : store.fetch_mut({EntityUid(0), EntityUid(5), EntityUid(6)})) {
-        auto meta = static_cast<TestComponent*>(component)->meta();
-        std::cout << "Component: " << meta.name << "\n";
-        for (auto member : meta.members()) {
-            std::cout << "\t" << member.meta.name << ": " << member.meta.type_info->name() << " = " << member.to_string() << "\n";
+class EcsWorld {
+    public:
+        template <typename T>
+        auto register_component() -> void {
+            auto gid = register_.register_component<T>();
+            stores_.insert({gid, std::make_unique<engine::ecs::ComponentStore<T>>(register_)});
         }
-    }
+
+        auto create_entity(const engine::ecs::Query& query) -> engine::ecs::EntityUid {
+            auto allocation = entities_.create(query);
+            allocation.map.assigned_components.get_set();
+            return allocation.entity;
+        }
+
+        const engine::ecs::ComponentRegister& component_register = register_;
+
+    private:
+        engine::ecs::EntityStore entities_;
+        engine::ecs::ComponentRegister register_;
+        tsl::robin_map<engine::ecs::ComponentGid, std::unique_ptr<engine::ecs::ComponentStoreInterface>> stores_{};
+};
+
+int main() {
+    auto world = EcsWorld{};
+    world.register_component<TestComponent>();
+    world.register_component<engine::ecs::predefined::UidComponent>();
+
+    auto query = world.component_register.query().select<TestComponent>().select("UidComponent").build();
+    auto ent1  = world.entities.create(query);
 
     return 0;
 }

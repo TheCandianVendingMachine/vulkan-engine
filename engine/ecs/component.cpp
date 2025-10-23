@@ -4,7 +4,6 @@
 #include "engine/meta_defines.h"
 
 ENGINE_NS::ecs::ComponentRegister::ComponentRegister() {
-    this->register_component<predefined::UidComponent>();
 }
 
 auto ENGINE_NS::ecs::ComponentRegister::register_component_by_name(std::string_view name) -> ComponentGid {

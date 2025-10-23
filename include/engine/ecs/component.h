@@ -45,7 +45,7 @@ namespace ENGINE_NS {
                     return *static_cast<T*>(component);
                 }
                 auto component(std::string_view name) -> Component* {
-                    auto gid       = component_map_.at(name);
+                    auto gid       = component_map_.at(std::string(name));
                     auto component = stored_.at(gid);
                     return component;
                 }
