@@ -2,6 +2,7 @@
 #include "engine/ecs/default.h"
 #include "engine/ecs/defines.h"
 #include "engine/meta_defines.h"
+#include <utility>
 
 ENGINE_NS::ecs::ComponentRegister::ComponentRegister() {
 }
@@ -38,5 +39,8 @@ auto ENGINE_NS::ecs::ComponentStoreInterface::fetch_mut(EntityUid entity) -> Com
     return const_cast<Component*>(fetch(entity));
 }
 
-ENGINE_NS::ecs::Bundle::Bundle(EntityUid entity) : entity_(entity) {
+ENGINE_NS::ecs::Bundle::Bundle(Bundle&& rhs) : entity_(std::move(rhs.entity_)), query_(std::move(rhs.query_)) {
+}
+
+ENGINE_NS::ecs::Bundle::Bundle(EntityUid entity, Query query) : entity_(entity), query_(std::move(query)) {
 }

@@ -46,7 +46,7 @@ namespace ENGINE_NS {
                 auto destroy(EntityUid entity);
                 auto entities_by_query(const Query& query) const -> std::vector<EntityUid>;
 
-                auto bundle(EntityUid entity) -> Bundle;
+                auto bundles_from_query(Query query) const -> std::vector<Bundle>;
 
             private:
                 EntityUid m_current_entity{};

@@ -50,11 +50,18 @@ namespace ENGINE_NS {
                     return component;
                 }
 
+                const EntityUid& entity = entity_;
+
+                Bundle(Bundle&& rhs);
+
             private:
-                Bundle(EntityUid entity);
+                Bundle(EntityUid entity, Query query);
 
                 template <typename T, typename = std::enable_if_t<std::is_base_of<Component, T>::value>>
                 auto assign(ComponentGid gid, T* component) -> void {
+                    if (query_.query.get(static_cast<std::size_t>(gid)) == 0) {
+                        return;
+                    }
                     stored_.insert({gid, component});
                     component_map_.insert({T::Meta::name, gid});
                 }
@@ -64,6 +71,7 @@ namespace ENGINE_NS {
                 friend class ComponentStore;
 
                 EntityUid entity_;
+                Query query_;
                 tsl::robin_map<std::string, ComponentGid> component_map_;
                 tsl::robin_map<ComponentGid, Component*> stored_;
         };
@@ -115,6 +123,9 @@ namespace ENGINE_NS {
 
                 virtual auto assign_bundles(std::vector<Bundle>& bundles) -> void override final {
                     for (auto& bundle : bundles) {
+                        if (bundle.query_.query.get(static_cast<std::size_t>(this->gid_)) == 0) {
+                            continue;
+                        }
                         bundle.assign(gid_, static_cast<T*>(this->fetch_mut(bundle.entity_)));
                     }
                 }

@@ -7,7 +7,7 @@ namespace ENGINE_NS {
     namespace ecs {
         class System {
             public:
-                virtual auto query() -> Query = 0;
+                virtual auto query(const ComponentRegister& component_register) const -> Query = 0;
 
                 virtual auto initialise() -> void {
                 }
