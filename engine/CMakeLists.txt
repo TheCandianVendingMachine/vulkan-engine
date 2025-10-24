@@ -1,6 +1,9 @@
 set(ENGINE_HEADER_PATH
     "${PROJECT_SOURCE_DIR}/include/engine"
 )
+set(LINALG_HEADER_PATH
+    "${PROJECT_SOURCE_DIR}/include/linalg"
+)
 
 set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/meta_defines.h"
@@ -25,6 +28,9 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/reflection/type_int16.h"
     "${ENGINE_HEADER_PATH}/reflection/type_int32.h"
     "${ENGINE_HEADER_PATH}/reflection/type_int64.h"
+    "${ENGINE_HEADER_PATH}/linalg/linalg.h"
+    "${ENGINE_HEADER_PATH}/linalg/vector.h"
+    "${ENGINE_HEADER_PATH}/linalg/matrix.h"
 )
 
 add_library(engine
@@ -33,6 +39,9 @@ add_library(engine
     engine.cpp
     logger.cpp
     random.cpp
+    linalg/linalg.cpp
+    linalg/vector.cpp
+    linalg/matrix.cpp
     ecs/default.cpp
     ecs/entity.cpp
     ecs/component.cpp
@@ -64,6 +73,7 @@ if (MSVC)
         /utf-8
         /W4
         /WX
+        /wd4201
         /external:anglebrackets
         /external:W0
     )

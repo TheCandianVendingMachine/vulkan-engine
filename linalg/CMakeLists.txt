@@ -15,6 +15,7 @@ add_library(linalg_scalar SHARED
     matrix2.cpp
     matrix3.cpp
     matrix4.cpp
+    vector_interface.cpp
     vector2.cpp
     vector3.cpp
     vector4.cpp
@@ -35,6 +36,7 @@ endif()
 
 add_library(linalg_sse SHARED
     matrix4_sse.cpp
+    vector_interface.cpp
     vector2_sse.cpp
     vector3_sse.cpp
     vector4_sse.cpp
@@ -58,6 +60,7 @@ endif()
 
 add_library(linalg_avx SHARED
     vector_avx.cpp
+    vector_interface.cpp
     ${HEADER_LIST}
 )
 target_include_directories(linalg_avx PUBLIC

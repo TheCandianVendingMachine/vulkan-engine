@@ -40,5 +40,10 @@ namespace ENGINE_NS {
             LogLocator m_logger;
     };
 
-    extern std::unique_ptr<Engine> g_ENGINE;
+    extern Engine* g_ENGINE;
+
+    void crash(ErrorCode reason);
+    void crash(ErrorCode reason, int line);
+    void crash(ErrorCode reason, int line, const char* function);
+    void crash(ErrorCode reason, int line, const char* function, const char* file);
 } // namespace ENGINE_NS

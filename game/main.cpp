@@ -53,7 +53,7 @@ class EcsWorld {
 class TestSystem : engine::ecs::System {
     public:
         virtual auto query(const engine::ecs::ComponentRegister& component_register) const -> engine::ecs::Query override final {
-            return component_register.query().select<engine::ecs::predefined::UidComponent>().build();
+            return component_register.query().select<engine::ecs::predefined::UidComponent>().select<TestComponent>().build();
         }
 
         virtual auto initialise() -> void {
@@ -65,8 +65,10 @@ class TestSystem : engine::ecs::System {
         virtual auto tick(std::vector<engine::ecs::Bundle>& bundles) -> void {
             fmt::println("Tick");
             for (auto& bundle : bundles) {
-                auto uid_component = bundle.component<engine::ecs::predefined::UidComponent>();
-                fmt::println("Entity {}, Id {}", static_cast<std::size_t>(bundle.entity), static_cast<std::size_t>(uid_component.id_));
+                auto uid_component  = bundle.component<engine::ecs::predefined::UidComponent>();
+                auto test_component = bundle.component<TestComponent>();
+                fmt::println("Entity {}, Id {}, Test {}", static_cast<std::size_t>(bundle.entity),
+                             static_cast<std::size_t>(uid_component.id_), test_component.value);
             }
         }
         virtual auto fixed_tick(double dt, std::vector<engine::ecs::Bundle>&) -> void {
@@ -75,7 +77,9 @@ class TestSystem : engine::ecs::System {
 };
 
 int main() {
-    auto world = EcsWorld{};
+    auto engine = engine::Engine();
+
+    auto world  = EcsWorld{};
     world.register_component<TestComponent>();
     world.register_component<engine::ecs::predefined::UidComponent>();
 
@@ -84,7 +88,7 @@ int main() {
     TestSystem system{};
     system.initialise();
 
-    for (int i = 0; i < 5'000; i++) {
+    for (int i = 0; i < 500; i++) {
         auto query   = system.query(world.component_register);
         auto bundles = world.bundles_from_query(query);
         system.tick(bundles);
