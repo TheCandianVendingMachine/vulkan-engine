@@ -40,6 +40,8 @@ Engine& Engine::instance() {
 
 auto Engine::run() -> void {
     while (true) {
+        FrameMarkStart(StaticNames::EngineLoop);
+        FrameMarkEnd(StaticNames::EngineLoop);
         FrameMark;
     }
 }

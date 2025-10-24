@@ -21,11 +21,13 @@ class EcsWorld {
     public:
         template <typename T>
         auto register_component() -> void {
+            ZoneScoped;
             auto gid = register_.register_component<T>();
             stores_.insert({gid, std::make_unique<engine::ecs::ComponentStore<T>>(register_)});
         }
 
         auto create_entity(const engine::ecs::Query& query) -> engine::ecs::EntityUid {
+            ZoneScoped;
             auto allocation = entities_.create(query);
             for (auto idx : allocation.map.assigned_components.set_bits()) {
                 auto gid = engine::ecs::ComponentGid(idx);
@@ -35,6 +37,7 @@ class EcsWorld {
         }
 
         auto bundles_from_query(engine::ecs::Query& query) -> std::vector<engine::ecs::Bundle> {
+            ZoneScoped;
             auto bundles = entities_.bundles_from_query(query);
             for (auto& [gid, store] : stores_) {
                 if (query.query.get(static_cast<std::size_t>(gid)) == 0) {
@@ -74,6 +77,8 @@ class TestSystem : engine::ecs::System {
 };
 
 int main() {
+    for (int i = 0; i < 400'000'000; i++) {
+    }
     auto engine = engine::Engine();
 
     auto A      = linalg::Matrix4<float>::identity();
@@ -100,7 +105,7 @@ int main() {
     TestSystem system{};
     system.initialise();
 
-    for (int i = 0; i < 500'000; i++) {
+    for (int i = 0; i < 50'000; i++) {
         auto query   = system.query(world.component_register);
         auto bundles = world.bundles_from_query(query);
         system.tick(bundles);

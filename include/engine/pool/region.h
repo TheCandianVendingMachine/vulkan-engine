@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include "engine/pool/types.h"
+#include <Tracy/Tracy.hpp>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -114,6 +115,7 @@ namespace ENGINE_NS {
                     }
 
                     auto operator++() -> Iterator& {
+                        ZoneScoped;
                         m_ptr += 1;
                         switch (m_ptr->state) {
                             case AllocationState::FREE:
@@ -163,6 +165,7 @@ namespace ENGINE_NS {
 
             template <typename... TArgs>
             auto emplace(Index idx, TArgs&&... args) -> T* {
+                ZoneScoped;
                 if (static_cast<size_t>(idx) >= m_capacity) {
                     return nullptr;
                 }
@@ -196,10 +199,12 @@ namespace ENGINE_NS {
                         std::unreachable();
                 }
 
+                TracyAlloc(spot, sizeof(engine::Allocation<T>));
                 return new (static_cast<void*>(spot)) T(std::forward<TArgs&&>(args)...);
             }
 
             auto free(Index idx) {
+                ZoneScoped;
                 if (!m_pool) {
                     return;
                 }
@@ -211,6 +216,7 @@ namespace ENGINE_NS {
                 if (current->state != AllocationState::IN_USE) {
                     return;
                 }
+                TracyFree(current);
                 current->object.~T();
 
                 auto left  = get_(idx - BackwardJump(1));
@@ -265,6 +271,7 @@ namespace ENGINE_NS {
             }
 
             auto reserve(size_t count) -> void {
+                ZoneScoped;
                 if (count <= m_capacity) {
                     return;
                 }
