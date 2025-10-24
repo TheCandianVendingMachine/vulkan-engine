@@ -12,6 +12,7 @@ set(HEADER_LIST
 )
 
 add_library(linalg_scalar SHARED
+    matrix_interface.cpp
     matrix2.cpp
     matrix3.cpp
     matrix4.cpp
@@ -35,6 +36,7 @@ endif()
 
 
 add_library(linalg_sse SHARED
+    matrix_interface.cpp
     matrix4_sse.cpp
     vector_interface.cpp
     vector2_sse.cpp
@@ -60,7 +62,6 @@ endif()
 
 add_library(linalg_avx SHARED
     vector_avx.cpp
-    vector_interface.cpp
     ${HEADER_LIST}
 )
 target_include_directories(linalg_avx PUBLIC

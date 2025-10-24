@@ -38,7 +38,7 @@ void ENGINE_NS::linalg::load_library() {
 
     if (has_avx) {
         logger.info("Detected AVX2");
-        // arch = Arch::AVX;
+        arch = Arch::AVX;
     } else {
         logger.info("AVX2 not present");
     }

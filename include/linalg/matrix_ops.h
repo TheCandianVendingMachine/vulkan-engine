@@ -43,3 +43,42 @@ namespace linalg {
         auto solve(const Matrix4<double>& A, const Vector4<double> b) -> Vector4<double>;
     } // namespace blas2
 } // namespace linalg
+
+extern "C"
+{
+    __declspec(dllexport) float* smvprod2(float* out, float* A, const float* x);
+    __declspec(dllexport) float* ssolve2l(float* out, float* L, float* b);
+    __declspec(dllexport) float* ssolve2u(float* out, float* U, float* b);
+    __declspec(dllexport) float* ssolve2(float* out, float* A, float* b);
+
+    __declspec(dllexport) double* dmvprod2(double* out, double* A, const double* x);
+    __declspec(dllexport) double* dsolve2l(double* out, double* L, double* b);
+    __declspec(dllexport) double* dsolve2u(double* out, double* U, double* b);
+    __declspec(dllexport) double* dsolve2(double* out, double* A, double* b);
+}
+
+extern "C"
+{
+    __declspec(dllexport) float* smvprod3(float* out, float* A, const float* x);
+    __declspec(dllexport) float* ssolve3l(float* out, float* L, float* b);
+    __declspec(dllexport) float* ssolve3u(float* out, float* U, float* b);
+    __declspec(dllexport) float* ssolve3(float* out, float* A, float* b);
+
+    __declspec(dllexport) double* dmvprod3(double* out, double* A, const double* x);
+    __declspec(dllexport) double* dsolve3l(double* out, double* L, double* b);
+    __declspec(dllexport) double* dsolve3u(double* out, double* U, double* b);
+    __declspec(dllexport) double* dsolve3(double* out, double* A, double* b);
+}
+
+extern "C"
+{
+    __declspec(dllexport) float* smvprod4(float* out, float* A, const float* x);
+    __declspec(dllexport) float* ssolve4l(float* out, float* L, float* b);
+    __declspec(dllexport) float* ssolve4u(float* out, float* U, float* b);
+    __declspec(dllexport) float* ssolve4(float* out, float* A, float* b);
+
+    __declspec(dllexport) double* dmvprod4(double* out, double* A, const double* x);
+    __declspec(dllexport) double* dsolve4l(double* out, double* L, double* b);
+    __declspec(dllexport) double* dsolve4u(double* out, double* U, double* b);
+    __declspec(dllexport) double* dsolve4(double* out, double* A, double* b);
+}

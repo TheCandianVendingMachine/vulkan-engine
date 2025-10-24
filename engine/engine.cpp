@@ -45,6 +45,8 @@ auto Engine::startup() -> void {
     logger.get(LogNamespaces::CORE).info("Starting");
     linalg::load_library();
     linalg::load_vector_functions(linalg::g_VECTOR_LIBRARY->library);
+    linalg::load_matrix_functions(linalg::g_VECTOR_LIBRARY->library);
+
 
     m_running = true;
 }
