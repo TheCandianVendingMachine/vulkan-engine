@@ -4,6 +4,7 @@
 #include <engine/ecs/entity.h>
 #include <engine/ecs/system.h>
 #include <engine/engine.h>
+#include <engine/linalg/vector.h>
 #include <engine/reflection/type.h>
 #include <iostream>
 #include <robin_map.h>

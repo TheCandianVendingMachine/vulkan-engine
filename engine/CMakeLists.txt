@@ -41,6 +41,9 @@ add_library(engine
     random.cpp
     linalg/linalg.cpp
     linalg/vector.cpp
+    linalg/vector2_operations.cpp
+    linalg/vector3_operations.cpp
+    linalg/vector4_operations.cpp
     linalg/matrix.cpp
     ecs/default.cpp
     ecs/entity.cpp

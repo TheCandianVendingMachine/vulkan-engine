@@ -63,12 +63,12 @@ ENGINE_NS::linalg::Library::Library(Arch arch) : arch_(arch) {
         crash(ErrorCode::CANNOT_LOAD_LINEAR_ALGEBRA_LIBRARY);
     }
     library = library_;
-    logger.info("Successfully loaded vector library");
+    logger.info("Successfully loaded linear algebra library");
 }
 
 ENGINE_NS::linalg::Library::~Library() {
     if (library_) {
-        Engine::instance().logger.get(LogNamespaces::CORE).info("Releasing vector library");
+        Engine::instance().logger.get(LogNamespaces::CORE).info("Releasing linear algebra library");
         FreeLibrary(static_cast<HMODULE>(library_));
         library_ = nullptr;
     }
@@ -76,29 +76,29 @@ ENGINE_NS::linalg::Library::~Library() {
 
 void ENGINE_NS::linalg::Library::load_scalar_() {
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
-    logger.info("Loading scalar vector library");
+    logger.info("Loading scalar linear algebra library");
     library_ = LoadLibraryA("linalg_scalar.dll");
     if (!library_) {
-        logger.error("Failed to load library");
+        logger.error("Failed to load linear algebra library");
     }
 }
 
 void ENGINE_NS::linalg::Library::load_sse_() {
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
-    logger.info("Loading SSE vector library");
+    logger.info("Loading SSE linear algebra library");
     library_ = LoadLibraryA("linalg_sse.dll");
     if (!library_) {
-        logger.warning("Failed to load SSE vector library");
+        logger.warning("Failed to load SSE linear algebra library");
         load_scalar_();
     }
 }
 
 void ENGINE_NS::linalg::Library::load_avx_() {
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
-    logger.info("Loading AVX vector library");
+    logger.info("Loading AVX linear algebra library");
     library_ = LoadLibraryA("linalg_avx.dll");
     if (!library_) {
-        logger.warning("Failed to load AVX vector library");
+        logger.warning("Failed to load AVX linear algebra library");
         load_sse_();
     }
 }
