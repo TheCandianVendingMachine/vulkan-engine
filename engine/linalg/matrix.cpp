@@ -1,6 +1,7 @@
 #include "engine/linalg/matrix.h"
 #include "engine/engine.h"
 #include "engine/meta_defines.h"
+#include <Tracy/Tracy.hpp>
 #include <Windows.h>
 #include <libloaderapi.h>
 
@@ -10,6 +11,7 @@
     }
 
 void ENGINE_NS::linalg::load_matrix_functions(const void* clibrary) {
+    ZoneScoped;
     auto& logger = engine::g_ENGINE->logger.get(engine::LogNamespaces::CORE);
     logger.info("Linking matrix functions");
     HMODULE library = static_cast<HMODULE>(const_cast<void*>(clibrary));

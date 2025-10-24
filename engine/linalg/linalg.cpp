@@ -1,5 +1,6 @@
 #include "engine/linalg/linalg.h"
 #include "engine/engine.h"
+#include <Tracy/tracy.hpp>
 #include <Windows.h>
 #include <libloaderapi.h>
 #include <memory>
@@ -18,6 +19,7 @@
 std::unique_ptr<ENGINE_NS::linalg::Library> ENGINE_NS::linalg::g_VECTOR_LIBRARY = nullptr;
 
 void ENGINE_NS::linalg::load_library() {
+    ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     logger.info("Initialising linalg library");
 
@@ -47,6 +49,7 @@ void ENGINE_NS::linalg::load_library() {
 }
 
 ENGINE_NS::linalg::Library::Library(Arch arch) : arch_(arch) {
+    ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     switch (arch) {
         case Arch::SCALAR:
@@ -67,6 +70,7 @@ ENGINE_NS::linalg::Library::Library(Arch arch) : arch_(arch) {
 }
 
 ENGINE_NS::linalg::Library::~Library() {
+    ZoneScoped;
     if (library_) {
         Engine::instance().logger.get(LogNamespaces::CORE).info("Releasing linear algebra library");
         FreeLibrary(static_cast<HMODULE>(library_));
@@ -75,6 +79,7 @@ ENGINE_NS::linalg::Library::~Library() {
 }
 
 void ENGINE_NS::linalg::Library::load_scalar_() {
+    ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     logger.info("Loading scalar linear algebra library");
     library_ = LoadLibraryA("linalg_scalar.dll");
@@ -84,6 +89,7 @@ void ENGINE_NS::linalg::Library::load_scalar_() {
 }
 
 void ENGINE_NS::linalg::Library::load_sse_() {
+    ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     logger.info("Loading SSE linear algebra library");
     library_ = LoadLibraryA("linalg_sse.dll");
@@ -94,6 +100,7 @@ void ENGINE_NS::linalg::Library::load_sse_() {
 }
 
 void ENGINE_NS::linalg::Library::load_avx_() {
+    ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     logger.info("Loading AVX linear algebra library");
     library_ = LoadLibraryA("linalg_avx.dll");

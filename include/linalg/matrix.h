@@ -42,6 +42,10 @@ namespace linalg {
                 return Matrix2(T(0), T(0), T(0), T(0));
             }
 
+            Matrix2(const Vector2<T>& row1, const Vector2<T>& row2) {
+                std::memcpy(&elements[0], row1.elements, sizeof(row1.elements));
+                std::memcpy(&elements[2], row2.elements, sizeof(row2.elements));
+            }
             Matrix2(const Matrix2& other) {
                 *this = other;
             }
@@ -127,6 +131,11 @@ namespace linalg {
                 return Matrix3(T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0));
             }
 
+            Matrix3(const Vector3<T>& row1, const Vector3<T>& row2, const Vector3<T>& row3) {
+                std::memcpy(&elements[0], row1.elements, sizeof(row1.elements));
+                std::memcpy(&elements[3], row2.elements, sizeof(row2.elements));
+                std::memcpy(&elements[6], row3.elements, sizeof(row3.elements));
+            }
             Matrix3(const Matrix3& other) {
                 *this = other;
             }
@@ -248,6 +257,12 @@ namespace linalg {
                 return Matrix4(T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0));
             }
 
+            Matrix4(const Vector4<T>& row1, const Vector4<T>& row2, const Vector4<T>& row3, const Vector4<T>& row4) {
+                std::memcpy(&elements[0], row1.elements, sizeof(row1.elements));
+                std::memcpy(&elements[4], row2.elements, sizeof(row2.elements));
+                std::memcpy(&elements[8], row3.elements, sizeof(row3.elements));
+                std::memcpy(&elements[12], row4.elements, sizeof(row4.elements));
+            }
             Matrix4(const Matrix4& other) {
                 *this = other;
             }

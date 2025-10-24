@@ -1,6 +1,7 @@
 #include "engine/linalg/vector.h"
 #include "engine/engine.h"
 #include "engine/meta_defines.h"
+#include <Tracy/Tracy.hpp>
 #include <Windows.h>
 #include <libloaderapi.h>
 
@@ -12,6 +13,7 @@
 namespace ENGINE_NS {
     namespace linalg {
         void load_vector_functions(const void* clibrary) {
+            ZoneScoped;
             auto& logger = engine::g_ENGINE->logger.get(engine::LogNamespaces::CORE);
             logger.info("Linking vector functions");
             HMODULE library               = static_cast<HMODULE>(const_cast<void*>(clibrary));
