@@ -2,10 +2,12 @@
 #include "engine/ecs/component.h"
 #include "engine/meta_defines.h"
 #include <string_view>
+#include <tracy/tracy.hpp>
 
 using namespace ::ENGINE_NS;
 
 auto ecs::QueryBuilder::select(std::string_view name) -> ecs::QueryBuilder& {
+    ZoneScoped;
     auto uid = this->component_register_.component_gid_by_name(name).value();
     this->query_.set(static_cast<underlying_type<decltype(uid)>>(uid));
     return *this;

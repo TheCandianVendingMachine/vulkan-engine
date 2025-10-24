@@ -4,10 +4,12 @@
 #include <engine/ecs/entity.h>
 #include <engine/ecs/system.h>
 #include <engine/engine.h>
-#include <engine/linalg/vector.h>
+#include <engine/linalg/matrix.h>
 #include <engine/reflection/type.h>
 #include <iostream>
 #include <robin_map.h>
+
+#include <tracy/Tracy.hpp>
 
 struct TestComponent : engine::ecs::Component {
         int value = 0;
@@ -80,7 +82,22 @@ class TestSystem : engine::ecs::System {
 int main() {
     auto engine = engine::Engine();
 
-    auto world  = EcsWorld{};
+    auto A      = linalg::Matrix4<float>::identity();
+    auto B      = linalg::Matrix4<float>::identity();
+
+    A.c1r1      = 5.f;
+    A.c2r4      = 2.f;
+    A.c1r2      = 5.f;
+
+    B.r3c2      = 2.f;
+    B.r1c1      = 0.f;
+    B.r1c3      = 2.f;
+
+    auto C      = A * B;
+
+    fmt::println("{}", C.r2c3);
+
+    auto world = EcsWorld{};
     world.register_component<TestComponent>();
     world.register_component<engine::ecs::predefined::UidComponent>();
 
@@ -89,10 +106,13 @@ int main() {
     TestSystem system{};
     system.initialise();
 
-    for (int i = 0; i < 500; i++) {
+    for (int i = 0; i < 500'000; i++) {
         auto query   = system.query(world.component_register);
         auto bundles = world.bundles_from_query(query);
         system.tick(bundles);
+        C = C * A;
+        C = B * C;
+        FrameMark;
     }
 
     system.deinitialise();

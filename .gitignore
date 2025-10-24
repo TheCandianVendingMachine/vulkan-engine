@@ -1,5 +1,6 @@
 targets/
 external/
+bin/
 .vscode
 DartConfiguration.tcl
 compile_commands.json

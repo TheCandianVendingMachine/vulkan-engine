@@ -1,6 +1,11 @@
-add_executable(game main.cpp)
+add_executable(game
+    main.cpp
+    ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
+
+)
 target_include_directories(game PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+    ${EXTERNAL_HEADER_DIR}/Tracy
 )
 target_compile_features(game PRIVATE cxx_std_23)
 if (MSVC)
@@ -23,4 +28,7 @@ else()
         -Werror
     )
 endif()
-target_link_libraries(game PRIVATE engine)
+target_link_libraries(game PRIVATE
+    engine
+    PUBLIC
+    Tracy::TracyClient)

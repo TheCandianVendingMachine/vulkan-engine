@@ -3,6 +3,7 @@
 #include "engine/ecs/query.h"
 #include "engine/meta_defines.h"
 #include "engine/pool.h"
+#include <Tracy/Tracy.hpp>
 #include <algorithm>
 #include <memory>
 #include <optional>
@@ -100,9 +101,11 @@ namespace ENGINE_NS {
                     return T::Meta::name;
                 }
                 virtual auto create(EntityUid assigned) -> void override final {
+                    ZoneScoped;
                     assignment_.insert({assigned, components_.allocate()});
                 }
                 virtual auto destroy(EntityUid component) -> void override final {
+                    ZoneScoped;
                     if (!assignment_.contains(component)) {
                         return;
                     }
@@ -110,6 +113,7 @@ namespace ENGINE_NS {
                     components_.free(borrow);
                 }
                 virtual auto fetch(const std::vector<EntityUid>& entities) const -> std::vector<const Component*> override final {
+                    ZoneScoped;
                     std::vector<const Component*> components;
                     for (auto& entity : entities) {
                         auto& borrow = assignment_.at(entity);
@@ -118,10 +122,12 @@ namespace ENGINE_NS {
                     return components;
                 }
                 virtual auto fetch(EntityUid entity) const -> const Component* override final {
+                    ZoneScoped;
                     return assignment_.at(entity).get().value();
                 }
 
                 virtual auto assign_bundles(std::vector<Bundle>& bundles) -> void override final {
+                    ZoneScoped;
                     for (auto& bundle : bundles) {
                         if (bundle.query_.query.get(static_cast<std::size_t>(this->gid_)) == 0) {
                             continue;

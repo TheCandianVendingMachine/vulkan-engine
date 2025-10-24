@@ -2,6 +2,7 @@
 #include "engine/linalg/linalg.h"
 #include "engine/linalg/matrix.h"
 #include "engine/linalg/vector.h"
+#include <Tracy/Tracy.hpp>
 #include <cstdlib>
 #include <cstring>
 
@@ -39,9 +40,11 @@ Engine& Engine::instance() {
 
 auto Engine::run() -> void {
     while (true) {
+        FrameMark;
     }
 }
 auto Engine::startup() -> void {
+    ZoneScoped;
     logger.get(LogNamespaces::CORE).info("Starting");
     linalg::load_library();
     linalg::load_vector_functions(linalg::g_VECTOR_LIBRARY->library);
@@ -52,6 +55,7 @@ auto Engine::startup() -> void {
 }
 
 auto Engine::shutdown() -> void {
+    ZoneScoped;
     logger.get(LogNamespaces::CORE).info("Shutdown");
     linalg::g_VECTOR_LIBRARY->~Library();
     m_running = false;

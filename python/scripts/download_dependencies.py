@@ -272,7 +272,7 @@ class Imgui(GitDependency, BuildSystem):
     def __init__(self):
         super().__init__(
             'https://github.com/ocornut/imgui.git',
-            '45acd5e0e82f4c954432533ae9985ff0e1aad6d5'
+            '9a5d5c45f54b1301ea471622eddede70384243af'
         )
 
     def ignore(self, directory: str, contents: Sequence[str]) -> Sequence[str]:
@@ -409,6 +409,29 @@ class Catch2(GitDependency, NoBuildSystem):
             '25319fd3047c6bdcf3c0170e76fa526c77f99ca9'
         )
 
+class Tracy(GitDependency, CMakePackage):
+    DEPENDENCY_NAME: str = 'Tracy'
+    def __init__(self):
+        CMakePackage.__init__(
+            self,
+            name=self.DEPENDENCY_NAME,
+            build_path=INSTALL_DIRECTORY / self.DEPENDENCY_NAME,
+            options={
+                'TRACY_ENABLE': True,
+                'TRACY_ON_DEMAND': True
+            }
+        )
+
+        GitDependency.__init__(
+            self,
+            'https://github.com/wolfpld/tracy.git',
+            'c556831ddc6fe26d2fce01c14c97205a9dad46d5'
+        )
+
+    def copy_headers(self):
+        with header_library(self.DEPENDENCY_NAME) as build_path:
+            shutil.copytree(self.install_path / 'public', build_path, dirs_exist_ok=True)
+
 DEPENDENCIES = {
     'stb': Stb(),
     'imgui': Imgui(),
@@ -419,6 +442,7 @@ DEPENDENCIES = {
     'SDL': SDL(),
     'robin-map': RobinMap(),
     'Catch2': Catch2(),
+    'Tracy': Tracy()
 }
 
 def main():

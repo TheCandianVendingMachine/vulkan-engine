@@ -2,12 +2,14 @@
 #include "engine/ecs/default.h"
 #include "engine/ecs/defines.h"
 #include "engine/meta_defines.h"
+#include <Tracy/tracy.hpp>
 #include <utility>
 
 ENGINE_NS::ecs::ComponentRegister::ComponentRegister() {
 }
 
 auto ENGINE_NS::ecs::ComponentRegister::register_component_by_name(std::string_view name) -> ComponentGid {
+    ZoneScoped;
     auto current_gid = counter_;
     register_.insert({std::string(name), current_gid});
     counter_ = ComponentGid(static_cast<underlying_type<ComponentGid>>(current_gid) + 1);
@@ -15,6 +17,7 @@ auto ENGINE_NS::ecs::ComponentRegister::register_component_by_name(std::string_v
 }
 
 auto ENGINE_NS::ecs::ComponentRegister::component_gid_by_name(std::string_view name) const -> std::optional<ComponentGid> {
+    ZoneScoped;
     if (!register_.contains(std::string(name))) {
         return std::nullopt;
     }
@@ -26,6 +29,7 @@ auto ENGINE_NS::ecs::ComponentRegister::query() const -> QueryBuilder {
 }
 
 auto ENGINE_NS::ecs::ComponentStoreInterface::fetch_mut(const std::vector<EntityUid>& entities) -> std::vector<Component*> {
+    ZoneScoped;
     auto components = fetch(entities);
     std::vector<Component*> mutable_components{};
     mutable_components.reserve(components.size());
@@ -36,6 +40,7 @@ auto ENGINE_NS::ecs::ComponentStoreInterface::fetch_mut(const std::vector<Entity
 }
 
 auto ENGINE_NS::ecs::ComponentStoreInterface::fetch_mut(EntityUid entity) -> Component* {
+    ZoneScoped;
     return const_cast<Component*>(fetch(entity));
 }
 

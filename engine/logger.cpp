@@ -1,4 +1,5 @@
 #include "engine/logger.h"
+#include <Tracy/Tracy.hpp>
 #include <cstdio>
 #include <ranges>
 

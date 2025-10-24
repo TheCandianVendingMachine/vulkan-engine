@@ -45,12 +45,16 @@ add_library(engine
     linalg/vector3_operations.cpp
     linalg/vector4_operations.cpp
     linalg/matrix.cpp
+    linalg/matrix2_operations.cpp
+    linalg/matrix3_operations.cpp
+    linalg/matrix4_operations.cpp
     ecs/default.cpp
     ecs/entity.cpp
     ecs/component.cpp
     ecs/system.cpp
     ecs/query.cpp
     reflection/type.cpp
+    ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
     ${HEADER_LIST}
 )
 target_compile_definitions(engine PRIVATE
@@ -65,6 +69,7 @@ target_include_directories(engine PUBLIC
     ${EXTERNAL_HEADER_DIR}/VulkanMemoryAllocator
     ${EXTERNAL_HEADER_DIR}/volk
     ${EXTERNAL_HEADER_DIR}/robin-map
+    ${EXTERNAL_HEADER_DIR}/Tracy
     ${EXTERNAL_DIR}/fastgltf/include
     ${EXTERNAL_DIR}/fmtlib/include
     ${EXTERNAL_DIR}/sdl/include
@@ -105,6 +110,8 @@ target_link_libraries(engine PRIVATE
     fmt::fmt
     volk::volk
     SDL3::SDL3
+    PUBLIC
+    Tracy::TracyClient
 )
 
 source_group(
