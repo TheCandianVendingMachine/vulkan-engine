@@ -8,12 +8,14 @@ using namespace linalg;
 */
 template <>
 auto linalg::operator+ <float>(const Vector2<float>& lhs, const Vector2<float>& rhs) -> Vector2<float> {
+    ZoneScoped;
     auto out = Vector2<float>::zero();
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(out.elements, 1.f, lhs.elements, rhs.elements);
     return out;
 }
 template <>
 auto linalg::operator+ <double>(const Vector2<double>& lhs, const Vector2<double>& rhs) -> Vector2<double> {
+    ZoneScoped;
     auto out = Vector2<double>::zero();
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(out.elements, 1.f, lhs.elements, rhs.elements);
     return out;
@@ -21,11 +23,13 @@ auto linalg::operator+ <double>(const Vector2<double>& lhs, const Vector2<double
 
 template <>
 auto linalg::operator+= <float>(Vector2<float>& lhs, const Vector2<float>& rhs) -> Vector2<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(lhs.elements, 1.f, lhs.elements, rhs.elements);
     return lhs;
 }
 template <>
 auto linalg::operator+= <double>(Vector2<double>& lhs, const Vector2<double>& rhs) -> Vector2<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(lhs.elements, 1.f, lhs.elements, rhs.elements);
     return lhs;
 }
@@ -35,12 +39,14 @@ auto linalg::operator+= <double>(Vector2<double>& lhs, const Vector2<double>& rh
 */
 template <>
 auto linalg::operator- <float>(const Vector2<float>& lhs, const Vector2<float>& rhs) -> Vector2<float> {
+    ZoneScoped;
     auto out = Vector2<float>::zero();
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(out.elements, -1.f, rhs.elements, lhs.elements);
     return out;
 }
 template <>
 auto linalg::operator- <double>(const Vector2<double>& lhs, const Vector2<double>& rhs) -> Vector2<double> {
+    ZoneScoped;
     auto out = Vector2<double>::zero();
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(out.elements, -1.f, rhs.elements, lhs.elements);
     return out;
@@ -48,11 +54,13 @@ auto linalg::operator- <double>(const Vector2<double>& lhs, const Vector2<double
 
 template <>
 auto linalg::operator-= <float>(Vector2<float>& lhs, const Vector2<float>& rhs) -> Vector2<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(lhs.elements, -1.f, rhs.elements, lhs.elements);
     return lhs;
 }
 template <>
 auto linalg::operator-= <double>(Vector2<double>& lhs, const Vector2<double>& rhs) -> Vector2<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(lhs.elements, -1.f, rhs.elements, lhs.elements);
     return lhs;
 }
@@ -62,12 +70,14 @@ auto linalg::operator-= <double>(Vector2<double>& lhs, const Vector2<double>& rh
 */
 template <>
 auto linalg::operator* <float>(const Vector2<float>& lhs, float rhs) -> Vector2<float> {
+    ZoneScoped;
     auto out = Vector2<float>::zero();
     ENGINE_NS::linalg::blas1::vector2::float32::scale(out.elements, rhs, lhs.elements);
     return out;
 }
 template <>
 auto linalg::operator* <double>(const Vector2<double>& lhs, double rhs) -> Vector2<double> {
+    ZoneScoped;
     auto out = Vector2<double>::zero();
     ENGINE_NS::linalg::blas1::vector2::float64::scale(out.elements, rhs, lhs.elements);
     return out;
@@ -75,23 +85,27 @@ auto linalg::operator* <double>(const Vector2<double>& lhs, double rhs) -> Vecto
 
 template <>
 auto linalg::operator*= <float>(Vector2<float>& lhs, float rhs) -> Vector2<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::scale(lhs.elements, rhs, lhs.elements);
     return lhs;
 }
 template <>
 auto linalg::operator*= <double>(Vector2<double>& lhs, double rhs) -> Vector2<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::scale(lhs.elements, rhs, lhs.elements);
     return lhs;
 }
 
 template <>
 auto linalg::operator* <float>(float lhs, const Vector2<float>& rhs) -> Vector2<float> {
+    ZoneScoped;
     auto out = Vector2<float>::zero();
     ENGINE_NS::linalg::blas1::vector2::float32::scale(out.elements, lhs, rhs.elements);
     return out;
 }
 template <>
 auto linalg::operator* <double>(double lhs, const Vector2<double>& rhs) -> Vector2<double> {
+    ZoneScoped;
     auto out = Vector2<double>::zero();
     ENGINE_NS::linalg::blas1::vector2::float64::scale(out.elements, lhs, rhs.elements);
     return out;
@@ -99,11 +113,13 @@ auto linalg::operator* <double>(double lhs, const Vector2<double>& rhs) -> Vecto
 
 template <>
 auto linalg::operator*= <float>(float lhs, Vector2<float>& rhs) -> Vector2<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::scale(rhs.elements, lhs, rhs.elements);
     return rhs;
 }
 template <>
 auto linalg::operator*= <double>(double lhs, Vector2<double>& rhs) -> Vector2<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::scale(rhs.elements, lhs, rhs.elements);
     return rhs;
 }
@@ -113,12 +129,14 @@ auto linalg::operator*= <double>(double lhs, Vector2<double>& rhs) -> Vector2<do
 */
 template <>
 auto linalg::operator/ <float>(const Vector2<float>& lhs, float rhs) -> Vector2<float> {
+    ZoneScoped;
     auto out = Vector2<float>::zero();
     ENGINE_NS::linalg::blas1::vector2::float32::scale(out.elements, 1.f / rhs, lhs.elements);
     return out;
 }
 template <>
 auto linalg::operator/ <double>(const Vector2<double>& lhs, double rhs) -> Vector2<double> {
+    ZoneScoped;
     auto out = Vector2<double>::zero();
     ENGINE_NS::linalg::blas1::vector2::float64::scale(out.elements, 1.f / rhs, lhs.elements);
     return out;
@@ -126,11 +144,13 @@ auto linalg::operator/ <double>(const Vector2<double>& lhs, double rhs) -> Vecto
 
 template <>
 auto linalg::operator/= <float>(Vector2<float>& lhs, float rhs) -> Vector2<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::scale(lhs.elements, 1.f / rhs, lhs.elements);
     return lhs;
 }
 template <>
 auto linalg::operator/= <double>(Vector2<double>& lhs, double rhs) -> Vector2<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::scale(lhs.elements, 1.f / rhs, lhs.elements);
     return lhs;
 }
@@ -140,10 +160,12 @@ auto linalg::operator/= <double>(Vector2<double>& lhs, double rhs) -> Vector2<do
 */
 template <>
 auto linalg::dot<float>(const Vector2<float>& lhs, const Vector2<float>& rhs) -> float {
+    ZoneScoped;
     return ENGINE_NS::linalg::blas1::vector2::float32::dot(lhs.elements, rhs.elements);
 }
 template <>
 auto linalg::dot<double>(const Vector2<double>& lhs, const Vector2<double>& rhs) -> double {
+    ZoneScoped;
     return ENGINE_NS::linalg::blas1::vector2::float64::dot(lhs.elements, rhs.elements);
 }
 
@@ -152,10 +174,12 @@ auto linalg::dot<double>(const Vector2<double>& lhs, const Vector2<double>& rhs)
 */
 template <>
 auto linalg::magnitude<float>(const Vector2<float>& a) -> float {
+    ZoneScoped;
     return ENGINE_NS::linalg::blas1::vector2::float32::magnitude(a.elements);
 }
 template <>
 auto linalg::magnitude<double>(const Vector2<double>& a) -> double {
+    ZoneScoped;
     return ENGINE_NS::linalg::blas1::vector2::float64::magnitude(a.elements);
 }
 
@@ -164,10 +188,12 @@ auto linalg::magnitude<double>(const Vector2<double>& a) -> double {
 */
 template <>
 auto linalg::magnitude_sqr<float>(const Vector2<float>& a) -> float {
+    ZoneScoped;
     return ENGINE_NS::linalg::blas1::vector2::float32::dot(a.elements, a.elements);
 }
 template <>
 auto linalg::magnitude_sqr<double>(const Vector2<double>& a) -> double {
+    ZoneScoped;
     return ENGINE_NS::linalg::blas1::vector2::float64::dot(a.elements, a.elements);
 }
 
@@ -176,6 +202,7 @@ auto linalg::magnitude_sqr<double>(const Vector2<double>& a) -> double {
 */
 template <>
 auto linalg::project<float>(const Vector2<float>& a, const Vector2<float>& b) -> Vector2<float> {
+    ZoneScoped;
     auto dot_top    = dot(a, b);
     auto dot_bottom = dot(b, b);
     if (dot_bottom == 0.f) {
@@ -185,6 +212,7 @@ auto linalg::project<float>(const Vector2<float>& a, const Vector2<float>& b) ->
 }
 template <>
 auto linalg::project<double>(const Vector2<double>& a, const Vector2<double>& b) -> Vector2<double> {
+    ZoneScoped;
     auto dot_top    = dot(a, b);
     auto dot_bottom = dot(b, b);
     if (dot_bottom == 0.f) {
@@ -198,6 +226,7 @@ auto linalg::project<double>(const Vector2<double>& a, const Vector2<double>& b)
 */
 template <>
 auto linalg::normalize<float>(const Vector2<float>& a) -> Vector2<float> {
+    ZoneScoped;
     auto magnitude = linalg::magnitude(a);
     if (magnitude > 0.f) {
         return a / magnitude;
@@ -206,6 +235,7 @@ auto linalg::normalize<float>(const Vector2<float>& a) -> Vector2<float> {
 }
 template <>
 auto linalg::normalize<double>(const Vector2<double>& a) -> Vector2<double> {
+    ZoneScoped;
     auto magnitude = linalg::magnitude(a);
     if (magnitude > 0.0) {
         return a / magnitude;
@@ -215,6 +245,7 @@ auto linalg::normalize<double>(const Vector2<double>& a) -> Vector2<double> {
 
 template <>
 auto linalg::normalize_inplace<float>(Vector2<float>& a) -> Vector2<float>& {
+    ZoneScoped;
     auto magnitude = linalg::magnitude(a);
     if (magnitude > 0.f) {
         a /= magnitude;
@@ -223,6 +254,7 @@ auto linalg::normalize_inplace<float>(Vector2<float>& a) -> Vector2<float>& {
 }
 template <>
 auto linalg::normalize_inplace<double>(Vector2<double>& a) -> Vector2<double>& {
+    ZoneScoped;
     auto magnitude = linalg::magnitude(a);
     if (magnitude > 0.0) {
         a /= magnitude;

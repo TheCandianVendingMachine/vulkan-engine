@@ -1,6 +1,7 @@
 #include "engine/linalg/matrix.h"
 #include "engine/linalg/vector.h"
 #include "engine/meta_defines.h"
+#include <Tracy/Tracy.hpp>
 
 using namespace linalg;
 
@@ -9,6 +10,7 @@ using namespace linalg;
 */
 template <>
 auto linalg::operator+ <float>(const Matrix3<float>& A, const Matrix3<float>& B) -> Matrix3<float> {
+    ZoneScoped;
     auto row1 = Vector3<float>::zero();
     auto row2 = Vector3<float>::zero();
     auto row3 = Vector3<float>::zero();
@@ -22,6 +24,7 @@ auto linalg::operator+ <float>(const Matrix3<float>& A, const Matrix3<float>& B)
 }
 template <>
 auto linalg::operator+ <double>(const Matrix3<double>& A, const Matrix3<double>& B) -> Matrix3<double> {
+    ZoneScoped;
     auto row1 = Vector3<double>::zero();
     auto row2 = Vector3<double>::zero();
     auto row3 = Vector3<double>::zero();
@@ -36,6 +39,7 @@ auto linalg::operator+ <double>(const Matrix3<double>& A, const Matrix3<double>&
 
 template <>
 auto linalg::operator+= <float>(Matrix3<float>& A, const Matrix3<float>& B) -> Matrix3<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r1c1, 1.f, &A.r1c1, &B.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r2c1, 1.f, &A.r2c1, &B.r2c1);
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r3c1, 1.f, &A.r3c1, &B.r3c1);
@@ -44,6 +48,7 @@ auto linalg::operator+= <float>(Matrix3<float>& A, const Matrix3<float>& B) -> M
 }
 template <>
 auto linalg::operator+= <double>(Matrix3<double>& A, const Matrix3<double>& B) -> Matrix3<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r1c1, 1.f, &A.r1c1, &B.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r2c1, 1.f, &A.r2c1, &B.r2c1);
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r3c1, 1.f, &A.r3c1, &B.r3c1);
@@ -56,6 +61,7 @@ auto linalg::operator+= <double>(Matrix3<double>& A, const Matrix3<double>& B) -
 */
 template <>
 auto linalg::operator- <float>(const Matrix3<float>& A, const Matrix3<float>& B) -> Matrix3<float> {
+    ZoneScoped;
     auto row1 = Vector3<float>::zero();
     auto row2 = Vector3<float>::zero();
     auto row3 = Vector3<float>::zero();
@@ -69,6 +75,7 @@ auto linalg::operator- <float>(const Matrix3<float>& A, const Matrix3<float>& B)
 }
 template <>
 auto linalg::operator- <double>(const Matrix3<double>& A, const Matrix3<double>& B) -> Matrix3<double> {
+    ZoneScoped;
     auto row1 = Vector3<double>::zero();
     auto row2 = Vector3<double>::zero();
     auto row3 = Vector3<double>::zero();
@@ -83,6 +90,7 @@ auto linalg::operator- <double>(const Matrix3<double>& A, const Matrix3<double>&
 
 template <>
 auto linalg::operator-= <float>(Matrix3<float>& A, const Matrix3<float>& B) -> Matrix3<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r1c1, -1.f, &B.r1c1, &A.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r2c1, -1.f, &B.r2c1, &A.r2c1);
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r3c1, -1.f, &B.r3c1, &A.r3c1);
@@ -91,6 +99,7 @@ auto linalg::operator-= <float>(Matrix3<float>& A, const Matrix3<float>& B) -> M
 }
 template <>
 auto linalg::operator-= <double>(Matrix3<double>& A, const Matrix3<double>& B) -> Matrix3<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r1c1, -1.f, &B.r1c1, &A.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r2c1, -1.f, &B.r2c1, &A.r2c1);
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r3c1, -1.f, &B.r3c1, &A.r3c1);
@@ -103,6 +112,7 @@ auto linalg::operator-= <double>(Matrix3<double>& A, const Matrix3<double>& B) -
 */
 template <>
 auto linalg::operator* <float>(const Matrix3<float>& A, const Matrix3<float>& B) -> Matrix3<float> {
+    ZoneScoped;
     auto col1 = Vector3<float>(B.c1r1, B.c1r2, B.c1r3);
     auto col2 = Vector3<float>(B.c2r1, B.c2r2, B.c2r3);
     auto col3 = Vector3<float>(B.c3r1, B.c3r2, B.c3r3);
@@ -125,6 +135,7 @@ auto linalg::operator* <float>(const Matrix3<float>& A, const Matrix3<float>& B)
 }
 template <>
 auto linalg::operator* <double>(const Matrix3<double>& A, const Matrix3<double>& B) -> Matrix3<double> {
+    ZoneScoped;
     auto col1 = Vector3<double>(B.c1r1, B.c1r2, B.c1r3);
     auto col2 = Vector3<double>(B.c2r1, B.c2r2, B.c2r3);
     auto col3 = Vector3<double>(B.c3r1, B.c3r2, B.c3r3);
@@ -148,11 +159,13 @@ auto linalg::operator* <double>(const Matrix3<double>& A, const Matrix3<double>&
 
 template <>
 auto linalg::operator*= <float>(Matrix3<float>& A, const Matrix3<float>& B) -> Matrix3<float>& {
+    ZoneScoped;
     A = A * B;
     return A;
 }
 template <>
 auto linalg::operator*= <double>(Matrix3<double>& A, const Matrix3<double>& B) -> Matrix3<double>& {
+    ZoneScoped;
     A = A * B;
     return A;
 }
@@ -162,6 +175,7 @@ auto linalg::operator*= <double>(Matrix3<double>& A, const Matrix3<double>& B) -
 */
 template <>
 auto linalg::operator* <float>(const Matrix3<float>& A, const Vector3<float>& x) -> Vector3<float> {
+    ZoneScoped;
     auto out = Vector3<float>::zero();
     ENGINE_NS::linalg::blas2::matrix2::float32::matrix_vector_product(out.elements, const_cast<float*>(A.elements), x.elements);
     return out;
@@ -178,6 +192,7 @@ auto linalg::operator* <double>(const Matrix3<double>& A, const Vector3<double>&
 */
 template <>
 auto linalg::operator/ <float>(const Matrix3<float>& A, const Vector3<float>& x) -> Vector3<float> {
+    ZoneScoped;
     auto out = Vector3<float>::zero();
     ENGINE_NS::linalg::blas2::matrix2::float32::solve(const_cast<float*>(out.elements), const_cast<float*>(A.elements),
                                                       const_cast<float*>(x.elements));
@@ -185,6 +200,7 @@ auto linalg::operator/ <float>(const Matrix3<float>& A, const Vector3<float>& x)
 }
 template <>
 auto linalg::operator/ <double>(const Matrix3<double>& A, const Vector3<double>& x) -> Vector3<double> {
+    ZoneScoped;
     auto out = Vector3<double>::zero();
     ENGINE_NS::linalg::blas2::matrix2::float64::solve(const_cast<double*>(out.elements), const_cast<double*>(A.elements),
                                                       const_cast<double*>(x.elements));

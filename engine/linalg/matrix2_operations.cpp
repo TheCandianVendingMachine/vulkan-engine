@@ -1,6 +1,7 @@
 #include "engine/linalg/matrix.h"
 #include "engine/linalg/vector.h"
 #include "engine/meta_defines.h"
+#include <Tracy/Tracy.hpp>
 
 using namespace linalg;
 
@@ -9,6 +10,7 @@ using namespace linalg;
 */
 template <>
 auto linalg::operator+ <float>(const Matrix2<float>& A, const Matrix2<float>& B) -> Matrix2<float> {
+    ZoneScoped;
     auto row1 = Vector2<float>::zero();
     auto row2 = Vector2<float>::zero();
 
@@ -19,6 +21,7 @@ auto linalg::operator+ <float>(const Matrix2<float>& A, const Matrix2<float>& B)
 }
 template <>
 auto linalg::operator+ <double>(const Matrix2<double>& A, const Matrix2<double>& B) -> Matrix2<double> {
+    ZoneScoped;
     auto row1 = Vector2<double>::zero();
     auto row2 = Vector2<double>::zero();
 
@@ -30,6 +33,7 @@ auto linalg::operator+ <double>(const Matrix2<double>& A, const Matrix2<double>&
 
 template <>
 auto linalg::operator+= <float>(Matrix2<float>& A, const Matrix2<float>& B) -> Matrix2<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r1c1, 1.f, &A.r1c1, &B.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r2c1, 1.f, &A.r2c1, &B.r2c1);
 
@@ -37,6 +41,7 @@ auto linalg::operator+= <float>(Matrix2<float>& A, const Matrix2<float>& B) -> M
 }
 template <>
 auto linalg::operator+= <double>(Matrix2<double>& A, const Matrix2<double>& B) -> Matrix2<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r1c1, 1.f, &A.r1c1, &B.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r2c1, 1.f, &A.r2c1, &B.r2c1);
 
@@ -48,6 +53,7 @@ auto linalg::operator+= <double>(Matrix2<double>& A, const Matrix2<double>& B) -
 */
 template <>
 auto linalg::operator- <float>(const Matrix2<float>& A, const Matrix2<float>& B) -> Matrix2<float> {
+    ZoneScoped;
     auto row1 = Vector2<float>::zero();
     auto row2 = Vector2<float>::zero();
 
@@ -58,6 +64,7 @@ auto linalg::operator- <float>(const Matrix2<float>& A, const Matrix2<float>& B)
 }
 template <>
 auto linalg::operator- <double>(const Matrix2<double>& A, const Matrix2<double>& B) -> Matrix2<double> {
+    ZoneScoped;
     auto row1 = Vector2<double>::zero();
     auto row2 = Vector2<double>::zero();
 
@@ -69,6 +76,7 @@ auto linalg::operator- <double>(const Matrix2<double>& A, const Matrix2<double>&
 
 template <>
 auto linalg::operator-= <float>(Matrix2<float>& A, const Matrix2<float>& B) -> Matrix2<float>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r1c1, -1.f, &B.r1c1, &A.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float32::axpy(&A.r2c1, -1.f, &B.r2c1, &A.r2c1);
 
@@ -76,6 +84,7 @@ auto linalg::operator-= <float>(Matrix2<float>& A, const Matrix2<float>& B) -> M
 }
 template <>
 auto linalg::operator-= <double>(Matrix2<double>& A, const Matrix2<double>& B) -> Matrix2<double>& {
+    ZoneScoped;
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r1c1, -1.f, &B.r1c1, &A.r1c1);
     ENGINE_NS::linalg::blas1::vector2::float64::axpy(&A.r2c1, -1.f, &B.r2c1, &A.r2c1);
 
@@ -87,6 +96,7 @@ auto linalg::operator-= <double>(Matrix2<double>& A, const Matrix2<double>& B) -
 */
 template <>
 auto linalg::operator* <float>(const Matrix2<float>& A, const Matrix2<float>& B) -> Matrix2<float> {
+    ZoneScoped;
     auto col1 = Vector2<float>(B.c1r1, B.c1r2);
     auto col2 = Vector2<float>(B.c2r1, B.c2r2);
 
@@ -100,6 +110,7 @@ auto linalg::operator* <float>(const Matrix2<float>& A, const Matrix2<float>& B)
 }
 template <>
 auto linalg::operator* <double>(const Matrix2<double>& A, const Matrix2<double>& B) -> Matrix2<double> {
+    ZoneScoped;
     auto col1 = Vector2<double>(B.c1r1, B.c1r2);
     auto col2 = Vector2<double>(B.c2r1, B.c2r2);
 
@@ -114,11 +125,13 @@ auto linalg::operator* <double>(const Matrix2<double>& A, const Matrix2<double>&
 
 template <>
 auto linalg::operator*= <float>(Matrix2<float>& A, const Matrix2<float>& B) -> Matrix2<float>& {
+    ZoneScoped;
     A = A * B;
     return A;
 }
 template <>
 auto linalg::operator*= <double>(Matrix2<double>& A, const Matrix2<double>& B) -> Matrix2<double>& {
+    ZoneScoped;
     A = A * B;
     return A;
 }
@@ -128,12 +141,14 @@ auto linalg::operator*= <double>(Matrix2<double>& A, const Matrix2<double>& B) -
 */
 template <>
 auto linalg::operator* <float>(const Matrix2<float>& A, const Vector2<float>& x) -> Vector2<float> {
+    ZoneScoped;
     auto out = Vector2<float>::zero();
     ENGINE_NS::linalg::blas2::matrix2::float32::matrix_vector_product(out.elements, const_cast<float*>(A.elements), x.elements);
     return out;
 }
 template <>
 auto linalg::operator* <double>(const Matrix2<double>& A, const Vector2<double>& x) -> Vector2<double> {
+    ZoneScoped;
     auto out = Vector2<double>::zero();
     ENGINE_NS::linalg::blas2::matrix2::float64::matrix_vector_product(out.elements, const_cast<double*>(A.elements), x.elements);
     return out;
@@ -144,6 +159,7 @@ auto linalg::operator* <double>(const Matrix2<double>& A, const Vector2<double>&
 */
 template <>
 auto linalg::operator/ <float>(const Matrix2<float>& A, const Vector2<float>& x) -> Vector2<float> {
+    ZoneScoped;
     auto out = Vector2<float>::zero();
     ENGINE_NS::linalg::blas2::matrix2::float32::solve(const_cast<float*>(out.elements), const_cast<float*>(A.elements),
                                                       const_cast<float*>(x.elements));
@@ -151,6 +167,7 @@ auto linalg::operator/ <float>(const Matrix2<float>& A, const Vector2<float>& x)
 }
 template <>
 auto linalg::operator/ <double>(const Matrix2<double>& A, const Vector2<double>& x) -> Vector2<double> {
+    ZoneScoped;
     auto out = Vector2<double>::zero();
     ENGINE_NS::linalg::blas2::matrix2::float64::solve(const_cast<double*>(out.elements), const_cast<double*>(A.elements),
                                                       const_cast<double*>(x.elements));

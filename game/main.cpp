@@ -60,22 +60,16 @@ class TestSystem : engine::ecs::System {
         }
 
         virtual auto initialise() -> void {
-            fmt::println("Init");
         }
         virtual auto deinitialise() -> void {
-            fmt::println("Deinit");
         }
         virtual auto tick(std::vector<engine::ecs::Bundle>& bundles) -> void {
-            fmt::println("Tick");
             for (auto& bundle : bundles) {
                 auto uid_component  = bundle.component<engine::ecs::predefined::UidComponent>();
                 auto test_component = bundle.component<TestComponent>();
-                fmt::println("Entity {}, Id {}, Test {}", static_cast<std::size_t>(bundle.entity),
-                             static_cast<std::size_t>(uid_component.id_), test_component.value);
             }
         }
-        virtual auto fixed_tick(double dt, std::vector<engine::ecs::Bundle>&) -> void {
-            fmt::println("Fixed Tick ({:.2f})", dt);
+        virtual auto fixed_tick(double, std::vector<engine::ecs::Bundle>&) -> void {
         }
 };
 
