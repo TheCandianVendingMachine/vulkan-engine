@@ -24,28 +24,169 @@ namespace linalg {
         auto v_A3t = _mm_shuffle_ps(temp1, temp3, 0b1101'1101);
         auto v_A4t = _mm_shuffle_ps(temp2, temp4, 0b1101'1101);
 
-        auto v_mx0 = _mm_undefined_ps();
-        auto v_mx1 = _mm_undefined_ps();
-        auto v_mx2 = _mm_undefined_ps();
-        auto v_mx3 = _mm_undefined_ps();
+        auto v_c0  = _mm_undefined_ps();
+        auto v_c1  = _mm_undefined_ps();
+        auto v_c2  = _mm_undefined_ps();
+        auto v_c3  = _mm_undefined_ps();
 
-        auto v_m0x = _mm_undefined_ps();
-        auto v_m1x = _mm_undefined_ps();
-        auto v_m2x = _mm_undefined_ps();
-        auto v_m3x = _mm_undefined_ps();
+        auto v_r0  = _mm_undefined_ps();
+        auto v_r1  = _mm_undefined_ps();
+        auto v_r2  = _mm_undefined_ps();
+        auto v_r3  = _mm_undefined_ps();
 
-        // begin
+        /*
+        // Crout matrix decomposition without pivoting
+        // Unrolled loop with commented annotations, very long
+        auto LU           = Matrix4<float>::identity();
+        Matrix4<float>& L = LU;
+        Matrix4<float>& U = LU;
 
-        // U[i, j] = A[i, j]
-        // U[i, j] = U[i, j] - dot(L[i, <>], U[<>, j])
-        // L[j, i] = A[j, i]
-        // L[j, i] = L[j, i] - dot(L[j, <>], U[<>, i])
-        // L[j, i] = L[j, i] / U[i, i]
+        {
+            // j = 0; j < 4
+            {
+                // i = 0; i < 4
+                {
+                    // k = 0; k < 0
+                    L.r0c0 = A.r0c0;
+                }
+                // i = 1; i < 4
+                {
+                    // k = 0; k < 0
+                    L.r1c0 = A.r1c0;
+                }
+                // i = 2; i < 4
+                {
+                    // k = 0; k < 0
+                    L.r2c0 = A.r2c0;
+                }
+                // i = 3; i < 4
+                {
+                    // k = 0; k < 0
+                    L.r3c0 = A.r3c0;
+                }
+            }
 
-        // i = 0
-        // j = 0
+            {
+                // i = 1; i < 4
+                {
+                    // k = 0; k < 0
+                    U.r0c1 = A.r0c1 / L.r0c0;
+                }
+                // i = 2; i < 4
+                {
+                    // k = 0; k < 0
+                    U.r0c2 = A.r0c2 / L.r0c0;
+                }
+                // i = 3; i < 4
+                {
+                    // k = 0; k < 0
+                    U.r0c3 = A.r0c3 / L.r0c0;
+                }
+            }
+        }
+        {
+            // j = 1; j < 4
+            {
+                // i = 1; i < 4
+                {
+                    // k = 0; k < 1
+                    L.r1c1 = A.r1c1 - L.r1c0 * U.r0c1;
+                }
+                // i = 2; i < 4
+                {
+                    // k = 0; k < 1
+                    L.r2c1 = A.r2c1 - L.r2c0 * U.r0c1;
+                }
+                // i = 3; i < 4
+                {
+                    // k = 0; k < 1
+                    L.r3c1 = A.r3c1 - L.r3c0 * U.r0c1;
+                }
+            }
 
-        // end
+            {
+                // i = 2; i < 4
+                {
+                    // k = 0; k < 1
+                    U.r1c2 = (A.r1c2 - L.r1c0 * U.r0c2) / L.r1c1;
+                }
+                // i = 3; i < 4
+                {
+                    // k = 0; k < 1
+                    U.r1c3 = (A.r1c3 - L.r1c0 * U.r0c3) / L.r1c1;
+                }
+            }
+        }
+        {
+            // j = 2; j < 4
+            {
+                // i = 2; i < 4
+                {
+                    float sum = 0.f;
+                    {
+                        // k = 0; k < 2
+                        sum += L.r2c0 * U.r0c2;
+                    }
+                    {
+                        // k = 1; k < 2
+                        sum += L.r2c1 * U.r1c2;
+                    }
+                    L.r2c2 = A.r2c2 - sum;
+                }
+                // i = 3; i < 4
+                {
+                    float sum = 0.f;
+                    {
+                        // k = 0; k < 2
+                        sum += L.r3c0 * U.r0c2;
+                    }
+                    {
+                        // k = 1; k < 2
+                        sum += L.r3c1 * U.r1c2;
+                    }
+                    L.r3c2 = A.r3c2 - sum;
+                }
+            }
+
+            {
+                // i = 3; i < 4
+                {
+                    float sum = 0.f;
+                    {
+                        // k = 0; k < 2
+                        sum += L.r2c0 * U.r0c3;
+                    }
+                    {
+                        // k = 1; k < 2
+                        sum += L.r2c1 * U.r1c3;
+                    }
+                    U.r2c3 = (A.r2c3 - sum) / L.r2c2;
+                }
+            }
+        }
+        {
+            // j = 3; j < 4
+            {
+                // i = 3; i < 4
+                {
+                    float sum = 0.f;
+                    {
+                        // k = 0; k < 3
+                        sum += L.r3c0 * U.r0c3;
+                    }
+                    {
+                        // k = 1; k < 3
+                        sum += L.r3c1 * U.r1c3;
+                    }
+                    {
+                        // k = 2; k < 3
+                        sum += L.r3c2 * U.r2c3;
+                    }
+                    L.r3c3 = A.r3c3 - sum;
+                }
+            }
+        }
+        */
 
         float row1[4];
         float row2[4];

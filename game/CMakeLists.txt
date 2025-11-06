@@ -1,6 +1,16 @@
+set(GAME_HEADER_PATH
+    "${PROJECT_SOURCE_DIR}/include/game"
+)
+set(HEADER_LIST
+    "${GAME_HEADER_PATH}/game.h"
+    "${GAME_HEADER_PATH}/world.h"
+)
+
 add_executable(game
     main.cpp
+    world.cpp
     ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
+    ${HEADER_LIST}
 
 )
 target_include_directories(game PUBLIC

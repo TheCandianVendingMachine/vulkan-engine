@@ -13,14 +13,18 @@
 
 #define DESIRED_PRECISION (1e-20)
 
-constexpr auto range() -> Range<double> { return Range<double>{-250000.0, 250000.f}; }
+using namespace ::engine;
+
+constexpr auto range() -> Range<double> {
+    return Range<double>{-250000.0, 250000.f};
+}
 
 auto random_vector(Random& rng) -> linalg::Vector4<double> {
     return linalg::Vector4<double>{
-        rng.range(range()),
-        rng.range(range()),
-        rng.range(range()),
-        rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
     };
 }
 
@@ -28,7 +32,7 @@ TEST_CASE("blas1::axpy [Vector4<double>]", "[blas1][Vector4]") {
     SECTION("Single") {
         linalg::Vector4<double> x(1.0, 2.0, 6.0, 8.0);
         linalg::Vector4<double> y(3.0, 4.0, 5.0, 7.0);
-        double a = 2.0;
+        double a                       = 2.0;
 
         linalg::Vector4<double> result = linalg::blas1::axpy(a, x, y);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(5.0, DESIRED_PRECISION));
@@ -61,7 +65,7 @@ TEST_CASE("blas1::axpy [Vector4<double>]", "[blas1][Vector4]") {
 TEST_CASE("blas1::scale [Vector4<double>]", "[blas1][Vector4]") {
     SECTION("Single") {
         linalg::Vector4<double> x(1.0, 2.0, 6.0, 8.0);
-        double a = 2.0;
+        double a                       = 2.0;
 
         linalg::Vector4<double> result = linalg::blas1::scale(a, x);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(2.0, DESIRED_PRECISION));
@@ -274,7 +278,7 @@ TEST_CASE("blas1::component_max [Vector4<double>]", "[blas1][Vector4]") {
         }
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
-            double result = linalg::blas1::component_max(x[idx]);
+            double result   = linalg::blas1::component_max(x[idx]);
 
             double largest1 = std::max(std::abs(x[idx].x), std::abs(x[idx].y));
             double largest2 = std::max(std::abs(x[idx].y), std::abs(x[idx].z));

@@ -13,6 +13,8 @@
 
 #define DESIRED_PRECISION (1e-10f)
 
+using namespace ::engine;
+
 constexpr auto range() -> Range<float> {
     return Range<float>{-250000.f, 250000.f};
 }

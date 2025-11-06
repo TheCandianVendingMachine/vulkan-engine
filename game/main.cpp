@@ -11,49 +11,12 @@
 
 #include <tracy/Tracy.hpp>
 
+#include "game/world.h"
+
 struct TestComponent : engine::ecs::Component {
         int value = 0;
         REFLECT_START(TestComponent)
         REFLECT_MEMBER(value), REFLECT_END;
-};
-
-class EcsWorld {
-    public:
-        template <typename T>
-        auto register_component() -> void {
-            ZoneScoped;
-            auto gid = register_.register_component<T>();
-            stores_.insert({gid, std::make_unique<engine::ecs::ComponentStore<T>>(register_)});
-        }
-
-        auto create_entity(const engine::ecs::Query& query) -> engine::ecs::EntityUid {
-            ZoneScoped;
-            auto allocation = entities_.create(query);
-            for (auto idx : allocation.map.assigned_components.set_bits()) {
-                auto gid = engine::ecs::ComponentGid(idx);
-                stores_.at(gid)->create(allocation.entity);
-            }
-            return allocation.entity;
-        }
-
-        auto bundles_from_query(engine::ecs::Query& query) -> std::vector<engine::ecs::Bundle> {
-            ZoneScoped;
-            auto bundles = entities_.bundles_from_query(query);
-            for (auto& [gid, store] : stores_) {
-                if (query.query.get(static_cast<std::size_t>(gid)) == 0) {
-                    continue;
-                }
-                store->assign_bundles(bundles);
-            }
-            return bundles;
-        }
-
-        const engine::ecs::ComponentRegister& component_register = register_;
-
-    private:
-        engine::ecs::EntityStore entities_;
-        engine::ecs::ComponentRegister register_;
-        tsl::robin_map<engine::ecs::ComponentGid, std::unique_ptr<engine::ecs::ComponentStoreInterface>> stores_{};
 };
 
 class TestSystem : engine::ecs::System {
@@ -77,7 +40,7 @@ class TestSystem : engine::ecs::System {
 };
 
 int main() {
-    for (int i = 0; i < 400'000'000; i++) {
+    for (volatile unsigned long long i = 0; i < 6'000'000'000; i++) {
     }
     auto engine = engine::Engine();
 

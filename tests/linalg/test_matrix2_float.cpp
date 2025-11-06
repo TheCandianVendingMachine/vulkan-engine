@@ -14,9 +14,15 @@
 
 #define DESIRED_PRECISION (1e-10)
 
-constexpr auto range() -> Range<float> { return Range<float>{-250000.f, 250000.f}; }
+using namespace ::engine;
 
-auto random_vector(Random& rng) -> linalg::Vector2<float> { return linalg::Vector2<float>{rng.range(range()), rng.range(range())}; }
+constexpr auto range() -> Range<float> {
+    return Range<float>{-250000.f, 250000.f};
+}
+
+auto random_vector(Random& rng) -> linalg::Vector2<float> {
+    return linalg::Vector2<float>{rng.range(range()), rng.range(range())};
+}
 
 auto random_matrix(Random& rng) -> linalg::Matrix2<float> {
     return linalg::Matrix2<float>{rng.range(range()), rng.range(range()), rng.range(range()), rng.range(range())};
@@ -25,10 +31,10 @@ auto random_matrix(Random& rng) -> linalg::Matrix2<float> {
 TEST_CASE("Matrix2LU::lower [Matrix2<float>]", "[Matrix2]") {
     SECTION("non-unit") {
         linalg::Matrix2LU<float> lu({
-            1.f,
-            2.f,
-            3.f,
-            4.f,
+          1.f,
+          2.f,
+          3.f,
+          4.f,
         });
 
         CHECK_THAT(lu.lower().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION));
@@ -40,10 +46,10 @@ TEST_CASE("Matrix2LU::lower [Matrix2<float>]", "[Matrix2]") {
 
     SECTION("unit") {
         linalg::Matrix2LU<float> lu({
-            1.f,
-            2.f,
-            3.f,
-            4.f,
+          1.f,
+          2.f,
+          3.f,
+          4.f,
         });
 
         CHECK_THAT(lu.lower_unit().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION));
@@ -57,10 +63,10 @@ TEST_CASE("Matrix2LU::lower [Matrix2<float>]", "[Matrix2]") {
 TEST_CASE("Matrix2LU::upper [Matrix2<float>]", "[Matrix2]") {
     SECTION("non-unit") {
         linalg::Matrix2LU<float> lu({
-            1.f,
-            2.f,
-            3.f,
-            4.f,
+          1.f,
+          2.f,
+          3.f,
+          4.f,
         });
 
         CHECK_THAT(lu.upper().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION));
@@ -72,10 +78,10 @@ TEST_CASE("Matrix2LU::upper [Matrix2<float>]", "[Matrix2]") {
 
     SECTION("unit") {
         linalg::Matrix2LU<float> lu({
-            1.f,
-            2.f,
-            3.f,
-            4.f,
+          1.f,
+          2.f,
+          3.f,
+          4.f,
         });
 
         CHECK_THAT(lu.upper_unit().r1c1, Catch::Matchers::WithinAbs(1.f, DESIRED_PRECISION));

@@ -13,13 +13,17 @@
 
 #define DESIRED_PRECISION (1e-10)
 
-constexpr auto range() -> Range<double> { return Range<double>{-250000.f, 250000.f}; }
+using namespace ::engine;
+
+constexpr auto range() -> Range<double> {
+    return Range<double>{-250000.f, 250000.f};
+}
 
 TEST_CASE("blas1::axpy [Vector2<double>]", "[blas1][Vector2]") {
     SECTION("Single") {
         linalg::Vector2<double> x(1.0, 2.0);
         linalg::Vector2<double> y(3.0, 4.0);
-        double a = 2.0;
+        double a                       = 2.0;
 
         linalg::Vector2<double> result = linalg::blas1::axpy(a, x, y);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(5.0, DESIRED_PRECISION));
@@ -48,7 +52,7 @@ TEST_CASE("blas1::axpy [Vector2<double>]", "[blas1][Vector2]") {
 TEST_CASE("blas1::scale [Vector2<double>]", "[blas1][Vector2]") {
     SECTION("Single") {
         linalg::Vector2<double> x(1.0, 2.0);
-        double a = 2.0;
+        double a                       = 2.0;
 
         linalg::Vector2<double> result = linalg::blas1::scale(a, x);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(2.0, DESIRED_PRECISION));
