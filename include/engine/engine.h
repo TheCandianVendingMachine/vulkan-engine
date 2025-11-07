@@ -1,12 +1,13 @@
 #pragma once
+#include "engine/graphics/graphics.h"
 #include "engine/logger.h"
 #include "engine/meta_defines.h"
-#include <memory>
 #include <robin_map.h>
 
 namespace ENGINE_NS {
     enum class LogNamespaces {
-        CORE
+        CORE,
+        GRAPHICS
     };
 
     class LogLocator {
@@ -28,16 +29,18 @@ namespace ENGINE_NS {
 
             ENGINE_API auto run() -> void;
 
-            LogLocator& logger = m_logger;
+            LogLocator& logger = logger_;
 
         private:
             ENGINE_API auto startup() -> void;
             ENGINE_API auto shutdown() -> void;
 
         private:
-            bool m_running = false;
+            bool running_              = false;
+            std::uint64_t frame_count_ = 0;
 
-            LogLocator m_logger;
+            LogLocator logger_;
+            ENGINE_NS::GraphicsEngine graphics_;
     };
 
     extern Engine* g_ENGINE;

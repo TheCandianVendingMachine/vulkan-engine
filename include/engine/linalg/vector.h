@@ -1,12 +1,12 @@
 #pragma once
 #include "engine/meta_defines.h"
-#include "linalg/vector.h"
+#include <linalg/vector.h>
 
 // Vector2
 namespace linalg {
     // Addition
     template <typename T>
-    auto operator+(const Vector2<T>& lhs, const Vector2<T>& rhs) -> Vector2<T> = delete;
+    auto operator+(const Vector2<T>& lhs, const Vector2<T>& rhs) -> Vector2<T>;
     template <>
     auto operator+ <float>(const Vector2<float>& lhs, const Vector2<float>& rhs) -> Vector2<float>;
     template <>

@@ -28,5 +28,8 @@ static constexpr const char* g_ERROR_CODE_STR[static_cast<size_t>(ErrorCode::COU
                                                                                         "Failed to load linear algebra functions"};
 
 namespace StaticNames {
-    static constexpr const char* EngineLoop = "Engine loop";
-}
+    static constexpr const char* EngineLoop     = "Engine loop";
+    static constexpr const char* GraphicsInit   = "Graphics Init";
+    static constexpr const char* GraphicsDeinit = "Graphics Deinit";
+    static constexpr const char* GraphicsDraw   = "Graphics Draw";
+} // namespace StaticNames

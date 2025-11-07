@@ -10,7 +10,8 @@ using namespace ::ENGINE_NS;
 
 LogLocator::LogLocator() {
     m_loggers = {
-      {LogNamespaces::CORE, LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build()}
+      {LogNamespaces::CORE,     LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build()  },
+      {LogNamespaces::GRAPHICS, LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build()}
     };
 }
 
@@ -29,7 +30,7 @@ Engine::Engine() {
 }
 
 Engine::~Engine() {
-    if (m_running) {
+    if (running_) {
         shutdown();
     }
 }
@@ -40,7 +41,11 @@ Engine& Engine::instance() {
 
 auto Engine::run() -> void {
     while (true) {
+        ++frame_count_;
         FrameMarkStart(StaticNames::EngineLoop);
+
+        graphics_.draw();
+
         FrameMarkEnd(StaticNames::EngineLoop);
         FrameMark;
     }
@@ -48,19 +53,24 @@ auto Engine::run() -> void {
 auto Engine::startup() -> void {
     ZoneScoped;
     logger.get(LogNamespaces::CORE).info("Starting");
+
     linalg::load_library();
     linalg::load_vector_functions(linalg::g_VECTOR_LIBRARY->library);
     linalg::load_matrix_functions(linalg::g_VECTOR_LIBRARY->library);
 
+    graphics_.initialise();
 
-    m_running = true;
+    running_ = true;
 }
 
 auto Engine::shutdown() -> void {
     ZoneScoped;
     logger.get(LogNamespaces::CORE).info("Shutdown");
+
+    graphics_.cleanup();
+
     linalg::g_VECTOR_LIBRARY->~Library();
-    m_running = false;
+    running_ = false;
 }
 
 Engine* engine::g_ENGINE = nullptr;

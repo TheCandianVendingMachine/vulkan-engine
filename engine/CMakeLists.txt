@@ -19,6 +19,8 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/ecs/component.h"
     "${ENGINE_HEADER_PATH}/ecs/system.h"
     "${ENGINE_HEADER_PATH}/ecs/query.h"
+    "${ENGINE_HEADER_PATH}/graphics/graphics.h"
+    "${ENGINE_HEADER_PATH}/graphics/types.h"
     "${ENGINE_HEADER_PATH}/pool.h"
     "${ENGINE_HEADER_PATH}/pool/types.h"
     "${ENGINE_HEADER_PATH}/pool/region.h"
@@ -53,6 +55,7 @@ add_library(engine
     ecs/component.cpp
     ecs/system.cpp
     ecs/query.cpp
+    graphics/graphics.cpp
     reflection/type.cpp
     ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
     ${HEADER_LIST}
@@ -109,7 +112,7 @@ target_link_libraries(engine PRIVATE
     fastgltf::fastgltf
     fmt::fmt
     volk::volk
-    SDL3::SDL3
+    SDL3::SDL3-static
     PUBLIC
     Tracy::TracyClient
 )
