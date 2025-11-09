@@ -57,6 +57,7 @@ auto Engine::run() -> void {
 
     double accumulator     = 0.0;
     auto last_update       = std::chrono::high_resolution_clock::now();
+    auto last_frame        = std::chrono::high_resolution_clock::now();
 
     while (running_) {
         ++frame_count_;
@@ -89,11 +90,12 @@ auto Engine::run() -> void {
 
         FrameMarkEnd(StaticNames::EngineLoop);
 
-        auto frame_delta = std::chrono::high_resolution_clock::now() - frame_start;
+        auto frame_delta = std::chrono::high_resolution_clock::now() - last_frame;
         if (frame_delta < tick_rate) {
             auto sleep = tick_rate - frame_delta;
             std::this_thread::sleep_for(sleep);
         }
+        last_frame = std::chrono::high_resolution_clock::now();
         FrameMark;
     }
 }
