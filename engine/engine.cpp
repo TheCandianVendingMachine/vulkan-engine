@@ -4,8 +4,10 @@
 #include "engine/linalg/vector.h"
 #include <SDL3/SDL.h>
 #include <Tracy/Tracy.hpp>
+#include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
 
 using namespace ::ENGINE_NS;
 
@@ -49,9 +51,21 @@ ENGINE_API auto ENGINE_NS::Engine::quit() -> void {
 
 auto Engine::run() -> void {
     SDL_Event event;
+
+    const auto tick_rate   = std::chrono::milliseconds(2);
+    const auto update_rate = 1.0 / 10.0;
+
+    double accumulator     = 0.0;
+    auto last_update       = std::chrono::high_resolution_clock::now();
+
     while (running_) {
         ++frame_count_;
         FrameMarkStart(StaticNames::EngineLoop);
+
+        auto frame_start = std::chrono::high_resolution_clock::now();
+        auto delta       = frame_start - last_update;
+        accumulator += delta.count() * 1e-9;
+        last_update = frame_start;
 
         while (SDL_PollEvent(&event) != 0) {
             switch (event.type) {
@@ -63,9 +77,23 @@ auto Engine::run() -> void {
             }
         }
 
+        this->update();
+        while (accumulator > 0.0) {
+            FrameMarkStart(StaticNames::FixedUpdate);
+            accumulator -= update_rate;
+            this->fixed_update(update_rate);
+            FrameMarkEnd(StaticNames::FixedUpdate);
+        }
+
         graphics_.draw();
 
         FrameMarkEnd(StaticNames::EngineLoop);
+
+        auto frame_delta = std::chrono::high_resolution_clock::now() - frame_start;
+        if (frame_delta < tick_rate) {
+            auto sleep = tick_rate - frame_delta;
+            std::this_thread::sleep_for(sleep);
+        }
         FrameMark;
     }
 }
@@ -90,6 +118,12 @@ auto Engine::shutdown() -> void {
 
     linalg::g_VECTOR_LIBRARY->~Library();
     running_ = false;
+}
+
+auto ENGINE_NS::Engine::update() -> void {
+}
+
+auto ENGINE_NS::Engine::fixed_update(double) -> void {
 }
 
 Engine* engine::g_ENGINE = nullptr;

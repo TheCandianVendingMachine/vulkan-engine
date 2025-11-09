@@ -33,8 +33,11 @@ namespace ENGINE_NS {
             LogLocator& logger = logger_;
 
         private:
-            ENGINE_API auto startup() -> void;
-            ENGINE_API auto shutdown() -> void;
+            auto startup() -> void;
+            auto shutdown() -> void;
+
+            auto update() -> void;
+            auto fixed_update(double update_rate) -> void;
 
         private:
             bool running_              = false;
