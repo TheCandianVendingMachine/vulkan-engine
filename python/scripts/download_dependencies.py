@@ -323,6 +323,19 @@ class Stb(GitDependency, BuildSystem):
                 f.write('#define STB_IMAGE_WRITE_IMPLEMENTATION\n')
                 f.write('#include "stb_image_write.h"\n')
 
+class Vulkan(GitDependency, BuildSystem):
+    DEPENDENCY_NAME: str = 'vulkan-headers'
+    def __init__(self):
+        GitDependency.__init__(
+            self,
+            'https://github.com/KhronosGroup/Vulkan-Headers.git',
+            '3dda5a1a87b62fdf3baf4680edc41c00e85a7a22'
+        )
+    
+    def build(self):
+        with header_library(self.DEPENDENCY_NAME) as build_path:
+            shutil.copytree(self.install_path / 'include', build_path, dirs_exist_ok=True)
+
 class Volk(GitDependency, CMakePackage):
     DEPENDENCY_NAME: str = 'volk'
     def __init__(self):
@@ -437,6 +450,7 @@ DEPENDENCIES = {
     'imgui': Imgui(),
     'fastgltf': FastGltf(),
     'fmtlib': FmtLib(),
+    'vulkan': Vulkan(),
     'volk': Volk(),
     'VulkanMemoryAllocator': VulkanMemoryAllocator(),
     'SDL': SDL(),

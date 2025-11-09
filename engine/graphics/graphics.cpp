@@ -1,14 +1,16 @@
 #include "engine/graphics/graphics.h"
 #include "engine/engine.h"
+#include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
 // clang-format off
-#include <vulkan/vulkan.h>
+#include <volk/volk.h>
 // clang-format on
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
 #include <Tracy/Tracy.hpp>
 #include <Tracy/TracyVulkan.hpp>
 #include <Tracy/common/TracySystem.hpp>
+#include <chrono>
 
 void ENGINE_NS::GraphicsEngine::initialise() {
     FrameMarkStart(StaticNames::GraphicsInit);
@@ -17,16 +19,25 @@ void ENGINE_NS::GraphicsEngine::initialise() {
 
     logger.info("Initialising SDL");
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
+    {
+        ZoneScoped;
+        SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
 
-    window_                      = SDL_CreateWindow("Vulkan Engine", window_extent_.x, window_extent_.y, window_flags);
+        window_                      = SDL_CreateWindow("Vulkan Engine", window_extent_.x, window_extent_.y, window_flags);
+    }
+
+    logger.info("Initialising Vulkan");
+    init_vulkan_();
 
     logger.info("Initialising render thread");
-    running_.store(true, std::memory_order_release);
-    update_rate_   = std::chrono::milliseconds(9);
-    render_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::draw_, this);
+    {
+        ZoneScoped;
+        running_.store(true, std::memory_order_release);
+        update_rate_   = std::chrono::milliseconds(9);
+        render_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::draw_, this);
+    }
 
-    initialised_   = true;
+    initialised_ = true;
     FrameMarkEnd(StaticNames::GraphicsInit);
 }
 
@@ -56,6 +67,17 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
     initialised_ = false;
     FrameMarkEnd(StaticNames::GraphicsDeinit);
+}
+
+auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
+    ZoneScoped;
+    VK_CHECK(volkInitialize());
+    vulkan_instance_ = VulkanInstance::build()
+                           .engine_name(ENGINE_NAME_STR)
+                           .engine_version(Version(1, 0, 0))
+                           .game_name("Shooter")
+                           .game_version(Version(1, 0, 0))
+                           .finish();
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {

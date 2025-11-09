@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 #include "linalg/vector.h"
 #include <atomic>
@@ -27,6 +28,9 @@ namespace ENGINE_NS {
             SDL_Window* window_ = nullptr;
             friend class Engine;
 
+            VulkanInstance vulkan_instance_;
+
+            auto init_vulkan_() -> void;
             auto draw_() -> void;
     };
 } // namespace ENGINE_NS

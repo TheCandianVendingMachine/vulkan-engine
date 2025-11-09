@@ -44,13 +44,9 @@ namespace ENGINE_NS {
             std::uint64_t frame_count_ = 0;
 
             LogLocator logger_;
-            ENGINE_NS::GraphicsEngine graphics_;
+            GraphicsEngine graphics_;
     };
 
     extern Engine* g_ENGINE;
 
-    void crash(ErrorCode reason);
-    void crash(ErrorCode reason, int line);
-    void crash(ErrorCode reason, int line, const char* function);
-    void crash(ErrorCode reason, int line, const char* function, const char* file);
 } // namespace ENGINE_NS

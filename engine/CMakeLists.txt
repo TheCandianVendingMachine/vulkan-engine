@@ -10,9 +10,11 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/stb_image_write_wrapped.h"
     "${ENGINE_HEADER_PATH}/bitset.h"
     "${ENGINE_HEADER_PATH}/engine.h"
+    "${ENGINE_HEADER_PATH}/engine_utils.h"
     "${ENGINE_HEADER_PATH}/logger.h"
     "${ENGINE_HEADER_PATH}/random.h"
     "${ENGINE_HEADER_PATH}/newtype.h"
+    "${ENGINE_HEADER_PATH}/version.h"
     "${ENGINE_HEADER_PATH}/ecs/default.h"
     "${ENGINE_HEADER_PATH}/ecs/defines.h"
     "${ENGINE_HEADER_PATH}/ecs/entity.h"
@@ -21,6 +23,7 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/ecs/query.h"
     "${ENGINE_HEADER_PATH}/graphics/graphics.h"
     "${ENGINE_HEADER_PATH}/graphics/types.h"
+    "${ENGINE_HEADER_PATH}/graphics/vulkan.h"
     "${ENGINE_HEADER_PATH}/pool.h"
     "${ENGINE_HEADER_PATH}/pool/types.h"
     "${ENGINE_HEADER_PATH}/pool/region.h"
@@ -39,8 +42,10 @@ add_library(engine
     stb_image_implementation.cpp
     bitset.cpp
     engine.cpp
+    engine_utils.cpp
     logger.cpp
     random.cpp
+    version.cpp
     linalg/linalg.cpp
     linalg/vector.cpp
     linalg/vector2_operations.cpp
@@ -56,6 +61,7 @@ add_library(engine
     ecs/system.cpp
     ecs/query.cpp
     graphics/graphics.cpp
+    graphics/vulkan.cpp
     reflection/type.cpp
     ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
     ${HEADER_LIST}
@@ -69,6 +75,7 @@ target_include_directories(engine PUBLIC
     ${EXTERNAL_HEADER_DIR}
     ${EXTERNAL_HEADER_DIR}/stb
     ${EXTERNAL_HEADER_DIR}/fmt
+    ${EXTERNAL_HEADER_DIR}/vulkan-headers
     ${EXTERNAL_HEADER_DIR}/VulkanMemoryAllocator
     ${EXTERNAL_HEADER_DIR}/volk
     ${EXTERNAL_HEADER_DIR}/robin-map
@@ -108,10 +115,9 @@ else()
 endif()
 
 target_link_libraries(engine PRIVATE
-    Vulkan::Vulkan
     fastgltf::fastgltf
     fmt::fmt
-    volk::volk
+    volk
     SDL3::SDL3-static
     PUBLIC
     Tracy::TracyClient

@@ -1,5 +1,6 @@
 #include "engine/linalg/matrix.h"
 #include "engine/engine.h"
+#include "engine/engine_utils.h"
 #include "engine/meta_defines.h"
 #include <Tracy/Tracy.hpp>
 #include <Windows.h>
