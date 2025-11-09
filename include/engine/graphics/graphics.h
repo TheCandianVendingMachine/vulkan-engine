@@ -18,5 +18,6 @@ namespace ENGINE_NS {
             ::linalg::Vector2<int> window_extent_{1'700, 900};
 
             SDL_Window* window_ = nullptr;
+            friend class Engine;
     };
 } // namespace ENGINE_NS

@@ -2,6 +2,7 @@
 #include "engine/linalg/linalg.h"
 #include "engine/linalg/matrix.h"
 #include "engine/linalg/vector.h"
+#include <SDL3/SDL.h>
 #include <Tracy/Tracy.hpp>
 #include <cstdlib>
 #include <cstring>
@@ -39,10 +40,28 @@ Engine& Engine::instance() {
     return *g_ENGINE;
 }
 
+ENGINE_API auto ENGINE_NS::Engine::quit() -> void {
+    if (this->running_) {
+        this->running_ = false;
+        this->shutdown();
+    }
+}
+
 auto Engine::run() -> void {
-    while (true) {
+    SDL_Event event;
+    while (running_) {
         ++frame_count_;
         FrameMarkStart(StaticNames::EngineLoop);
+
+        while (SDL_PollEvent(&event) != 0) {
+            switch (event.type) {
+                case SDL_EVENT_QUIT:
+                    this->quit();
+                    break;
+                default:
+                    break;
+            }
+        }
 
         graphics_.draw();
 

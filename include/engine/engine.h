@@ -27,6 +27,7 @@ namespace ENGINE_NS {
 
             ENGINE_API static Engine& instance();
 
+            ENGINE_API auto quit() -> void;
             ENGINE_API auto run() -> void;
 
             LogLocator& logger = logger_;
