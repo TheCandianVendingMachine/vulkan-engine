@@ -7,7 +7,10 @@
 namespace ENGINE_NS {
     enum class LogNamespaces {
         CORE,
-        GRAPHICS
+        GRAPHICS,
+        VULKAN,
+        VULKAN_VALIDATION,
+        VULKAN_PERFORMANCE
     };
 
     class LogLocator {
@@ -45,6 +48,8 @@ namespace ENGINE_NS {
 
             LogLocator logger_;
             GraphicsEngine graphics_;
+
+            friend void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const char* file);
     };
 
     extern Engine* g_ENGINE;

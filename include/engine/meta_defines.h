@@ -25,8 +25,8 @@ enum class ErrorCode : int {
     COUNT
 };
 
-static constexpr const char* g_ERROR_CODE_STR[static_cast<size_t>(ErrorCode::COUNT)] = {"Unknown", "Failed to load linear algebra library",
-                                                                                        "Failed to load linear algebra functions"};
+static constexpr const char* g_ERROR_CODE_STR[static_cast<size_t>(ErrorCode::COUNT)] = {
+  "Unknown", "Failed to load linear algebra library", "Failed to load linear algebra functions", "Vulkan Error"};
 
 namespace StaticNames {
     static constexpr const char* EngineLoop         = "Engine loop";

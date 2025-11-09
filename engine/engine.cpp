@@ -13,8 +13,13 @@ using namespace ::ENGINE_NS;
 
 LogLocator::LogLocator() {
     m_loggers = {
-      {LogNamespaces::CORE,     LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build()  },
-      {LogNamespaces::GRAPHICS, LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build()}
+      {LogNamespaces::CORE,               LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build()  },
+      {LogNamespaces::GRAPHICS,           LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build()},
+      {LogNamespaces::VULKAN,             LoggerBuilder().with_identifier("VULKAN").with_stream({stdout, logger::Level::DEBUG}).build()  },
+      {LogNamespaces::VULKAN_PERFORMANCE,
+       LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build()                       },
+      {LogNamespaces::VULKAN_VALIDATION,
+       LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build()                        },
     };
 }
 

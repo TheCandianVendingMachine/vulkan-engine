@@ -33,6 +33,7 @@ void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const ch
                 idx = 0;
             } else if (c == '\0') {
                 sanitized_file = "";
+                break;
             } else {
                 buffer[idx++] = c;
             }
@@ -40,6 +41,7 @@ void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const ch
         g_ENGINE->logger.get(LogNamespaces::CORE).error("Engine crash!");
         g_ENGINE->logger.get(LogNamespaces::CORE).error("Location: {}::{}/{}", sanitized_file, function, line);
         g_ENGINE->logger.get(LogNamespaces::CORE).error("{}", g_ERROR_CODE_STR[static_cast<std::size_t>(reason)]);
+        g_ENGINE->shutdown();
     }
     std::exit(static_cast<int>(reason));
 }

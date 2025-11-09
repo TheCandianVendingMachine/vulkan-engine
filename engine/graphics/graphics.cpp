@@ -55,8 +55,10 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     logger.info("Stopping render thread");
     {
         ZoneScoped;
-        this->running_.store(false, std::memory_order_release);
-        this->render_thread_.join();
+        if (this->running_.load(std::memory_order_acquire)) {
+            this->running_.store(false, std::memory_order_release);
+            this->render_thread_.join();
+        }
     }
 
     logger.info("Cleaning up SDL");
@@ -77,6 +79,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .engine_version(Version(1, 0, 0))
                            .game_name("Shooter")
                            .game_version(Version(1, 0, 0))
+                           .with_validation_layers(true)
                            .finish();
 }
 

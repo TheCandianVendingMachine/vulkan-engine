@@ -10,7 +10,7 @@
     do {                                                                                                                                   \
         VkResult err = x;                                                                                                                  \
         if (err) {                                                                                                                         \
-            ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR);                                                                                   \
+            ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);                                                     \
         }                                                                                                                                  \
     } while (0)
 
@@ -23,6 +23,7 @@ namespace ENGINE_NS {
             auto engine_name(std::string_view name) -> VulkanInstanceBuilder&;
             auto game_version(Version version) -> VulkanInstanceBuilder&;
             auto engine_version(Version version) -> VulkanInstanceBuilder&;
+            auto with_validation_layers(bool with) -> VulkanInstanceBuilder&;
 
             auto finish() -> VulkanInstance;
 
@@ -34,6 +35,7 @@ namespace ENGINE_NS {
             std::string engine_name_{};
             Version game_version_{};
             Version engine_version_{};
+            bool with_validation_layers_ = false;
     };
 
     class VulkanInstance {
@@ -52,7 +54,9 @@ namespace ENGINE_NS {
 
             VulkanInstance(VkInstanceCreateInfo create_info);
 
-            bool moved_ = false;
+            bool moved_               = false;
+            bool has_debug_messenger_ = false;
+            VkDebugUtilsMessengerEXT debug_messenger_;
             VkInstance instance_;
     };
 } // namespace ENGINE_NS

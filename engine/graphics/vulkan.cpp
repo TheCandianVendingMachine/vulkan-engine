@@ -1,11 +1,45 @@
 #include "engine/graphics/vulkan.h"
+#include "engine/engine.h"
+#include "engine/logger.h"
 // clang-format disable
 #include <Volk/volk.h>
 // clang-format enable
 #include <SDL3/SDL_vulkan.h>
-#include <algorithm>
+#include <cstdint>
 #include <type_traits>
 #include <vector>
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL validation_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+                                                          VkDebugUtilsMessageTypeFlagsEXT messageType,
+                                                          const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void*) {
+    engine::Logger* logger = nullptr;
+    switch (messageType) {
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
+            logger = &ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
+            logger = &ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN_VALIDATION);
+            break;
+        case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
+            logger = &ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN_PERFORMANCE);
+            break;
+        default:
+            assert(false);
+            break;
+    }
+
+    if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+        logger->error("{}", pCallbackData->pMessage);
+    } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+        logger->warning("{}", pCallbackData->pMessage);
+    } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+        logger->info("{}", pCallbackData->pMessage);
+    } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+        logger->debug("{}", pCallbackData->pMessage);
+    }
+
+    return VK_FALSE;
+}
 
 auto ENGINE_NS::VulkanInstance::build() -> VulkanInstanceBuilder {
     return VulkanInstanceBuilder();
@@ -23,12 +57,30 @@ ENGINE_NS::VulkanInstance::~VulkanInstance() {
     if (this->moved_) {
         return;
     }
+    if (has_debug_messenger_) {
+        vkDestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
+    }
     vkDestroyInstance(instance_, nullptr);
 }
 
 ENGINE_NS::VulkanInstance::VulkanInstance(VkInstanceCreateInfo create_info) {
     VK_CHECK(vkCreateInstance(&create_info, nullptr, &instance_));
     volkLoadInstance(instance_);
+    if (create_info.enabledLayerCount > 0) {
+        VkDebugUtilsMessengerCreateInfoEXT debug_create{};
+        debug_create.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+        debug_create.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+        debug_create.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                   VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        debug_create.pfnUserCallback = validation_callback;
+
+        if (!vkCreateDebugUtilsMessengerEXT) {
+            crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
+        }
+        VK_CHECK(vkCreateDebugUtilsMessengerEXT(instance_, &debug_create, nullptr, &debug_messenger_));
+        has_debug_messenger_ = true;
+    }
 }
 
 auto ENGINE_NS::VulkanInstanceBuilder::game_name(std::string_view name) -> VulkanInstanceBuilder& {
@@ -51,6 +103,11 @@ auto ENGINE_NS::VulkanInstanceBuilder::engine_version(Version version) -> Vulkan
     return *this;
 }
 
+auto ENGINE_NS::VulkanInstanceBuilder::with_validation_layers(bool with) -> VulkanInstanceBuilder& {
+    with_validation_layers_ = with;
+    return *this;
+}
+
 auto ENGINE_NS::VulkanInstanceBuilder::finish() -> VulkanInstance {
     VkApplicationInfo app_info{};
     app_info.apiVersion         = VK_API_VERSION_1_3;
@@ -67,11 +124,38 @@ auto ENGINE_NS::VulkanInstanceBuilder::finish() -> VulkanInstance {
     unsigned int count             = 0;
     auto instance_extensions       = SDL_Vulkan_GetInstanceExtensions(&count);
 
-    std::vector<const char*> extensions(count + 1);
-    extensions[0] = VK_EXT_DEBUG_REPORT_EXTENSION_NAME;
-    std::copy(instance_extensions + 0, instance_extensions + count, extensions.begin() + 1);
+    std::vector<const char*> extensions(count);
+    std::copy(instance_extensions + 0, instance_extensions + count, extensions.begin());
 
-    instance_info.enabledExtensionCount   = count;
+    std::vector<const char*> validation_layers;
+    if (with_validation_layers_) {
+        extensions.insert(extensions.begin(), VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+        validation_layers.emplace_back("VK_LAYER_KHRONOS_validation");
+
+        std::uint32_t layer_count = 0;
+        vkEnumerateInstanceLayerProperties(&layer_count, nullptr);
+        std::vector<VkLayerProperties> available_layers(layer_count);
+        vkEnumerateInstanceLayerProperties(&layer_count, available_layers.data());
+
+        for (const auto& layer : validation_layers) {
+            bool found = false;
+            for (const auto& existing_layer : available_layers) {
+                if (std::strcmp(layer, existing_layer.layerName) == 0) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                crash(ErrorCode::VULKAN_ERROR);
+            }
+        }
+    }
+    instance_info.enabledLayerCount       = static_cast<std::uint32_t>(validation_layers.size());
+    instance_info.ppEnabledLayerNames     = validation_layers.data();
+
+    instance_info.enabledExtensionCount   = static_cast<std::uint32_t>(extensions.size());
     instance_info.ppEnabledExtensionNames = extensions.data();
 
     return VulkanInstance(instance_info);
