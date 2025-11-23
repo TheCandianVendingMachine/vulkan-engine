@@ -5,6 +5,7 @@
 #include <Volk/volk.h>
 // clang-format enable
 #include <SDL3/SDL_vulkan.h>
+#include <Tracy/Tracy.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <robin_set.h>
@@ -16,6 +17,7 @@
 static VKAPI_ATTR VkBool32 VKAPI_CALL validation_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                           VkDebugUtilsMessageTypeFlagsEXT messageType,
                                                           const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void*) {
+    ZoneScoped;
     engine::Logger* logger = nullptr;
     switch (messageType) {
         case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
@@ -75,6 +77,8 @@ auto ENGINE_NS::VulkanInstance::cleanup() -> void {
 }
 
 ENGINE_NS::VulkanInstance::VulkanInstance(VkInstanceCreateInfo create_info) {
+    ZoneScoped;
+
     VK_CHECK(vkCreateInstance(&create_info, nullptr, &instance_));
     volkLoadInstance(instance_);
     if (create_info.enabledLayerCount > 0) {
@@ -120,6 +124,8 @@ auto ENGINE_NS::VulkanInstanceBuilder::with_validation_layers(bool with) -> Vulk
 }
 
 auto ENGINE_NS::VulkanInstanceBuilder::finish() -> VulkanInstance {
+    ZoneScoped;
+
     VkApplicationInfo app_info{};
     app_info.apiVersion         = VK_API_VERSION_1_3;
     app_info.applicationVersion = VK_MAKE_VERSION(game_version_.major, game_version_.minor, game_version_.patch);
@@ -204,6 +210,8 @@ ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device, V
                                                       VkPhysicalDeviceVulkan11Features f11, VkPhysicalDeviceVulkan12Features f12,
                                                       VkPhysicalDeviceVulkan13Features f13, VkPhysicalDeviceVulkan14Features f14) :
     device_(device), features_10_(f10), features_11_(f11), features_12_(f12), features_13_(f13), features_14_(f14) {
+    ZoneScoped;
+
     features_.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     features_.features = features_10_;
     features_.pNext    = &features_11_;
@@ -213,6 +221,8 @@ ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device, V
 }
 
 auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -> VulkanPhysicalDevice {
+    ZoneScoped;
+
     auto& logger               = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
 
     std::uint32_t device_count = 0;
@@ -458,18 +468,23 @@ auto ENGINE_NS::VulkanDevice::operator=(VulkanDevice&& rhs) -> VulkanDevice& {
 
 ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues, VulkanPhysicalDevice& physical_device,
                                       VkDeviceCreateInfo create_info) : queues_(queues) {
+    ZoneScoped;
+
     VK_CHECK(vkCreateDevice(physical_device.device, &create_info, nullptr, &device_));
 }
 
 auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice {
+    ZoneScoped;
+
     std::uint32_t count = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device.device, &count, nullptr);
     std::vector<VkQueueFamilyProperties> properties(count);
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device.device, &count, properties.data());
 
     struct FamilyAllocation {
-            std::uint32_t family = 0;
-            std::uint32_t count  = 0;
+            std::uint32_t family    = 0;
+            std::uint32_t count     = 0;
+            std::uint32_t max_count = 0;
             std::vector<float> priorities;
     };
 
@@ -479,7 +494,7 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
     std::vector<FamilyAllocation> queue_family_allocations;
 
     for (std::uint32_t idx = 0; idx < properties.size(); idx++) {
-        queue_family_allocations.emplace_back(idx++, 0);
+        queue_family_allocations.emplace_back(idx++, 0, properties[idx].queueCount, std::vector<float>{});
     }
 
     for (auto& [name, requested] : queues_) {
@@ -491,6 +506,7 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
                 queue_family_map.insert({queue_family_index, 0});
             }
             if (queue_family_map.at(queue_family_index) >= queue.queueCount) {
+                queue_family_index++;
                 continue;
             }
 
@@ -525,7 +541,7 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
     for (auto& family : queue_family_allocations) {
         VkDeviceQueueCreateInfo info{};
         info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        info.queueCount       = family.count;
+        info.queueCount       = std::min(family.count, family.max_count);
         info.queueFamilyIndex = family.family;
         info.pQueuePriorities = family.priorities.data();
 
