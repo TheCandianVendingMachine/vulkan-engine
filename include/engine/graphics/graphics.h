@@ -29,6 +29,7 @@ namespace ENGINE_NS {
             friend class Engine;
 
             VulkanInstance vulkan_instance_;
+            VulkanSurface surface_;
 
             auto init_vulkan_() -> void;
             auto draw_() -> void;

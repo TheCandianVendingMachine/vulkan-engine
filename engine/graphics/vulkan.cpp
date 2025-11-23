@@ -7,7 +7,9 @@
 #include <SDL3/SDL_vulkan.h>
 #include <cstdint>
 #include <type_traits>
+#include <utility>
 #include <vector>
+
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL validation_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                           VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -47,20 +49,27 @@ auto ENGINE_NS::VulkanInstance::build() -> VulkanInstanceBuilder {
 
 auto ENGINE_NS::VulkanInstance::operator=(VulkanInstance&& rhs) noexcept -> VulkanInstance& {
     if (this != &rhs && !rhs.moved_) {
-        instance_  = std::move(rhs.instance_);
-        rhs.moved_ = true;
+        instance_            = std::move(rhs.instance_);
+        has_debug_messenger_ = std::move(rhs.has_debug_messenger_);
+        debug_messenger_     = std::move(rhs.debug_messenger_);
+        rhs.moved_           = true;
     }
     return *this;
 }
 
-ENGINE_NS::VulkanInstance::~VulkanInstance() {
+auto ENGINE_NS::VulkanInstance::cleanup() -> void {
+    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (this->moved_) {
+        logger.info("Instance has already been moved or destroyed");
         return;
     }
+    logger.info("Destroying instance");
+
     if (has_debug_messenger_) {
         vkDestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
     }
     vkDestroyInstance(instance_, nullptr);
+    this->moved_ = true;
 }
 
 ENGINE_NS::VulkanInstance::VulkanInstance(VkInstanceCreateInfo create_info) {
@@ -164,3 +173,233 @@ auto ENGINE_NS::VulkanInstanceBuilder::finish() -> VulkanInstance {
 ENGINE_NS::VulkanInstanceBuilder::VulkanInstanceBuilder() {
 }
 
+auto ENGINE_NS::VulkanPhysicalDevice::choose(SDL_Window* window) -> VulkanPhysicalDeviceSelector {
+    return VulkanPhysicalDeviceSelector(window);
+}
+
+auto ENGINE_NS::VulkanPhysicalDevice::operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice& {
+    if (this != &rhs && !rhs.moved_) {
+        device_    = std::move(rhs.device_);
+        rhs.moved_ = true;
+    }
+    return *this;
+}
+
+ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device) : device_(device) {
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -> VulkanPhysicalDevice {
+    auto& logger               = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+
+    std::uint32_t device_count = 0;
+    vkEnumeratePhysicalDevices(instance.instance, &device_count, nullptr);
+    if (device_count == 0) {
+        crash(ErrorCode::VULKAN_ERROR);
+    }
+    std::vector<VkPhysicalDevice> devices(device_count);
+    vkEnumeratePhysicalDevices(instance.instance, &device_count, devices.data());
+
+    const auto api_version = VK_MAKE_API_VERSION(0, vulkan_version_.major, vulkan_version_.minor, vulkan_version_.patch);
+
+    logger.debug("Requesting a device with API version {}", api_version);
+
+    std::vector<std::pair<VkPhysicalDevice, int>> available_devices{};
+
+    for (auto& device : devices) {
+        VkPhysicalDeviceProperties properties{};
+        vkGetPhysicalDeviceProperties(device, &properties);
+        logger.debug("Found device '{}' with API version {}", properties.deviceName, properties.apiVersion);
+        if (properties.apiVersion < api_version) {
+            logger.debug("Invalid API version");
+            continue;
+        }
+        VkPhysicalDeviceFeatures2 features{};
+        VkPhysicalDeviceVulkan11Features features11{};
+        VkPhysicalDeviceVulkan12Features features12{};
+        VkPhysicalDeviceVulkan13Features features13{};
+        VkPhysicalDeviceVulkan14Features features14{};
+
+        features.sType   = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+        features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+        features13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+        features14.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES;
+
+
+        features.pNext   = &features11;
+        features11.pNext = &features12;
+        features12.pNext = &features13;
+        features13.pNext = &features14;
+
+        vkGetPhysicalDeviceFeatures2(device, &features);
+
+        bool has_all_features_ = true;
+        for (auto idx = 0; idx < (&features_10_.inheritedQueries - &features_10_.robustBufferAccess); idx++) {
+            auto base_target = &features_10_.robustBufferAccess;
+            auto base_test   = &features.features.robustBufferAccess;
+
+            if (*(base_target + idx) == VK_TRUE && *(base_test + idx) == VK_FALSE) {
+                has_all_features_ = false;
+                break;
+            }
+        }
+        if (!has_all_features_) {
+            logger.debug("Device does not have a desired Vulkan 1.0 feature");
+            continue;
+        }
+
+        has_all_features_ = true;
+        for (auto idx = 0; idx < (&features_11_.shaderDrawParameters - &features_11_.storageBuffer16BitAccess); idx++) {
+            auto base_target = &features_11_.storageBuffer16BitAccess;
+            auto base_test   = &features11.storageBuffer16BitAccess;
+
+            if (*(base_target + idx) == VK_TRUE && *(base_test + idx) == VK_FALSE) {
+                has_all_features_ = false;
+                break;
+            }
+        }
+        if (!has_all_features_) {
+            logger.debug("Device does not have a desired Vulkan 1.1 feature");
+            continue;
+        }
+
+        has_all_features_ = true;
+        for (auto idx = 0; idx < (&features_12_.subgroupBroadcastDynamicId - &features_12_.samplerMirrorClampToEdge); idx++) {
+            auto base_target = &features_12_.samplerMirrorClampToEdge;
+            auto base_test   = &features12.samplerMirrorClampToEdge;
+
+            if (*(base_target + idx) == VK_TRUE && *(base_test + idx) == VK_FALSE) {
+                has_all_features_ = false;
+                break;
+            }
+        }
+        if (!has_all_features_) {
+            logger.debug("Device does not have a desired Vulkan 1.2 feature");
+            continue;
+        }
+
+        has_all_features_ = true;
+        for (auto idx = 0; idx < (&features_13_.maintenance4 - &features_13_.robustImageAccess); idx++) {
+            auto base_target = &features_13_.robustImageAccess;
+            auto base_test   = &features13.robustImageAccess;
+
+            if (*(base_target + idx) == VK_TRUE && *(base_test + idx) == VK_FALSE) {
+                has_all_features_ = false;
+                break;
+            }
+        }
+        if (!has_all_features_) {
+            logger.debug("Device does not have a desired Vulkan 1.3 feature");
+            continue;
+        }
+
+        has_all_features_ = true;
+        for (auto idx = 0; idx < (&features_14_.pushDescriptor - &features_14_.globalPriorityQuery); idx++) {
+            auto base_target = &features_14_.globalPriorityQuery;
+            auto base_test   = &features14.globalPriorityQuery;
+
+            if (*(base_target + idx) == VK_TRUE && *(base_test + idx) == VK_FALSE) {
+                has_all_features_ = false;
+                break;
+            }
+        }
+        if (!has_all_features_) {
+            logger.debug("Device does not have a desired Vulkan 1.4 feature");
+            continue;
+        }
+
+        logger.debug("Device has all requested features");
+
+        int score = 10'000;
+        if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
+            score -= 1'374;
+        }
+        if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU) {
+            score -= 874;
+        }
+        if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_CPU) {
+            score -= 7'374;
+        }
+        if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_OTHER) {
+            score -= 377;
+        }
+        logger.debug("Device has a score of {}", score);
+        available_devices.push_back(std::make_pair(device, score));
+    }
+
+    std::sort(available_devices.begin(), available_devices.end(), [](auto& lhs, auto& rhs) {
+        return lhs.second > rhs.second;
+    });
+
+    if (available_devices.empty()) {
+        ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
+    }
+
+    return VulkanPhysicalDevice(available_devices[0].first);
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_minimum_vulkan_version(Version version) -> VulkanPhysicalDeviceSelector& {
+    vulkan_version_ = version;
+    return *this;
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_14(VkPhysicalDeviceVulkan14Features features)
+    -> VulkanPhysicalDeviceSelector& {
+    features_14_ = features;
+    return *this;
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_13(VkPhysicalDeviceVulkan13Features features)
+    -> VulkanPhysicalDeviceSelector& {
+    features_13_ = features;
+    return *this;
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_12(VkPhysicalDeviceVulkan12Features features)
+    -> VulkanPhysicalDeviceSelector& {
+    features_12_ = features;
+    return *this;
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_11(VkPhysicalDeviceVulkan11Features features)
+    -> VulkanPhysicalDeviceSelector& {
+    features_11_ = features;
+    return *this;
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_10(VkPhysicalDeviceFeatures features) -> VulkanPhysicalDeviceSelector& {
+    features_10_ = features;
+    return *this;
+}
+
+ENGINE_NS::VulkanPhysicalDeviceSelector::VulkanPhysicalDeviceSelector(SDL_Window* window) : window_(window) {
+}
+
+ENGINE_NS::VulkanSurface::VulkanSurface(SDL_Window* window, VulkanInstance& instance) : window_(window), instance_(&instance) {
+    if (!SDL_Vulkan_CreateSurface(window_, instance_->instance, nullptr, &surface_)) {
+        ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
+    }
+}
+
+auto ENGINE_NS::VulkanSurface::cleanup() -> void {
+    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    if (moved_ || !window_) {
+        logger.info("Surface has already been moved or cleaned up");
+        return;
+    }
+    logger.info("Destroying surface");
+    SDL_Vulkan_DestroySurface(instance_->instance, surface_, nullptr);
+    window_   = nullptr;
+    instance_ = nullptr;
+    surface_  = VK_NULL_HANDLE;
+}
+
+auto ENGINE_NS::VulkanSurface::operator=(VulkanSurface&& rhs) -> VulkanSurface& {
+    if (&rhs != this && !rhs.moved_) {
+        this->instance_ = std::move(rhs.instance_);
+        this->surface_  = std::move(rhs.surface_);
+        this->window_   = std::move(rhs.window_);
+        rhs.moved_      = true;
+    }
+    return *this;
+}

@@ -61,6 +61,11 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
         }
     }
 
+
+    logger.info("Cleaning up Vulkan");
+    surface_.cleanup();
+    vulkan_instance_.cleanup();
+
     logger.info("Cleaning up SDL");
     {
         ZoneScoped;
@@ -81,6 +86,24 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .game_version(Version(1, 0, 0))
                            .with_validation_layers(true)
                            .finish();
+
+    surface_ = VulkanSurface(window_, vulkan_instance_);
+
+    // vulkan 1.3 features
+    VkPhysicalDeviceVulkan13Features features{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
+    features.dynamicRendering = true;
+    features.synchronization2 = true;
+
+    // vulkan 1.2 features
+    VkPhysicalDeviceVulkan12Features features12{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
+    features12.bufferDeviceAddress = true;
+    features12.descriptorIndexing  = true;
+
+    VulkanPhysicalDevice::choose(window_)
+        .set_minimum_vulkan_version(Version(1, 3, 0))
+        .set_required_features_12(features12)
+        .set_required_features_13(features)
+        .finish(vulkan_instance_);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {

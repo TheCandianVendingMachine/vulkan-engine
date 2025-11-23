@@ -46,17 +46,76 @@ namespace ENGINE_NS {
 
             auto operator=(VulkanInstance&& rhs) noexcept -> VulkanInstance&;
 
+            auto cleanup() -> void;
+
             VulkanInstance() = default;
-            ~VulkanInstance();
 
         private:
             friend class VulkanInstanceBuilder;
 
             VulkanInstance(VkInstanceCreateInfo create_info);
 
+            VkDebugUtilsMessengerEXT debug_messenger_ = VK_NULL_HANDLE;
+            VkInstance instance_                      = VK_NULL_HANDLE;
+            bool moved_                               = false;
+            bool has_debug_messenger_                 = false;
+    };
+
+    class VulkanSurface {
+        public:
+            VulkanSurface() = default;
+            VulkanSurface(SDL_Window* window, VulkanInstance& instance);
+
+            auto cleanup() -> void;
+            auto operator=(VulkanSurface&& rhs) -> VulkanSurface&;
+
+        private:
+            VkSurfaceKHR surface_     = VK_NULL_HANDLE;
+            VulkanInstance* instance_ = nullptr;
+            SDL_Window* window_       = nullptr;
             bool moved_               = false;
-            bool has_debug_messenger_ = false;
-            VkDebugUtilsMessengerEXT debug_messenger_;
-            VkInstance instance_;
+    };
+
+    class VulkanPhysicalDevice;
+    class VulkanPhysicalDeviceSelector {
+        public:
+            auto finish(VulkanInstance& instance) -> VulkanPhysicalDevice;
+
+            auto set_minimum_vulkan_version(Version version) -> VulkanPhysicalDeviceSelector&;
+            auto set_required_features_14(VkPhysicalDeviceVulkan14Features features) -> VulkanPhysicalDeviceSelector&;
+            auto set_required_features_13(VkPhysicalDeviceVulkan13Features features) -> VulkanPhysicalDeviceSelector&;
+            auto set_required_features_12(VkPhysicalDeviceVulkan12Features features) -> VulkanPhysicalDeviceSelector&;
+            auto set_required_features_11(VkPhysicalDeviceVulkan11Features features) -> VulkanPhysicalDeviceSelector&;
+            auto set_required_features_10(VkPhysicalDeviceFeatures features) -> VulkanPhysicalDeviceSelector&;
+
+        private:
+            SDL_Window* window_ = nullptr;
+            VkPhysicalDeviceVulkan14Features features_14_{};
+            VkPhysicalDeviceVulkan13Features features_13_{};
+            VkPhysicalDeviceVulkan12Features features_12_{};
+            VkPhysicalDeviceVulkan11Features features_11_{};
+            VkPhysicalDeviceFeatures features_10_{};
+            Version vulkan_version_{};
+
+            VulkanPhysicalDeviceSelector(SDL_Window* window);
+            friend class VulkanPhysicalDevice;
+    };
+
+    class VulkanPhysicalDevice {
+        public:
+            static auto choose(SDL_Window* window) -> VulkanPhysicalDeviceSelector;
+
+            VkPhysicalDevice& device = device_;
+
+            auto operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice&;
+
+            VulkanPhysicalDevice() = default;
+
+        private:
+            VkPhysicalDevice device_ = VK_NULL_HANDLE;
+            bool moved_              = false;
+
+            VulkanPhysicalDevice(VkPhysicalDevice device);
+            friend class VulkanPhysicalDeviceSelector;
     };
 } // namespace ENGINE_NS
