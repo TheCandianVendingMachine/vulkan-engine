@@ -7,6 +7,7 @@
 #include <SDL3/SDL_vulkan.h>
 #include <algorithm>
 #include <cstdint>
+#include <robin_set.h>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -455,17 +456,76 @@ auto ENGINE_NS::VulkanDevice::operator=(VulkanDevice&& rhs) -> VulkanDevice& {
     return *this;
 }
 
-ENGINE_NS::VulkanDevice::VulkanDevice(VulkanPhysicalDevice& physical_device, VkDeviceCreateInfo create_info) {
+ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues, VulkanPhysicalDevice& physical_device,
+                                      VkDeviceCreateInfo create_info) : queues_(queues) {
     VK_CHECK(vkCreateDevice(physical_device.device, &create_info, nullptr, &device_));
 }
 
 auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice {
-    VkDeviceCreateInfo create_info{};
-    create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    create_info.pNext = &physical_device.features;
+    std::uint32_t count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device.device, &count, nullptr);
+    std::vector<VkQueueFamilyProperties> properties(count);
+    vkGetPhysicalDeviceQueueFamilyProperties(physical_device.device, &count, properties.data());
 
-    return VulkanDevice(physical_device, create_info);
+    tsl::robin_map<std::string, VulkanQueue> queues;
+    tsl::robin_map<std::uint32_t, std::uint32_t> queue_family_map;
+    tsl::robin_set<std::string> allocated_queues;
+    std::uint32_t queue_family_index = 0;
+    for (auto& queue : properties) {
+        queue_family_map.insert({queue_family_index, 0});
+        for (auto& [name, requested] : queues_) {
+            if (allocated_queues.contains(name)) {
+                continue;
+            }
+            if ((queue.queueFlags & static_cast<VkQueueFlags>(requested)) != 0) {
+                std::uint32_t& idx = queue_family_map.at(queue_family_index);
+                queues.insert({
+                  name, VulkanQueue{.queue_family    = queue_family_index,
+                                    .queue_index     = idx,
+                                    .max_queue_index = queue.queueCount,
+                                    .type            = requested}
+                });
+                allocated_queues.insert(name);
+                idx += 1;
+                if (idx >= queue.queueCount) {
+                    break;
+                }
+            }
+
+            if (allocated_queues.size() == queues_.size()) {
+                break;
+            }
+        }
+        queue_family_index++;
+    }
+
+    std::vector<VkDeviceQueueCreateInfo> queue_create_info;
+    std::vector<float> priorities = {1.f};
+    for (auto& [_, queue] : queues) {
+        VkDeviceQueueCreateInfo info{};
+        info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        info.queueCount       = 1;
+        info.queueFamilyIndex = queue.queue_family;
+        info.pQueuePriorities = priorities.data();
+
+        queue_create_info.push_back(info);
+    }
+
+    VkDeviceCreateInfo create_info{};
+    create_info.sType                = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    create_info.pNext                = &physical_device.features;
+
+    create_info.queueCreateInfoCount = static_cast<std::uint32_t>(queue_create_info.size());
+    create_info.pQueueCreateInfos    = queue_create_info.data();
+
+    return VulkanDevice(std::move(queues), physical_device, create_info);
 }
+
+auto ENGINE_NS::VulkanDeviceBuilder::request_queue(std::string name, VulkanQueueType type) -> VulkanDeviceBuilder& {
+    queues_.insert({name, type});
+    return *this;
+}
+
 
 ENGINE_NS::VulkanDeviceBuilder::VulkanDeviceBuilder() {
 }

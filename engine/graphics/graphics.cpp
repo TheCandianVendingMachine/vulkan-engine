@@ -63,9 +63,9 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
 
     logger.info("Cleaning up Vulkan");
+    device_.cleanup();
     surface_.cleanup();
     vulkan_instance_.cleanup();
-    device_.cleanup();
 
     logger.info("Cleaning up SDL");
     {
@@ -106,7 +106,9 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .set_required_features_13(features)
                            .finish(vulkan_instance_);
 
-    device_ = VulkanDevice::build().finish(physical_device_);
+    device_ = VulkanDevice::build()
+                  .request_queue("main", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+                  .finish(physical_device_);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {

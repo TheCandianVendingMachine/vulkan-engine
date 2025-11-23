@@ -58,7 +58,7 @@ auto Engine::run() -> void {
     SDL_Event event;
 
     const auto tick_rate   = std::chrono::milliseconds(2);
-    const auto update_rate = 1.0 / 10.0;
+    const auto update_rate = 1.0 / 40.0;
 
     double accumulator     = 0.0;
     auto last_update       = std::chrono::high_resolution_clock::now();

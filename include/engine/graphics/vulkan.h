@@ -4,6 +4,8 @@
 #include "engine/version.h"
 #include <string>
 #define VK_NO_PROTOTYPES
+#include <cstdint>
+#include <robin_map.h>
 #include <vulkan/vulkan_core.h>
 
 #define VK_CHECK(x)                                                                                                                        \
@@ -128,12 +130,50 @@ namespace ENGINE_NS {
             friend class VulkanPhysicalDeviceSelector;
     };
 
+    enum class VulkanQueueType : std::uint8_t {
+        GRAPHICS = VK_QUEUE_GRAPHICS_BIT,
+        COMPUTE  = VK_QUEUE_COMPUTE_BIT,
+        TRANSFER = VK_QUEUE_TRANSFER_BIT
+    };
+    inline auto operator|(const VulkanQueueType& lhs, const VulkanQueueType& rhs) -> VulkanQueueType {
+        return static_cast<VulkanQueueType>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs));
+    }
+    inline auto operator|=(VulkanQueueType& lhs, const VulkanQueueType& rhs) -> VulkanQueueType& {
+        lhs = lhs | rhs;
+        return lhs;
+    }
+    inline auto operator&(const VulkanQueueType& lhs, const VulkanQueueType& rhs) -> VulkanQueueType {
+        return static_cast<VulkanQueueType>(static_cast<std::uint8_t>(lhs) & static_cast<std::uint8_t>(rhs));
+    }
+    inline auto operator&=(VulkanQueueType& lhs, const VulkanQueueType& rhs) -> VulkanQueueType& {
+        lhs = lhs & rhs;
+        return lhs;
+    }
+    inline auto operator^(const VulkanQueueType& lhs, const VulkanQueueType& rhs) -> VulkanQueueType {
+        return static_cast<VulkanQueueType>(static_cast<std::uint8_t>(lhs) ^ static_cast<std::uint8_t>(rhs));
+    }
+    inline auto operator^=(VulkanQueueType& lhs, const VulkanQueueType& rhs) -> VulkanQueueType& {
+        lhs = lhs ^ rhs;
+        return lhs;
+    }
+
+    struct VulkanQueue {
+            std::uint32_t queue_family    = 0;
+            std::uint32_t queue_index     = 0;
+            std::uint32_t max_queue_index = 0;
+            VulkanQueueType type{};
+    };
+
     class VulkanDevice;
     class VulkanDeviceBuilder {
         public:
             auto finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice;
 
+            auto request_queue(std::string id, VulkanQueueType type) -> VulkanDeviceBuilder&;
+
         private:
+            tsl::robin_map<std::string, VulkanQueueType> queues_;
+
             friend class VulkanDevice;
             VulkanDeviceBuilder();
     };
@@ -148,10 +188,13 @@ namespace ENGINE_NS {
             auto operator=(VulkanDevice&& rhs) -> VulkanDevice&;
 
         private:
+            tsl::robin_map<std::string, VulkanQueue> queues_;
             VkDevice device_ = VK_NULL_HANDLE;
             bool moved_      = false;
 
+
             friend class VulkanDeviceBuilder;
-            VulkanDevice(VulkanPhysicalDevice& physical_device, VkDeviceCreateInfo create_info);
+            VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues, VulkanPhysicalDevice& physical_device,
+                         VkDeviceCreateInfo create_info);
     };
 } // namespace ENGINE_NS
