@@ -89,8 +89,11 @@ namespace ENGINE_NS {
             auto set_required_features_12(VkPhysicalDeviceVulkan12Features features) -> VulkanPhysicalDeviceSelector&;
             auto set_required_features_11(VkPhysicalDeviceVulkan11Features features) -> VulkanPhysicalDeviceSelector&;
             auto set_required_features_10(VkPhysicalDeviceFeatures features) -> VulkanPhysicalDeviceSelector&;
+            auto with_extension(std::string extension) -> VulkanPhysicalDeviceSelector&;
 
         private:
+            std::vector<std::string> extensions_;
+
             SDL_Window* window_ = nullptr;
             VkPhysicalDeviceVulkan14Features features_14_{};
             VkPhysicalDeviceVulkan13Features features_13_{};
@@ -111,10 +114,14 @@ namespace ENGINE_NS {
 
             auto operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice&;
 
-            VulkanPhysicalDevice()                    = default;
-            const VkPhysicalDeviceFeatures2& features = features_;
+            VulkanPhysicalDevice()                     = default;
+            const VkPhysicalDeviceFeatures2& features  = features_;
+            const std::vector<std::string>& extensions = extensions_;
+
 
         private:
+            std::vector<std::string> extensions_;
+
             VkPhysicalDevice device_ = VK_NULL_HANDLE;
             VkPhysicalDeviceFeatures2 features_{};
             VkPhysicalDeviceVulkan14Features features_14_{};
@@ -126,7 +133,7 @@ namespace ENGINE_NS {
 
             VulkanPhysicalDevice(VkPhysicalDevice device, VkPhysicalDeviceFeatures f10, VkPhysicalDeviceVulkan11Features f11,
                                  VkPhysicalDeviceVulkan12Features f12, VkPhysicalDeviceVulkan13Features f13,
-                                 VkPhysicalDeviceVulkan14Features f14);
+                                 VkPhysicalDeviceVulkan14Features f14, std::vector<std::string>&& extensions);
             friend class VulkanPhysicalDeviceSelector;
     };
 

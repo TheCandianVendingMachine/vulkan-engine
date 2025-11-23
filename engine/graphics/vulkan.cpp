@@ -142,7 +142,7 @@ auto ENGINE_NS::VulkanInstanceBuilder::finish() -> VulkanInstance {
     auto instance_extensions       = SDL_Vulkan_GetInstanceExtensions(&count);
 
     std::vector<const char*> extensions(count);
-    std::copy(instance_extensions + 0, instance_extensions + count, extensions.begin());
+    std::copy(instance_extensions, instance_extensions + count, extensions.begin());
 
     std::vector<const char*> validation_layers;
     if (with_validation_layers_) {
@@ -187,6 +187,8 @@ auto ENGINE_NS::VulkanPhysicalDevice::choose(SDL_Window* window) -> VulkanPhysic
 
 auto ENGINE_NS::VulkanPhysicalDevice::operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice& {
     if (this != &rhs && !rhs.moved_) {
+        extensions_        = std::move(rhs.extensions_);
+
         device_            = std::move(rhs.device_);
 
         features_          = std::move(rhs.features_);
@@ -208,8 +210,10 @@ auto ENGINE_NS::VulkanPhysicalDevice::operator=(VulkanPhysicalDevice&& rhs) noex
 
 ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device, VkPhysicalDeviceFeatures f10,
                                                       VkPhysicalDeviceVulkan11Features f11, VkPhysicalDeviceVulkan12Features f12,
-                                                      VkPhysicalDeviceVulkan13Features f13, VkPhysicalDeviceVulkan14Features f14) :
-    device_(device), features_10_(f10), features_11_(f11), features_12_(f12), features_13_(f13), features_14_(f14) {
+                                                      VkPhysicalDeviceVulkan13Features f13, VkPhysicalDeviceVulkan14Features f14,
+                                                      std::vector<std::string>&& extensions) :
+    device_(device), features_10_(f10), features_11_(f11), features_12_(f12), features_13_(f13), features_14_(f14),
+    extensions_(extensions) {
     ZoneScoped;
 
     features_.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -344,6 +348,31 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
 
         logger.debug("Device has all requested features");
 
+        std::uint32_t extension_count = 0;
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
+        std::vector<VkExtensionProperties> device_extensions(extension_count);
+        vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, device_extensions.data());
+
+        bool found = false;
+        for (auto& desired_extension : extensions_) {
+            found = false;
+            for (auto& device_extension : device_extensions) {
+                if (device_extension.extensionName == desired_extension) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                logger.debug("Could not find extension '{}' in device", desired_extension);
+                break;
+            }
+        }
+        if (!found) {
+            logger.debug("Device does not all wanted extensions");
+            continue;
+        }
+        logger.debug("Device has all requested extensions");
+
         int score = 10'000;
         if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
             score -= 1'374;
@@ -369,7 +398,8 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
         ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
     }
 
-    return VulkanPhysicalDevice(available_devices[0].first, features_10_, features_11_, features_12_, features_13_, features_14_);
+    return VulkanPhysicalDevice(available_devices[0].first, features_10_, features_11_, features_12_, features_13_, features_14_,
+                                std::move(extensions_));
 }
 
 auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_minimum_vulkan_version(Version version) -> VulkanPhysicalDeviceSelector& {
@@ -403,6 +433,11 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_11(VkPhysica
 
 auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_10(VkPhysicalDeviceFeatures features) -> VulkanPhysicalDeviceSelector& {
     features_10_ = features;
+    return *this;
+}
+
+auto ENGINE_NS::VulkanPhysicalDeviceSelector::with_extension(std::string extension) -> VulkanPhysicalDeviceSelector& {
+    extensions_.emplace_back(extension);
     return *this;
 }
 
@@ -474,6 +509,7 @@ ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&&
 }
 
 auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice {
+    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     ZoneScoped;
 
     std::uint32_t count = 0;
@@ -552,12 +588,21 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
         queue_create_info.push_back(info);
     }
 
-    VkDeviceCreateInfo create_info{};
-    create_info.sType                = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    create_info.pNext                = &physical_device.features;
+    std::vector<const char*> extensions;
+    for (auto& extension : physical_device.extensions) {
+        extensions.push_back(extension.c_str());
+        logger.debug("Loading extension '{}'", extension);
+    }
 
-    create_info.queueCreateInfoCount = static_cast<std::uint32_t>(queue_create_info.size());
-    create_info.pQueueCreateInfos    = queue_create_info.data();
+    VkDeviceCreateInfo create_info{};
+    create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    create_info.pNext                   = &physical_device.features;
+
+    create_info.queueCreateInfoCount    = static_cast<std::uint32_t>(queue_create_info.size());
+    create_info.pQueueCreateInfos       = queue_create_info.data();
+
+    create_info.enabledExtensionCount   = static_cast<std::uint32_t>(extensions.size());
+    create_info.ppEnabledExtensionNames = extensions.data();
 
     return VulkanDevice(std::move(queues), physical_device, create_info);
 }
@@ -570,7 +615,6 @@ auto ENGINE_NS::VulkanDeviceBuilder::request_queue(std::string name, VulkanQueue
     queue_counts_.at(type)++;
     return *this;
 }
-
 
 ENGINE_NS::VulkanDeviceBuilder::VulkanDeviceBuilder() {
 }

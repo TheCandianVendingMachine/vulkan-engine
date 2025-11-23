@@ -104,6 +104,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .set_minimum_vulkan_version(Version(1, 3, 0))
                            .set_required_features_12(features12)
                            .set_required_features_13(features)
+                           .with_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
                            .finish(vulkan_instance_);
 
     device_ = VulkanDevice::build()
