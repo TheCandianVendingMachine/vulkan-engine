@@ -30,6 +30,8 @@ namespace ENGINE_NS {
 
             VulkanInstance vulkan_instance_;
             VulkanSurface surface_;
+            VulkanPhysicalDevice physical_device_;
+            VulkanDevice device_;
 
             auto init_vulkan_() -> void;
             auto draw_() -> void;

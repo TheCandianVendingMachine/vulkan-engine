@@ -5,6 +5,7 @@
 #include <Volk/volk.h>
 // clang-format enable
 #include <SDL3/SDL_vulkan.h>
+#include <algorithm>
 #include <cstdint>
 #include <type_traits>
 #include <utility>
@@ -179,13 +180,35 @@ auto ENGINE_NS::VulkanPhysicalDevice::choose(SDL_Window* window) -> VulkanPhysic
 
 auto ENGINE_NS::VulkanPhysicalDevice::operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice& {
     if (this != &rhs && !rhs.moved_) {
-        device_    = std::move(rhs.device_);
-        rhs.moved_ = true;
+        device_            = std::move(rhs.device_);
+
+        features_          = std::move(rhs.features_);
+        features_10_       = std::move(rhs.features_10_);
+        features_11_       = std::move(rhs.features_11_);
+        features_12_       = std::move(rhs.features_12_);
+        features_13_       = std::move(rhs.features_13_);
+        features_14_       = std::move(rhs.features_14_);
+
+        features_.pNext    = &features_11_;
+        features_11_.pNext = &features_12_;
+        features_12_.pNext = &features_13_;
+        features_13_.pNext = &features_14_;
+
+        rhs.moved_         = true;
     }
     return *this;
 }
 
-ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device) : device_(device) {
+ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device, VkPhysicalDeviceFeatures f10,
+                                                      VkPhysicalDeviceVulkan11Features f11, VkPhysicalDeviceVulkan12Features f12,
+                                                      VkPhysicalDeviceVulkan13Features f13, VkPhysicalDeviceVulkan14Features f14) :
+    device_(device), features_10_(f10), features_11_(f11), features_12_(f12), features_13_(f13), features_14_(f14) {
+    features_.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features_.features = features_10_;
+    features_.pNext    = &features_11_;
+    features_11_.pNext = &features_12_;
+    features_12_.pNext = &features_13_;
+    features_13_.pNext = &features_14_;
 }
 
 auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -> VulkanPhysicalDevice {
@@ -335,7 +358,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
         ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
     }
 
-    return VulkanPhysicalDevice(available_devices[0].first);
+    return VulkanPhysicalDevice(available_devices[0].first, features_10_, features_11_, features_12_, features_13_, features_14_);
 }
 
 auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_minimum_vulkan_version(Version version) -> VulkanPhysicalDeviceSelector& {
@@ -373,6 +396,10 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::set_required_features_10(VkPhysica
 }
 
 ENGINE_NS::VulkanPhysicalDeviceSelector::VulkanPhysicalDeviceSelector(SDL_Window* window) : window_(window) {
+    features_11_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    features_12_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features_13_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    features_14_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_4_FEATURES;
 }
 
 ENGINE_NS::VulkanSurface::VulkanSurface(SDL_Window* window, VulkanInstance& instance) : window_(window), instance_(&instance) {
@@ -402,4 +429,43 @@ auto ENGINE_NS::VulkanSurface::operator=(VulkanSurface&& rhs) -> VulkanSurface& 
         rhs.moved_      = true;
     }
     return *this;
+}
+
+auto ENGINE_NS::VulkanDevice::build() -> VulkanDeviceBuilder {
+    return VulkanDeviceBuilder();
+}
+
+auto ENGINE_NS::VulkanDevice::cleanup() -> void {
+    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    if (this->moved_) {
+        logger.info("Device has already been moved or destroyed");
+        return;
+    }
+    logger.info("Destroying device");
+    vkDestroyDevice(device_, nullptr);
+    this->device_ = VK_NULL_HANDLE;
+    this->moved_  = true;
+}
+
+auto ENGINE_NS::VulkanDevice::operator=(VulkanDevice&& rhs) -> VulkanDevice& {
+    if (!rhs.moved_ && &rhs != this) {
+        this->device_ = std::move(rhs.device_);
+        rhs.moved_    = true;
+    }
+    return *this;
+}
+
+ENGINE_NS::VulkanDevice::VulkanDevice(VulkanPhysicalDevice& physical_device, VkDeviceCreateInfo create_info) {
+    VK_CHECK(vkCreateDevice(physical_device.device, &create_info, nullptr, &device_));
+}
+
+auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice {
+    VkDeviceCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    create_info.pNext = &physical_device.features;
+
+    return VulkanDevice(physical_device, create_info);
+}
+
+ENGINE_NS::VulkanDeviceBuilder::VulkanDeviceBuilder() {
 }

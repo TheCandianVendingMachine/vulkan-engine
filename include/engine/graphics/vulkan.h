@@ -109,13 +109,49 @@ namespace ENGINE_NS {
 
             auto operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice&;
 
-            VulkanPhysicalDevice() = default;
+            VulkanPhysicalDevice()                    = default;
+            const VkPhysicalDeviceFeatures2& features = features_;
 
         private:
             VkPhysicalDevice device_ = VK_NULL_HANDLE;
-            bool moved_              = false;
+            VkPhysicalDeviceFeatures2 features_{};
+            VkPhysicalDeviceVulkan14Features features_14_{};
+            VkPhysicalDeviceVulkan13Features features_13_{};
+            VkPhysicalDeviceVulkan12Features features_12_{};
+            VkPhysicalDeviceVulkan11Features features_11_{};
+            VkPhysicalDeviceFeatures features_10_{};
+            bool moved_ = false;
 
-            VulkanPhysicalDevice(VkPhysicalDevice device);
+            VulkanPhysicalDevice(VkPhysicalDevice device, VkPhysicalDeviceFeatures f10, VkPhysicalDeviceVulkan11Features f11,
+                                 VkPhysicalDeviceVulkan12Features f12, VkPhysicalDeviceVulkan13Features f13,
+                                 VkPhysicalDeviceVulkan14Features f14);
             friend class VulkanPhysicalDeviceSelector;
+    };
+
+    class VulkanDevice;
+    class VulkanDeviceBuilder {
+        public:
+            auto finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice;
+
+        private:
+            friend class VulkanDevice;
+            VulkanDeviceBuilder();
+    };
+
+    class VulkanDevice {
+        public:
+            VulkanDevice() = default;
+
+            static auto build() -> VulkanDeviceBuilder;
+            auto cleanup() -> void;
+
+            auto operator=(VulkanDevice&& rhs) -> VulkanDevice&;
+
+        private:
+            VkDevice device_ = VK_NULL_HANDLE;
+            bool moved_      = false;
+
+            friend class VulkanDeviceBuilder;
+            VulkanDevice(VulkanPhysicalDevice& physical_device, VkDeviceCreateInfo create_info);
     };
 } // namespace ENGINE_NS

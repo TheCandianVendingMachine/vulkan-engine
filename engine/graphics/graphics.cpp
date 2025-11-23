@@ -65,6 +65,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     logger.info("Cleaning up Vulkan");
     surface_.cleanup();
     vulkan_instance_.cleanup();
+    device_.cleanup();
 
     logger.info("Cleaning up SDL");
     {
@@ -99,11 +100,13 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     features12.bufferDeviceAddress = true;
     features12.descriptorIndexing  = true;
 
-    VulkanPhysicalDevice::choose(window_)
-        .set_minimum_vulkan_version(Version(1, 3, 0))
-        .set_required_features_12(features12)
-        .set_required_features_13(features)
-        .finish(vulkan_instance_);
+    physical_device_               = VulkanPhysicalDevice::choose(window_)
+                           .set_minimum_vulkan_version(Version(1, 3, 0))
+                           .set_required_features_12(features12)
+                           .set_required_features_13(features)
+                           .finish(vulkan_instance_);
+
+    device_ = VulkanDevice::build().finish(physical_device_);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {
