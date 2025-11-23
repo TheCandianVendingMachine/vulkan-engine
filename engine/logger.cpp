@@ -1,5 +1,6 @@
 #include "engine/logger.h"
 #include <Tracy/Tracy.hpp>
+#include <chrono>
 #include <cstdio>
 #include <ranges>
 
@@ -43,7 +44,12 @@ auto logger::level_to_string(Level level) -> std::string_view {
 }
 
 auto entry_to_context(fmt::format_context& ctx, const logger::Entry& entry) -> fmt::format_context::iterator {
-    return fmt::format_to(ctx.out(), "[{}] ({}) {}", logger::level_to_string(entry.level), entry.owner, entry.message);
+    auto hours        = static_cast<std::uint64_t>(std::floor(entry.log_time_.count() / 60 / 60));
+    auto minutes      = static_cast<std::uint64_t>(std::floor(entry.log_time_.count() / 60));
+    auto seconds      = static_cast<std::uint64_t>(std::floor(entry.log_time_.count()));
+    auto milliseconds = static_cast<std::uint64_t>(10'000.0 * (entry.log_time_.count() - std::floor(entry.log_time_.count())));
+    return fmt::format_to(ctx.out(), "{:0>2}:{:0>2}:{:0>2}.{:0>4} [{}] ({}) {}", hours, minutes, seconds, milliseconds,
+                          logger::level_to_string(entry.level), entry.owner, entry.message);
 }
 
 auto fmt::formatter<logger::Entry>::format(logger::Entry entry, fmt::format_context& ctx) const -> fmt::format_context::iterator {
@@ -73,7 +79,8 @@ auto LoggerBuilder::build() -> Logger {
     return Logger(m_identifier, std::move(m_streams));
 }
 
-Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams) : m_streams(std::move(streams)), m_identifier(identifier) {
+Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams) :
+    m_streams(std::move(streams)), m_identifier(identifier), start_time_(logger::Clock::now()) {
 }
 
 auto Logger::last_entries(uint64_t count) const -> std::vector<const logger::Entry*> {
@@ -124,7 +131,9 @@ auto Logger::set_index(uint64_t index) -> void {
 }
 
 void Logger::append(logger::Level level, std::string&& message) {
-    logger::Entry entry{m_log_idx, level, m_identifier, std::move(message)};
+    logger::Entry entry{
+      m_log_idx, level, m_identifier, std::move(message), logger::Clock::now() - start_time_,
+    };
     for (auto stream : m_streams) {
         if (stream.level >= level) {
             fmt::print(stream.file, "{}\n", entry);

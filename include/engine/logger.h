@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+#include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <deque>
@@ -11,6 +12,8 @@
 
 namespace ENGINE_NS {
     namespace logger {
+        using Clock = std::chrono::steady_clock;
+
         enum class Level : std::uint8_t {
             DEBUG   = 1 << 3,
             ERROR   = 1 << 2,
@@ -33,6 +36,7 @@ namespace ENGINE_NS {
                 Level level{};
                 std::string owner{};
                 std::string message{};
+                std::chrono::duration<double> log_time_{};
         };
     } // namespace logger
 
@@ -83,6 +87,7 @@ namespace ENGINE_NS {
 
         private:
             uint64_t m_log_idx{};
+            std::chrono::time_point<logger::Clock> start_time_{};
             std::vector<Stream> m_streams{};
             std::deque<logger::Entry> m_entries{};
             std::string m_identifier{};
