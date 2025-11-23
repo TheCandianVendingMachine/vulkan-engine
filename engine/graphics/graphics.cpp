@@ -63,6 +63,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
 
     logger.info("Cleaning up Vulkan");
+    swapchain_.cleanup();
     device_.cleanup();
     surface_.cleanup();
     vulkan_instance_.cleanup();
@@ -108,11 +109,22 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .finish(vulkan_instance_);
 
     device_ = VulkanDevice::build()
-                  .request_queue("main", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .request_queue("main2", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .request_queue("main3", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+                  .request_queue("graphics", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
                   .request_queue("transfer", VulkanQueueType::TRANSFER)
                   .finish(physical_device_);
+
+    create_swapchain();
+}
+
+auto ENGINE_NS::GraphicsEngine::create_swapchain() -> void {
+    swapchain_ =
+        VulkanSwapchain::build()
+            .set_desired_format(VkSurfaceFormatKHR{.format = VK_FORMAT_B8G8R8A8_UNORM, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})
+            .set_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+            .set_extent(::linalg::Vector2<unsigned int>(window_extent_.x, window_extent_.y))
+            .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
+            .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+            .finish(physical_device_, surface_, device_);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {

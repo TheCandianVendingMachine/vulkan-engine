@@ -32,8 +32,10 @@ namespace ENGINE_NS {
             VulkanSurface surface_;
             VulkanPhysicalDevice physical_device_;
             VulkanDevice device_;
+            VulkanSwapchain swapchain_;
 
             auto init_vulkan_() -> void;
+            auto create_swapchain() -> void;
             auto draw_() -> void;
     };
 } // namespace ENGINE_NS

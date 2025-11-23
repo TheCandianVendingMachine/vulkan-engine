@@ -5,6 +5,7 @@
 #include <string>
 #define VK_NO_PROTOTYPES
 #include <cstdint>
+#include <linalg/vector.h>
 #include <robin_map.h>
 #include <vulkan/vulkan_core.h>
 
@@ -70,6 +71,8 @@ namespace ENGINE_NS {
 
             auto cleanup() -> void;
             auto operator=(VulkanSurface&& rhs) -> VulkanSurface&;
+
+            VkSurfaceKHR& surface = surface_;
 
         private:
             VkSurfaceKHR surface_     = VK_NULL_HANDLE;
@@ -195,6 +198,8 @@ namespace ENGINE_NS {
 
             auto operator=(VulkanDevice&& rhs) -> VulkanDevice&;
 
+            VkDevice& device = device_;
+
         private:
             tsl::robin_map<std::string, VulkanQueue> queues_;
             VkDevice device_ = VK_NULL_HANDLE;
@@ -204,5 +209,48 @@ namespace ENGINE_NS {
             friend class VulkanDeviceBuilder;
             VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues, VulkanPhysicalDevice& physical_device,
                          VkDeviceCreateInfo create_info);
+    };
+
+    class VulkanSwapchain;
+    class VulkanSwapchainBuilder {
+        public:
+            auto finish(VulkanPhysicalDevice& physical_device, VulkanSurface& surface, VulkanDevice& device) -> VulkanSwapchain;
+
+            auto set_desired_format(VkSurfaceFormatKHR format) -> VulkanSwapchainBuilder&;
+            auto set_present_mode(VkPresentModeKHR present) -> VulkanSwapchainBuilder&;
+            auto set_extent(VkExtent2D extent) -> VulkanSwapchainBuilder&;
+            auto set_extent(::linalg::Vector2<unsigned int> extent) -> VulkanSwapchainBuilder&;
+            auto add_image_usage_flags(VkImageUsageFlags flags) -> VulkanSwapchainBuilder&;
+
+
+        private:
+            VkSurfaceFormatKHR desired_format_{};
+            VkPresentModeKHR present_mode_{};
+            VkExtent2D extent_{};
+            VkImageUsageFlags image_usage_flags_{};
+
+            friend class VulkanSwapchain;
+            VulkanSwapchainBuilder() = default;
+    };
+
+    class VulkanSwapchain {
+        public:
+            VulkanSwapchain() = default;
+
+            static auto build() -> VulkanSwapchainBuilder;
+            auto operator=(VulkanSwapchain&& rhs) -> VulkanSwapchain&;
+            auto cleanup() -> void;
+
+        private:
+            VulkanDevice* device_     = nullptr;
+            VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
+            VkFormat format_{};
+            VkExtent2D extent_{};
+            std::vector<VkImage> images_;
+            std::vector<VkImageView> views_;
+            bool moved_ = false;
+
+            friend class VulkanSwapchainBuilder;
+            VulkanSwapchain(VkSwapchainCreateInfoKHR create_info, VulkanDevice& device);
     };
 } // namespace ENGINE_NS
