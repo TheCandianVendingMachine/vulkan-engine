@@ -173,6 +173,7 @@ namespace ENGINE_NS {
 
         private:
             tsl::robin_map<std::string, VulkanQueueType> queues_;
+            tsl::robin_map<VulkanQueueType, std::uint32_t> queue_counts_;
 
             friend class VulkanDevice;
             VulkanDeviceBuilder();

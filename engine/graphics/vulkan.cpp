@@ -467,46 +467,71 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
     std::vector<VkQueueFamilyProperties> properties(count);
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device.device, &count, properties.data());
 
+    struct FamilyAllocation {
+            std::uint32_t family = 0;
+            std::uint32_t count  = 0;
+            std::vector<float> priorities;
+    };
+
     tsl::robin_map<std::string, VulkanQueue> queues;
     tsl::robin_map<std::uint32_t, std::uint32_t> queue_family_map;
     tsl::robin_set<std::string> allocated_queues;
-    std::uint32_t queue_family_index = 0;
-    for (auto& queue : properties) {
-        queue_family_map.insert({queue_family_index, 0});
-        for (auto& [name, requested] : queues_) {
-            if (allocated_queues.contains(name)) {
+    std::vector<FamilyAllocation> queue_family_allocations;
+
+    for (std::uint32_t idx = 0; idx < properties.size(); idx++) {
+        queue_family_allocations.emplace_back(idx++, 0);
+    }
+
+    for (auto& [name, requested] : queues_) {
+        std::uint32_t queue_family_index = 0;
+        std::uint32_t best_queue_family  = 0;
+        std::uint32_t best_difference    = ~std::uint32_t(0);
+        for (auto& queue : properties) {
+            if (!queue_family_map.contains(queue_family_index)) {
+                queue_family_map.insert({queue_family_index, 0});
+            }
+            if (queue_family_map.at(queue_family_index) >= queue.queueCount) {
                 continue;
             }
-            if ((queue.queueFlags & static_cast<VkQueueFlags>(requested)) != 0) {
-                std::uint32_t& idx = queue_family_map.at(queue_family_index);
-                queues.insert({
-                  name, VulkanQueue{.queue_family    = queue_family_index,
-                                    .queue_index     = idx,
-                                    .max_queue_index = queue.queueCount,
-                                    .type            = requested}
-                });
-                allocated_queues.insert(name);
-                idx += 1;
-                if (idx >= queue.queueCount) {
-                    break;
-                }
-            }
 
-            if (allocated_queues.size() == queues_.size()) {
-                break;
+            auto difference = queue.queueFlags - static_cast<VkQueueFlags>(requested);
+            if ((queue.queueFlags & static_cast<VkQueueFlags>(requested)) != 0 && difference < best_difference) {
+                best_queue_family = queue_family_index;
+                best_difference   = difference;
             }
+            queue_family_index++;
         }
-        queue_family_index++;
+
+        queue_family_allocations[best_queue_family].count++;
+        queue_family_allocations[best_queue_family].priorities.push_back(
+            1.f / static_cast<float>(queue_family_allocations[best_queue_family].count));
+
+        std::uint32_t& idx = queue_family_map.at(best_queue_family);
+        queues.insert({
+          name, VulkanQueue{.queue_family    = best_queue_family,
+                            .queue_index     = idx,
+                            .max_queue_index = properties[best_queue_family].queueCount,
+                            .type            = requested}
+        });
+        allocated_queues.insert(name);
+        idx += 1;
+
+        if (allocated_queues.size() == queues_.size()) {
+            break;
+        }
     }
 
     std::vector<VkDeviceQueueCreateInfo> queue_create_info;
-    std::vector<float> priorities = {1.f};
-    for (auto& [_, queue] : queues) {
+    for (auto& family : queue_family_allocations) {
         VkDeviceQueueCreateInfo info{};
         info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-        info.queueCount       = 1;
-        info.queueFamilyIndex = queue.queue_family;
-        info.pQueuePriorities = priorities.data();
+        info.queueCount       = family.count;
+        info.queueFamilyIndex = family.family;
+        info.pQueuePriorities = family.priorities.data();
+
+        if (info.queueCount == 0) {
+            continue;
+        }
 
         queue_create_info.push_back(info);
     }
@@ -523,6 +548,10 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
 
 auto ENGINE_NS::VulkanDeviceBuilder::request_queue(std::string name, VulkanQueueType type) -> VulkanDeviceBuilder& {
     queues_.insert({name, type});
+    if (!queue_counts_.contains(type)) {
+        queue_counts_.insert({type, 0});
+    }
+    queue_counts_.at(type)++;
     return *this;
 }
 

@@ -108,6 +108,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
 
     device_ = VulkanDevice::build()
                   .request_queue("main", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+                  .request_queue("transfer", VulkanQueueType::TRANSFER)
                   .finish(physical_device_);
 }
 
