@@ -76,7 +76,6 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
     };
 
     tsl::robin_map<std::string, VulkanQueue> queues;
-    tsl::robin_map<std::uint32_t, std::uint32_t> queue_family_map;
     tsl::robin_set<std::string> allocated_queues;
     std::vector<FamilyAllocation> queue_family_allocations;
 
@@ -89,17 +88,14 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
         std::uint32_t best_queue_family  = 0;
         std::uint32_t best_difference    = ~std::uint32_t(0);
         for (auto& queue : properties) {
-            if (!queue_family_map.contains(queue_family_index)) {
-                queue_family_map.insert({queue_family_index, 0});
-            }
-            if (queue_family_map.at(queue_family_index) >= queue.queueCount) {
+            if (queue_family_allocations[queue_family_index].count >= queue.queueCount) {
                 queue_family_index++;
                 continue;
             }
 
-            auto difference = queue.queueFlags - static_cast<VkQueueFlags>(requested);
-            if ((queue.queueFlags & static_cast<VkQueueFlags>(requested)) == static_cast<VkQueueFlags>(requested) &&
-                difference < best_difference) {
+            auto difference    = queue.queueFlags - static_cast<VkQueueFlags>(requested);
+            auto enabled_flags = queue.queueFlags & static_cast<VkQueueFlags>(requested);
+            if (enabled_flags == static_cast<VkQueueFlags>(requested) && difference < best_difference) {
                 best_queue_family = queue_family_index;
                 best_difference   = difference;
             }
@@ -113,14 +109,13 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
             }
         }
 
+        std::uint32_t idx = queue_family_allocations[best_queue_family].count;
         queue_family_allocations[best_queue_family].count++;
         queue_family_allocations[best_queue_family].priorities.push_back(1.f / static_cast<float>(queues_with_same_type));
 
-        std::uint32_t& idx = queue_family_map.at(best_queue_family);
         queues.insert({name, VulkanQueue(best_queue_family, std::min(idx, properties[best_queue_family].queueCount - 1),
                                          properties[best_queue_family].queueCount, requested)});
         allocated_queues.insert(name);
-        idx += 1;
 
         if (allocated_queues.size() == queues_.size()) {
             break;

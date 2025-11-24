@@ -22,12 +22,12 @@ auto ENGINE_NS::VulkanQueue::get() const -> VkQueue {
 }
 
 ENGINE_NS::VulkanQueue::VulkanQueue(const VulkanQueue& rhs) :
-    queue_family_(rhs.queue_family_), queue_index_(rhs.queue_family_), max_queue_index_(rhs.max_queue_index_), type_(rhs.type_),
+    queue_family_(rhs.queue_family_), queue_index_(rhs.queue_index_), max_queue_index_(rhs.max_queue_index_), type_(rhs.type_),
     device_(rhs.device_), associated_queue_(rhs.associated_queue_) {
 }
 
 ENGINE_NS::VulkanQueue::VulkanQueue(VulkanQueue&& rhs) noexcept :
-    queue_family_(std::move(rhs.queue_family_)), queue_index_(std::move(rhs.queue_family_)),
+    queue_family_(std::move(rhs.queue_family_)), queue_index_(std::move(rhs.queue_index_)),
     max_queue_index_(std::move(rhs.max_queue_index_)), type_(std::move(rhs.type_)), device_(std::move(rhs.device_)),
     associated_queue_(std::move(rhs.associated_queue_)) {
 }
