@@ -6,6 +6,7 @@
 // clang-format enable
 #include <Tracy/Tracy.hpp>
 #include <cstdint>
+#include <robin_map.h>
 #include <robin_set.h>
 #include <type_traits>
 #include <utility>
@@ -27,9 +28,10 @@ auto ENGINE_NS::VulkanDevice::cleanup() -> void {
     this->moved_  = true;
 }
 
-auto ENGINE_NS::VulkanDevice::operator=(VulkanDevice&& rhs) -> VulkanDevice& {
+auto ENGINE_NS::VulkanDevice::operator=(VulkanDevice&& rhs) noexcept -> VulkanDevice& {
     if (!rhs.moved_ && &rhs != this) {
         this->device_ = std::move(rhs.device_);
+        this->queues_ = std::move(rhs.queues_);
         rhs.moved_    = true;
     }
     return *this;

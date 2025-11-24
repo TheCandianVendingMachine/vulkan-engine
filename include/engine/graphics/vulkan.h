@@ -19,6 +19,10 @@
 
 struct SDL_Window;
 namespace ENGINE_NS {
+    auto command_pool_create_info(std::uint32_t family_index) -> VkCommandPoolCreateInfo;
+    auto command_buffer_allocate_info(VkCommandPool command_pool) -> VkCommandBufferAllocateInfo;
+
+
     class VulkanInstance;
     class VulkanInstanceBuilder {
         public:
@@ -70,7 +74,7 @@ namespace ENGINE_NS {
             VulkanSurface(SDL_Window* window, VulkanInstance& instance);
 
             auto cleanup() -> void;
-            auto operator=(VulkanSurface&& rhs) -> VulkanSurface&;
+            auto operator=(VulkanSurface&& rhs) noexcept -> VulkanSurface&;
 
             VkSurfaceKHR& surface = surface_;
 
@@ -173,6 +177,13 @@ namespace ENGINE_NS {
             auto get() -> VkQueue;
             auto get() const -> VkQueue;
 
+            VulkanQueue(const VulkanQueue& rhs);
+            VulkanQueue(VulkanQueue&& rhs) noexcept;
+            auto operator=(const VulkanQueue& rhs) -> VulkanQueue&;
+            auto operator=(VulkanQueue&& rhs) noexcept -> VulkanQueue&;
+
+            const std::uint32_t& family = queue_family_;
+
         private:
             VulkanQueue(std::uint32_t queue_family, std::uint32_t queue_index, std::uint32_t max_queue_index, VulkanQueueType type);
 
@@ -208,7 +219,7 @@ namespace ENGINE_NS {
             static auto build() -> VulkanDeviceBuilder;
             auto cleanup() -> void;
 
-            auto operator=(VulkanDevice&& rhs) -> VulkanDevice&;
+            auto operator=(VulkanDevice&& rhs) noexcept -> VulkanDevice&;
 
             VkDevice& device                                       = device_;
             const tsl::robin_map<std::string, VulkanQueue>& queues = queues_;
@@ -251,7 +262,7 @@ namespace ENGINE_NS {
             VulkanSwapchain() = default;
 
             static auto build() -> VulkanSwapchainBuilder;
-            auto operator=(VulkanSwapchain&& rhs) -> VulkanSwapchain&;
+            auto operator=(VulkanSwapchain&& rhs) noexcept -> VulkanSwapchain&;
             auto cleanup() -> void;
 
         private:

@@ -63,6 +63,13 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
 
     logger.info("Cleaning up Vulkan");
+    vkDeviceWaitIdle(device_.device);
+    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+        if (frames_[idx].tracy_context) {
+            TracyVkDestroy(frames_[idx].tracy_context);
+        }
+        vkDestroyCommandPool(device_.device, frames_[idx].command_pool, nullptr);
+    }
     swapchain_.cleanup();
     device_.cleanup();
     surface_.cleanup();
@@ -76,6 +83,10 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
     initialised_ = false;
     FrameMarkEnd(StaticNames::GraphicsDeinit);
+}
+
+auto ENGINE_NS::GraphicsEngine::current_frame() -> graphics::FrameData& {
+    return frames_[frame_number_ % graphics::FRAME_OVERLAP];
 }
 
 auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
@@ -113,10 +124,23 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                   .request_queue("transfer", VulkanQueueType::TRANSFER)
                   .finish(physical_device_);
 
-    create_swapchain();
+    create_swapchain_();
+
+    graphics_queue_                   = device_.queues.at("graphics").get();
+    transfer_queue_                   = device_.queues.at("transfer").get();
+
+    VkCommandPoolCreateInfo pool_info = command_pool_create_info(device_.queues.at("graphics").family);
+    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+        VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frames_[idx].command_pool));
+
+        VkCommandBufferAllocateInfo buffer_alloc = command_buffer_allocate_info(frames_[idx].command_pool);
+        VK_CHECK(vkAllocateCommandBuffers(device_.device, &buffer_alloc, &frames_[idx].main_command_buffer));
+        frames_[idx].tracy_context =
+            TracyVkContext(physical_device_.device, device_.device, device_.queues.at("graphics").get(), frames_[idx].main_command_buffer);
+    }
 }
 
-auto ENGINE_NS::GraphicsEngine::create_swapchain() -> void {
+auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
     swapchain_ =
         VulkanSwapchain::build()
             .set_desired_format(VkSurfaceFormatKHR{.format = VK_FORMAT_B8G8R8A8_UNORM, .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR})

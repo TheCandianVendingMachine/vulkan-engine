@@ -26,7 +26,7 @@ auto ENGINE_NS::VulkanSurface::cleanup() -> void {
     surface_  = VK_NULL_HANDLE;
 }
 
-auto ENGINE_NS::VulkanSurface::operator=(VulkanSurface&& rhs) -> VulkanSurface& {
+auto ENGINE_NS::VulkanSurface::operator=(VulkanSurface&& rhs) noexcept -> VulkanSurface& {
     if (&rhs != this && !rhs.moved_) {
         this->instance_ = std::move(rhs.instance_);
         this->surface_  = std::move(rhs.surface_);

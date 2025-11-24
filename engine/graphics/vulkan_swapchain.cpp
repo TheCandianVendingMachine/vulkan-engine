@@ -13,7 +13,7 @@ auto ENGINE_NS::VulkanSwapchain::build() -> VulkanSwapchainBuilder {
     return VulkanSwapchainBuilder{};
 }
 
-auto ENGINE_NS::VulkanSwapchain::operator=(VulkanSwapchain&& rhs) -> VulkanSwapchain& {
+auto ENGINE_NS::VulkanSwapchain::operator=(VulkanSwapchain&& rhs) noexcept -> VulkanSwapchain& {
     if (!rhs.moved_ && this != &rhs) {
         this->device_    = std::move(rhs.device_);
         this->extent_    = std::move(rhs.extent_);
