@@ -73,6 +73,7 @@ ENGINE_NS::VulkanSwapchain::VulkanSwapchain(VkSwapchainCreateInfoKHR create_info
 
 auto ENGINE_NS::VulkanSwapchainBuilder::finish(VulkanPhysicalDevice& physical_device, VulkanSurface& surface, VulkanDevice& device)
     -> VulkanSwapchain {
+    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     VkSurfaceCapabilitiesKHR capabilities{};
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device.device, surface.surface, &capabilities);
 
@@ -97,6 +98,58 @@ auto ENGINE_NS::VulkanSwapchainBuilder::finish(VulkanPhysicalDevice& physical_de
         default:
             create_info.minImageCount = capabilities.minImageCount;
             break;
+    }
+
+    std::uint32_t format_count = 0;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device.device, surface.surface, &format_count, nullptr);
+    std::vector<VkSurfaceFormatKHR> formats(format_count);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device.device, surface.surface, &format_count, formats.data());
+    bool does_format_exist                = false;
+    bool does_color_space_exist           = false;
+    bool does_combination_exist           = false;
+
+    std::size_t idx                       = 0;
+    std::size_t first_similar_format      = 0;
+    std::size_t first_similar_color_space = 0;
+
+    for (auto& format : formats) {
+        bool format_equals       = format.format == create_info.imageFormat;
+        bool colour_space_equals = format.colorSpace == create_info.imageColorSpace;
+        if (format_equals && !does_format_exist) {
+            first_similar_format = idx;
+            does_format_exist    = true;
+        }
+        if (colour_space_equals && !does_color_space_exist) {
+            first_similar_color_space = idx;
+            does_color_space_exist    = true;
+        }
+        if (format_equals && colour_space_equals) {
+            does_combination_exist = true;
+            break;
+        }
+        idx++;
+    }
+
+    if (!does_combination_exist) {
+        assert(!does_format_exist || !does_color_space_exist);
+        if (!does_format_exist && !does_color_space_exist) {
+            logger.warning("Requested format and color space does not exist on device. Falling back to a valid format");
+            if (formats.size() > 0) {
+                create_info.imageFormat     = formats[0].format;
+                create_info.imageColorSpace = formats[0].colorSpace;
+            } else {
+                crash(ErrorCode::VULKAN_ERROR, __LINE__, __FUNCTION__, __FILE__, "No formats exist on the device for this surface");
+            }
+        } else if (does_format_exist && !does_color_space_exist) {
+            logger.warning(
+                "Requested format exists on device, however the desired colour space does not. Falling back to a valid color space");
+            create_info.imageColorSpace = formats[first_similar_color_space].colorSpace;
+        } else if (!does_format_exist && does_color_space_exist) {
+            logger.warning("Requested color space exists on device, however the desired format does not. Falling back to a valid format");
+            create_info.imageFormat = formats[first_similar_format].format;
+        }
+    } else {
+        logger.debug("Requested format and color space exists.");
     }
 
     return VulkanSwapchain(create_info, device);

@@ -228,6 +228,10 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
         ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
     }
 
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(available_devices[0].first, &properties);
+    logger.info("Using {}", properties.deviceName);
+
     return VulkanPhysicalDevice(available_devices[0].first, features_10_, features_11_, features_12_, features_13_, features_14_,
                                 std::move(extensions_));
 }
