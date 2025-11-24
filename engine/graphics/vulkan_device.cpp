@@ -107,7 +107,8 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
         queue_family_allocations[best_queue_family].priorities.push_back(1.f / static_cast<float>(queues_with_same_type));
 
         std::uint32_t& idx = queue_family_map.at(best_queue_family);
-        queues.insert({name, VulkanQueue(best_queue_family, idx, properties[best_queue_family].queueCount, requested)});
+        queues.insert({name, VulkanQueue(best_queue_family, std::min(idx, properties[best_queue_family].queueCount - 1),
+                                         properties[best_queue_family].queueCount, requested)});
         allocated_queues.insert(name);
         idx += 1;
 
