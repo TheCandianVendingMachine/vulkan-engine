@@ -49,7 +49,7 @@ namespace ENGINE_NS {
             LogLocator logger_;
             GraphicsEngine graphics_;
 
-            friend void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const char* file);
+            friend void ENGINE_NS::crash(ErrorCode, int, const char*, const char*, const char*);
     };
 
     extern Engine* g_ENGINE;

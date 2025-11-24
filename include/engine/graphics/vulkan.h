@@ -2,18 +2,18 @@
 #include "engine/engine_utils.h"
 #include "engine/meta_defines.h"
 #include "engine/version.h"
-#include <string>
-#define VK_NO_PROTOTYPES
 #include <cstdint>
 #include <linalg/vector.h>
 #include <robin_map.h>
+#include <string>
+#define VK_NO_PROTOTYPES
 #include <vulkan/vulkan_core.h>
 
 #define VK_CHECK(x)                                                                                                                        \
     do {                                                                                                                                   \
         VkResult err = x;                                                                                                                  \
         if (err) {                                                                                                                         \
-            ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);                                                     \
+            ::ENGINE_NS::vulkan_crash(err, __LINE__, __func__, __FILE__);                                                                  \
         }                                                                                                                                  \
     } while (0)
 
