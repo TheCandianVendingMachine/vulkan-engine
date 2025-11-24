@@ -22,17 +22,22 @@ auto ENGINE_NS::VulkanDevice::cleanup() -> void {
         logger.info("Device has already been moved or destroyed");
         return;
     }
+    if (!this->initialised_) {
+        logger.warning("Attempting to cleanup unitialised device");
+    }
     logger.info("Destroying device");
     vkDestroyDevice(device_, nullptr);
-    this->device_ = VK_NULL_HANDLE;
-    this->moved_  = true;
+    this->device_      = VK_NULL_HANDLE;
+    this->moved_       = true;
+    this->initialised_ = false;
 }
 
 auto ENGINE_NS::VulkanDevice::operator=(VulkanDevice&& rhs) noexcept -> VulkanDevice& {
     if (!rhs.moved_ && &rhs != this) {
-        this->device_ = std::move(rhs.device_);
-        this->queues_ = std::move(rhs.queues_);
-        rhs.moved_    = true;
+        this->device_      = std::move(rhs.device_);
+        this->queues_      = std::move(rhs.queues_);
+        this->initialised_ = std::move(rhs.initialised_);
+        rhs.moved_         = true;
     }
     return *this;
 }
@@ -47,9 +52,11 @@ ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&&
         // hate this const cast, but i cant get a mutable iterator otherwise
         const_cast<VulkanQueue&>(queue).device_ = this;
         if (const_cast<VulkanQueue&>(queue).get() == VK_NULL_HANDLE) {
-            ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
+            ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__, "Could not allocate queue");
         }
     }
+
+    initialised_ = true;
 }
 
 auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice {
@@ -91,7 +98,8 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
             }
 
             auto difference = queue.queueFlags - static_cast<VkQueueFlags>(requested);
-            if ((queue.queueFlags & static_cast<VkQueueFlags>(requested)) != 0 && difference < best_difference) {
+            if ((queue.queueFlags & static_cast<VkQueueFlags>(requested)) == static_cast<VkQueueFlags>(requested) &&
+                difference < best_difference) {
                 best_queue_family = queue_family_index;
                 best_difference   = difference;
             }

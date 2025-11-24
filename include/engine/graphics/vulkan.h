@@ -66,6 +66,7 @@ namespace ENGINE_NS {
             VkInstance instance_                      = VK_NULL_HANDLE;
             bool moved_                               = false;
             bool has_debug_messenger_                 = false;
+            bool initialised_                         = false;
     };
 
     class VulkanSurface {
@@ -83,6 +84,7 @@ namespace ENGINE_NS {
             VulkanInstance* instance_ = nullptr;
             SDL_Window* window_       = nullptr;
             bool moved_               = false;
+            bool initialised_         = false;
     };
 
     class VulkanPhysicalDevice;
@@ -226,8 +228,9 @@ namespace ENGINE_NS {
 
         private:
             tsl::robin_map<std::string, VulkanQueue> queues_;
-            VkDevice device_ = VK_NULL_HANDLE;
-            bool moved_      = false;
+            VkDevice device_  = VK_NULL_HANDLE;
+            bool moved_       = false;
+            bool initialised_ = false;
 
 
             friend class VulkanDeviceBuilder;
@@ -272,7 +275,8 @@ namespace ENGINE_NS {
             VkExtent2D extent_{};
             std::vector<VkImage> images_;
             std::vector<VkImageView> views_;
-            bool moved_ = false;
+            bool moved_       = false;
+            bool initialised_ = false;
 
             friend class VulkanSwapchainBuilder;
             VulkanSwapchain(VkSwapchainCreateInfoKHR create_info, VulkanDevice& device);

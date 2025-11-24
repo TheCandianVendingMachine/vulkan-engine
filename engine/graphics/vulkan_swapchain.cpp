@@ -15,25 +15,33 @@ auto ENGINE_NS::VulkanSwapchain::build() -> VulkanSwapchainBuilder {
 
 auto ENGINE_NS::VulkanSwapchain::operator=(VulkanSwapchain&& rhs) noexcept -> VulkanSwapchain& {
     if (!rhs.moved_ && this != &rhs) {
-        this->device_    = std::move(rhs.device_);
-        this->extent_    = std::move(rhs.extent_);
-        this->format_    = std::move(rhs.format_);
-        this->images_    = std::move(rhs.images_);
-        this->swapchain_ = std::move(rhs.swapchain_);
-        this->views_     = std::move(rhs.views_);
-        rhs.moved_       = true;
+        this->device_      = std::move(rhs.device_);
+        this->extent_      = std::move(rhs.extent_);
+        this->format_      = std::move(rhs.format_);
+        this->images_      = std::move(rhs.images_);
+        this->swapchain_   = std::move(rhs.swapchain_);
+        this->views_       = std::move(rhs.views_);
+        this->initialised_ = std::move(rhs.initialised_);
+        rhs.moved_         = true;
     }
     return *this;
 }
 
 auto ENGINE_NS::VulkanSwapchain::cleanup() -> void {
+    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (moved_) {
+        logger.info("Swapchain has already been moved or cleaned up");
+        return;
+    }
+    if (!initialised_) {
+        logger.warning("Swapchain is not initialised and is trying to be cleaned up");
         return;
     }
     vkDestroySwapchainKHR(device_->device, swapchain_, nullptr);
     for (auto& view : views_) {
         vkDestroyImageView(device_->device, view, nullptr);
     }
+    initialised_ = false;
 }
 
 ENGINE_NS::VulkanSwapchain::VulkanSwapchain(VkSwapchainCreateInfoKHR create_info, VulkanDevice& device) {
@@ -69,6 +77,7 @@ ENGINE_NS::VulkanSwapchain::VulkanSwapchain(VkSwapchainCreateInfoKHR create_info
 
         VK_CHECK(vkCreateImageView(device.device, &view_info, nullptr, &views_[idx]));
     }
+    initialised_ = true;
 }
 
 auto ENGINE_NS::VulkanSwapchainBuilder::finish(VulkanPhysicalDevice& physical_device, VulkanSurface& surface, VulkanDevice& device)

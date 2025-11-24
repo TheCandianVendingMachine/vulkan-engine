@@ -52,6 +52,7 @@ auto ENGINE_NS::VulkanInstance::operator=(VulkanInstance&& rhs) noexcept -> Vulk
         instance_            = std::move(rhs.instance_);
         has_debug_messenger_ = std::move(rhs.has_debug_messenger_);
         debug_messenger_     = std::move(rhs.debug_messenger_);
+        initialised_         = std::move(rhs.initialised_);
         rhs.moved_           = true;
     }
     return *this;
@@ -63,13 +64,17 @@ auto ENGINE_NS::VulkanInstance::cleanup() -> void {
         logger.info("Instance has already been moved or destroyed");
         return;
     }
+    if (!this->initialised_) {
+        logger.warning("Instance has not been initialised");
+        return;
+    }
     logger.info("Destroying instance");
 
     if (has_debug_messenger_) {
         vkDestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
     }
     vkDestroyInstance(instance_, nullptr);
-    this->moved_ = true;
+    this->initialised_ = false;
 }
 
 ENGINE_NS::VulkanInstance::VulkanInstance(VkInstanceCreateInfo create_info) {
@@ -92,6 +97,7 @@ ENGINE_NS::VulkanInstance::VulkanInstance(VkInstanceCreateInfo create_info) {
         VK_CHECK(vkCreateDebugUtilsMessengerEXT(instance_, &debug_create, nullptr, &debug_messenger_));
         has_debug_messenger_ = true;
     }
+    initialised_ = true;
 }
 
 auto ENGINE_NS::VulkanInstanceBuilder::game_name(std::string_view name) -> VulkanInstanceBuilder& {

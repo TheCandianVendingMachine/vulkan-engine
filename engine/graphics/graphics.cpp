@@ -11,6 +11,7 @@
 #include <Tracy/TracyVulkan.hpp>
 #include <Tracy/common/TracySystem.hpp>
 #include <chrono>
+#include <vulkan/vulkan_core.h>
 
 void ENGINE_NS::GraphicsEngine::initialise() {
     FrameMarkStart(StaticNames::GraphicsInit);
@@ -63,12 +64,14 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
 
     logger.info("Cleaning up Vulkan");
-    vkDeviceWaitIdle(device_.device);
-    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
-        if (frames_[idx].tracy_context) {
-            TracyVkDestroy(frames_[idx].tracy_context);
+    if (device_.device != VK_NULL_HANDLE) {
+        vkDeviceWaitIdle(device_.device);
+        for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+            if (frames_[idx].tracy_context) {
+                TracyVkDestroy(frames_[idx].tracy_context);
+            }
+            vkDestroyCommandPool(device_.device, frames_[idx].command_pool, nullptr);
         }
-        vkDestroyCommandPool(device_.device, frames_[idx].command_pool, nullptr);
     }
     swapchain_.cleanup();
     device_.cleanup();
