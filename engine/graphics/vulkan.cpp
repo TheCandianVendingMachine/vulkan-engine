@@ -506,6 +506,11 @@ ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&&
     ZoneScoped;
 
     VK_CHECK(vkCreateDevice(physical_device.device, &create_info, nullptr, &device_));
+
+    for (auto& [_, queue] : queues_) {
+        // hate this const cast, but i cant get a mutable iterator otherwise
+        const_cast<VulkanQueue&>(queue).device_ = this;
+    }
 }
 
 auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice {
@@ -559,12 +564,7 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
             1.f / static_cast<float>(queue_family_allocations[best_queue_family].count));
 
         std::uint32_t& idx = queue_family_map.at(best_queue_family);
-        queues.insert({
-          name, VulkanQueue{.queue_family    = best_queue_family,
-                            .queue_index     = idx,
-                            .max_queue_index = properties[best_queue_family].queueCount,
-                            .type            = requested}
-        });
+        queues.insert({name, VulkanQueue(best_queue_family, idx, properties[best_queue_family].queueCount, requested)});
         allocated_queues.insert(name);
         idx += 1;
 
@@ -734,4 +734,15 @@ auto ENGINE_NS::VulkanSwapchainBuilder::set_extent(::linalg::Vector2<unsigned in
 auto ENGINE_NS::VulkanSwapchainBuilder::add_image_usage_flags(VkImageUsageFlags flags) -> VulkanSwapchainBuilder& {
     image_usage_flags_ |= flags;
     return *this;
+}
+
+auto ENGINE_NS::VulkanQueue::get() const -> VkQueue {
+    VkQueue queue = VK_NULL_HANDLE;
+    vkGetDeviceQueue(device_->device, queue_family_, queue_index_, &queue);
+    return queue;
+}
+
+ENGINE_NS::VulkanQueue::VulkanQueue(std::uint32_t queue_family, std::uint32_t queue_index, std::uint32_t max_queue_index,
+                                    VulkanQueueType type) :
+    queue_family_(queue_family), queue_index_(queue_index), max_queue_index_(max_queue_index), type_(type) {
 }

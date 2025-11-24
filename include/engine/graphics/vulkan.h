@@ -167,14 +167,24 @@ namespace ENGINE_NS {
         return lhs;
     }
 
-    struct VulkanQueue {
-            std::uint32_t queue_family    = 0;
-            std::uint32_t queue_index     = 0;
-            std::uint32_t max_queue_index = 0;
-            VulkanQueueType type{};
+    class VulkanDevice;
+    class VulkanQueue {
+        public:
+            auto get() const -> VkQueue;
+
+        private:
+            VulkanQueue(std::uint32_t queue_family, std::uint32_t queue_index, std::uint32_t max_queue_index, VulkanQueueType type);
+
+            std::uint32_t queue_family_    = 0;
+            std::uint32_t queue_index_     = 0;
+            std::uint32_t max_queue_index_ = 0;
+            VulkanQueueType type_{};
+            VulkanDevice* device_ = nullptr;
+
+            friend class VulkanDeviceBuilder;
+            friend class VulkanDevice;
     };
 
-    class VulkanDevice;
     class VulkanDeviceBuilder {
         public:
             auto finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice;
@@ -198,7 +208,8 @@ namespace ENGINE_NS {
 
             auto operator=(VulkanDevice&& rhs) -> VulkanDevice&;
 
-            VkDevice& device = device_;
+            VkDevice& device                                       = device_;
+            const tsl::robin_map<std::string, VulkanQueue>& queues = queues_;
 
         private:
             tsl::robin_map<std::string, VulkanQueue> queues_;
