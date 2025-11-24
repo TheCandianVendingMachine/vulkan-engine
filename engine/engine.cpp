@@ -114,6 +114,7 @@ auto Engine::startup() -> void {
 
     graphics_.initialise();
 
+    logger.get(LogNamespaces::CORE).info("Engine ready");
     running_ = true;
 }
 
