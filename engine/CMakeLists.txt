@@ -62,6 +62,12 @@ add_library(engine
     ecs/query.cpp
     graphics/graphics.cpp
     graphics/vulkan.cpp
+    graphics/vulkan_device.cpp
+    graphics/vulkan_instance.cpp
+    graphics/vulkan_physical_device.cpp
+    graphics/vulkan_surface.cpp
+    graphics/vulkan_swapchain.cpp
+    graphics/vulkan_queue.cpp
     reflection/type.cpp
     ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
     ${HEADER_LIST}

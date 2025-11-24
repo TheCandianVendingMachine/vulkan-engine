@@ -170,6 +170,7 @@ namespace ENGINE_NS {
     class VulkanDevice;
     class VulkanQueue {
         public:
+            auto get() -> VkQueue;
             auto get() const -> VkQueue;
 
         private:
@@ -179,7 +180,8 @@ namespace ENGINE_NS {
             std::uint32_t queue_index_     = 0;
             std::uint32_t max_queue_index_ = 0;
             VulkanQueueType type_{};
-            VulkanDevice* device_ = nullptr;
+            VulkanDevice* device_     = nullptr;
+            VkQueue associated_queue_ = VK_NULL_HANDLE;
 
             friend class VulkanDeviceBuilder;
             friend class VulkanDevice;
