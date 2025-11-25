@@ -19,7 +19,7 @@
 
 struct SDL_Window;
 namespace ENGINE_NS {
-    auto command_pool_create_info(std::uint32_t family_index) -> VkCommandPoolCreateInfo;
+    auto command_pool_create_info(std::uint32_t family_index, VkCommandPoolCreateFlags flags) -> VkCommandPoolCreateInfo;
     auto command_buffer_allocate_info(VkCommandPool command_pool) -> VkCommandBufferAllocateInfo;
 
 

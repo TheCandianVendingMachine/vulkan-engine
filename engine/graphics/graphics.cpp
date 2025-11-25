@@ -129,10 +129,11 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
 
     create_swapchain_();
 
-    graphics_queue_                   = device_.queues.at("graphics").get();
-    transfer_queue_                   = device_.queues.at("transfer").get();
+    graphics_queue_ = device_.queues.at("graphics").get();
+    transfer_queue_ = device_.queues.at("transfer").get();
 
-    VkCommandPoolCreateInfo pool_info = command_pool_create_info(device_.queues.at("graphics").family);
+    VkCommandPoolCreateInfo pool_info =
+        command_pool_create_info(device_.queues.at("graphics").family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
     for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
         VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frames_[idx].command_pool));
 

@@ -3,10 +3,10 @@
 #include <Volk/volk.h>
 // clang-format enable
 
-auto ENGINE_NS::command_pool_create_info(std::uint32_t family_index) -> VkCommandPoolCreateInfo {
+auto ENGINE_NS::command_pool_create_info(std::uint32_t family_index, VkCommandPoolCreateFlags flags) -> VkCommandPoolCreateInfo {
     VkCommandPoolCreateInfo pool_info{};
     pool_info.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    pool_info.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    pool_info.flags            = flags;
     pool_info.pNext            = nullptr;
     pool_info.queueFamilyIndex = family_index;
     return pool_info;
