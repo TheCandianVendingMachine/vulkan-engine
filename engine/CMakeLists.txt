@@ -13,6 +13,7 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/engine_utils.h"
     "${ENGINE_HEADER_PATH}/logger.h"
     "${ENGINE_HEADER_PATH}/random.h"
+    "${ENGINE_HEADER_PATH}/rwlock.h"
     "${ENGINE_HEADER_PATH}/newtype.h"
     "${ENGINE_HEADER_PATH}/version.h"
     "${ENGINE_HEADER_PATH}/ecs/default.h"
@@ -63,6 +64,7 @@ add_library(engine
     graphics/graphics.cpp
     graphics/vulkan.cpp
     graphics/vulkan_device.cpp
+    graphics/vulkan_image.cpp
     graphics/vulkan_instance.cpp
     graphics/vulkan_physical_device.cpp
     graphics/vulkan_surface.cpp

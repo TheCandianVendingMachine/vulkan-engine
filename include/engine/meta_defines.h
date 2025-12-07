@@ -29,11 +29,12 @@ static constexpr const char* g_ERROR_CODE_STR[static_cast<size_t>(ErrorCode::COU
   "Unknown", "Failed to load linear algebra library", "Failed to load linear algebra functions", "Vulkan Error"};
 
 namespace StaticNames {
-    static constexpr const char* EngineLoop         = "Engine loop";
-    static constexpr const char* FixedUpdate        = "Fixed Update";
-    static constexpr const char* GraphicsInit       = "Graphics Init";
-    static constexpr const char* GraphicsDeinit     = "Graphics Deinit";
-    static constexpr const char* GraphicsDraw       = "Graphics Draw";
-    static constexpr const char* GraphicsThreadName = "Renderer";
-    static constexpr const char* RenderLoop         = "Render Loop";
+    static constexpr const char* EngineLoop            = "Engine loop";
+    static constexpr const char* FixedUpdate           = "Fixed Update";
+    static constexpr const char* GraphicsInit          = "Graphics Init";
+    static constexpr const char* GraphicsDeinit        = "Graphics Deinit";
+    static constexpr const char* GraphicsDraw          = "Graphics Draw";
+    static constexpr const char* GraphicsThreadName    = "Renderer";
+    static constexpr const char* RenderLoop            = "Render Loop";
+    static constexpr const char* MainCommandBufferName = "MainCommandBuffer";
 } // namespace StaticNames

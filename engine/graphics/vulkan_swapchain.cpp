@@ -21,6 +21,7 @@ auto ENGINE_NS::VulkanSwapchain::operator=(VulkanSwapchain&& rhs) noexcept -> Vu
         this->images_      = std::move(rhs.images_);
         this->swapchain_   = std::move(rhs.swapchain_);
         this->views_       = std::move(rhs.views_);
+        this->semaphores_  = std::move(rhs.semaphores_);
         this->initialised_ = std::move(rhs.initialised_);
         rhs.moved_         = true;
     }
@@ -36,6 +37,9 @@ auto ENGINE_NS::VulkanSwapchain::cleanup() -> void {
     if (!initialised_) {
         logger.warning("Swapchain is not initialised and is trying to be cleaned up");
         return;
+    }
+    for (auto& semaphore : semaphores_) {
+        vkDestroySemaphore(device_->device, semaphore, nullptr);
     }
     vkDestroySwapchainKHR(device_->device, swapchain_, nullptr);
     for (auto& view : views_) {
@@ -55,6 +59,7 @@ ENGINE_NS::VulkanSwapchain::VulkanSwapchain(VkSwapchainCreateInfoKHR create_info
     vkGetSwapchainImagesKHR(device.device, swapchain_, &image_count, nullptr);
     images_.resize(image_count);
     views_.resize(image_count);
+    semaphores_.resize(image_count);
     vkGetSwapchainImagesKHR(device.device, swapchain_, &image_count, images_.data());
 
     for (std::uint32_t idx = 0; idx < image_count; idx++) {
@@ -76,6 +81,9 @@ ENGINE_NS::VulkanSwapchain::VulkanSwapchain(VkSwapchainCreateInfoKHR create_info
         view_info.subresourceRange.layerCount     = 1;
 
         VK_CHECK(vkCreateImageView(device.device, &view_info, nullptr, &views_[idx]));
+
+        VkSemaphoreCreateInfo semaphore_info = semaphore_create_info(0);
+        VK_CHECK(vkCreateSemaphore(device.device, &semaphore_info, nullptr, &semaphores[idx]));
     }
     initialised_ = true;
 }

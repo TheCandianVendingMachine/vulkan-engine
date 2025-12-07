@@ -12,7 +12,7 @@
 #define VK_CHECK(x)                                                                                                                        \
     do {                                                                                                                                   \
         VkResult err = x;                                                                                                                  \
-        if (err) {                                                                                                                         \
+        if (err < 0) {                                                                                                                     \
             ::ENGINE_NS::vulkan_crash(err, __LINE__, __func__, __FILE__);                                                                  \
         }                                                                                                                                  \
     } while (0)
@@ -21,6 +21,18 @@ struct SDL_Window;
 namespace ENGINE_NS {
     auto command_pool_create_info(std::uint32_t family_index, VkCommandPoolCreateFlags flags) -> VkCommandPoolCreateInfo;
     auto command_buffer_allocate_info(VkCommandPool command_pool) -> VkCommandBufferAllocateInfo;
+    auto command_buffer_begin_info(VkCommandBufferUsageFlags flags) -> VkCommandBufferBeginInfo;
+
+    auto fence_create_info(VkFenceCreateFlags flags) -> VkFenceCreateInfo;
+    auto semaphore_create_info(VkSemaphoreCreateFlags flags) -> VkSemaphoreCreateInfo;
+
+    auto transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout current_layout, VkImageLayout new_layout) -> void;
+    auto image_subresource_range(VkImageAspectFlags aspect_mask) -> VkImageSubresourceRange;
+
+    auto semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore) -> VkSemaphoreSubmitInfo;
+    auto command_buffer_submit_info(VkCommandBuffer command_buffer) -> VkCommandBufferSubmitInfo;
+    auto submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signal_semaphore_info,
+                     VkSemaphoreSubmitInfo* wait_semaphore_info) -> VkSubmitInfo2;
 
 
     class VulkanInstance;
@@ -268,11 +280,16 @@ namespace ENGINE_NS {
             auto operator=(VulkanSwapchain&& rhs) noexcept -> VulkanSwapchain&;
             auto cleanup() -> void;
 
+            VkSwapchainKHR& swapchain            = swapchain_;
+            std::vector<VkImage>& images         = images_;
+            std::vector<VkSemaphore>& semaphores = semaphores_;
+
         private:
             VulkanDevice* device_     = nullptr;
             VkSwapchainKHR swapchain_ = VK_NULL_HANDLE;
             VkFormat format_{};
             VkExtent2D extent_{};
+            std::vector<VkSemaphore> semaphores_;
             std::vector<VkImage> images_;
             std::vector<VkImageView> views_;
             bool moved_       = false;

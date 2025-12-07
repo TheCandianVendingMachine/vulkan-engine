@@ -11,6 +11,7 @@
 #include <Tracy/TracyVulkan.hpp>
 #include <Tracy/common/TracySystem.hpp>
 #include <chrono>
+#include <engine/rwlock.h>
 #include <vulkan/vulkan_core.h>
 
 void ENGINE_NS::GraphicsEngine::initialise() {
@@ -34,7 +35,7 @@ void ENGINE_NS::GraphicsEngine::initialise() {
     {
         ZoneScoped;
         running_.store(true, std::memory_order_release);
-        update_rate_   = std::chrono::milliseconds(9);
+        update_rate_   = std::chrono::milliseconds(8);
         render_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::draw_, this);
     }
 
@@ -67,10 +68,14 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     if (device_.device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(device_.device);
         for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
-            if (frames_[idx].tracy_context) {
-                TracyVkDestroy(frames_[idx].tracy_context);
+            auto frame = frames_[idx].write();
+            vkDestroySemaphore(device_.device, frame.get().swapchain_semaphore_, nullptr);
+            vkDestroyFence(device_.device, frame.get().render_fence_, nullptr);
+
+            if (frame.get().tracy_context_) {
+                TracyVkDestroy(frame.get().tracy_context_);
             }
-            vkDestroyCommandPool(device_.device, frames_[idx].command_pool, nullptr);
+            vkDestroyCommandPool(device_.device, frame.get().command_pool, nullptr);
         }
     }
     swapchain_.cleanup();
@@ -88,7 +93,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     FrameMarkEnd(StaticNames::GraphicsDeinit);
 }
 
-auto ENGINE_NS::GraphicsEngine::current_frame() -> graphics::FrameData& {
+auto ENGINE_NS::GraphicsEngine::current_frame() -> RwLock<graphics::FrameData>& {
     return frames_[frame_number_ % graphics::FRAME_OVERLAP];
 }
 
@@ -134,13 +139,21 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
 
     VkCommandPoolCreateInfo pool_info =
         command_pool_create_info(device_.queues.at("graphics").family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
-        VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frames_[idx].command_pool));
+    VkSemaphoreCreateInfo semaphore_info = semaphore_create_info(0);
+    VkFenceCreateInfo fence_info         = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
 
-        VkCommandBufferAllocateInfo buffer_alloc = command_buffer_allocate_info(frames_[idx].command_pool);
-        VK_CHECK(vkAllocateCommandBuffers(device_.device, &buffer_alloc, &frames_[idx].main_command_buffer));
-        frames_[idx].tracy_context =
-            TracyVkContext(physical_device_.device, device_.device, device_.queues.at("graphics").get(), frames_[idx].main_command_buffer);
+
+    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+        auto frame = frames_[idx].write();
+        VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frame.get().command_pool));
+
+        VkCommandBufferAllocateInfo buffer_alloc = command_buffer_allocate_info(frame.get().command_pool);
+        VK_CHECK(vkAllocateCommandBuffers(device_.device, &buffer_alloc, &frame.get().main_command_buffer));
+        frame.get().tracy_context_ =
+            TracyVkContext(physical_device_.device, device_.device, device_.queues.at("graphics").get(), frame.get().main_command_buffer);
+
+        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &frame.get().render_fence_));
+        VK_CHECK(vkCreateSemaphore(device_.device, &semaphore_info, nullptr, &frame.get().swapchain_semaphore_));
     }
 }
 
@@ -157,18 +170,74 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {
     tracy::SetThreadName(StaticNames::GraphicsThreadName);
+    constexpr std::uint32_t TIMEOUT = 250'000'000;
 
-    auto last_frame = std::chrono::high_resolution_clock::now();
     while (running_.load(std::memory_order_acquire)) {
         FrameMarkStart(StaticNames::RenderLoop);
-        ++frame_number_;
+        auto frame_start = std::chrono::high_resolution_clock::now();
+        {
+            auto frame = current_frame().read();
+            VK_CHECK(vkWaitForFences(device_.device, 1, &frame.get().render_fence_, true, TIMEOUT));
+        }
+        {
+            auto frame = current_frame().write();
+            VK_CHECK(vkResetFences(device_.device, 1, &frame.get().render_fence_));
 
-        auto frame_delta = std::chrono::high_resolution_clock::now() - last_frame;
-        last_frame       = std::chrono::high_resolution_clock::now();
+            std::uint32_t swapchain_image_index = 0;
+            VK_CHECK(vkAcquireNextImageKHR(device_.device, swapchain_.swapchain, TIMEOUT, frame.get().swapchain_semaphore_, VK_NULL_HANDLE,
+                                           &swapchain_image_index));
+
+            VkCommandBuffer cmd = frame.get().main_command_buffer;
+            VK_CHECK(vkResetCommandBuffer(cmd, 0));
+            VkCommandBufferBeginInfo cmd_begin_info = command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+            VK_CHECK(vkBeginCommandBuffer(cmd, &cmd_begin_info));
+            TracyVkZone(frame.get().tracy_context_, cmd, StaticNames::MainCommandBufferName);
+
+            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+            VkClearColorValue clear_value;
+            float flash = std::abs(std::sin(frame_number_ / 120.f));
+            clear_value = {
+              {0.f, 0.f, flash, 1.f}
+            };
+
+            VkImageSubresourceRange clear_range = image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+            vkCmdClearColorImage(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &clear_range);
+
+            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+
+            TracyVkCollect(frame.get().tracy_context_, cmd);
+            VK_CHECK(vkEndCommandBuffer(cmd));
+
+            VkCommandBufferSubmitInfo cmd_info = command_buffer_submit_info(cmd);
+
+            VkSemaphoreSubmitInfo wait_info =
+                semaphore_submit_info(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, frame.get().swapchain_semaphore_);
+
+            VkSemaphoreSubmitInfo signal_info =
+                semaphore_submit_info(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, swapchain_.semaphores[swapchain_image_index]);
+
+            VkSubmitInfo2 submit_info = ENGINE_NS::submit_info(&cmd_info, &signal_info, &wait_info);
+
+            VK_CHECK(vkQueueSubmit2(graphics_queue_, 1, &submit_info, frame.get().render_fence_));
+
+            VkPresentInfoKHR present_info   = {};
+            present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            present_info.pSwapchains        = &swapchain_.swapchain;
+            present_info.swapchainCount     = 1;
+            present_info.pWaitSemaphores    = &swapchain_.semaphores[swapchain_image_index];
+            present_info.waitSemaphoreCount = 1;
+            present_info.pImageIndices      = &swapchain_image_index;
+
+            VK_CHECK(vkQueuePresentKHR(graphics_queue_, &present_info));
+        }
+        auto frame_delta = std::chrono::high_resolution_clock::now() - frame_start;
         if (frame_delta < this->update_rate_) {
             auto sleep = this->update_rate_ - frame_delta;
             std::this_thread::sleep_for(sleep);
         }
+        ++frame_number_;
         FrameMarkEnd(StaticNames::RenderLoop);
     }
 }
