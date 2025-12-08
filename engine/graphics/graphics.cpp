@@ -226,6 +226,17 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
     deletion_queue_.push(draw_image_);
 }
 
+auto ENGINE_NS::GraphicsEngine::draw_background_(VkCommandBuffer cmd) -> void {
+    VkClearColorValue clear_value;
+    float flash = std::abs(std::sin(frame_number_ / 120.f));
+    clear_value = {
+      {0.f, 0.f, flash, 1.f}
+    };
+
+    VkImageSubresourceRange clear_range = image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+    vkCmdClearColorImage(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &clear_range);
+}
+
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {
     tracy::SetThreadName(StaticNames::GraphicsThreadName);
     constexpr std::uint32_t TIMEOUT = 250'000'000;
@@ -249,21 +260,24 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             VK_CHECK(vkResetCommandBuffer(cmd, 0));
             VkCommandBufferBeginInfo cmd_begin_info = command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
+            VkExtent2D draw_extent                  = {draw_image_.extent.width, draw_image_.extent.height};
+
             VK_CHECK(vkBeginCommandBuffer(cmd, &cmd_begin_info));
             TracyVkZone(frame.get().tracy_context_, cmd, StaticNames::MainCommandBufferName);
 
-            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+            transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-            VkClearColorValue clear_value;
-            float flash = std::abs(std::sin(frame_number_ / 120.f));
-            clear_value = {
-              {0.f, 0.f, flash, 1.f}
-            };
+            draw_background_(cmd);
 
-            VkImageSubresourceRange clear_range = image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
-            vkCmdClearColorImage(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &clear_range);
+            transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED,
+                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+            blit_image(cmd, draw_image_.image, swapchain_.images[swapchain_image_index], draw_extent, swapchain_.extent);
+
+
+            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
             TracyVkCollect(frame.get().tracy_context_, cmd);
             VK_CHECK(vkEndCommandBuffer(cmd));

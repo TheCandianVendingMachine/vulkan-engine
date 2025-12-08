@@ -30,6 +30,7 @@ namespace ENGINE_NS {
     auto image_subresource_range(VkImageAspectFlags aspect_mask) -> VkImageSubresourceRange;
     auto image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent) -> VkImageCreateInfo;
     auto image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags) -> VkImageViewCreateInfo;
+    auto blit_image(VkCommandBuffer cmd, VkImage from, VkImage to, VkExtent2D src_size, VkExtent2D dst_size) -> void;
 
     auto semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore) -> VkSemaphoreSubmitInfo;
     auto command_buffer_submit_info(VkCommandBuffer command_buffer) -> VkCommandBufferSubmitInfo;
@@ -285,6 +286,7 @@ namespace ENGINE_NS {
             VkSwapchainKHR& swapchain            = swapchain_;
             std::vector<VkImage>& images         = images_;
             std::vector<VkSemaphore>& semaphores = semaphores_;
+            const VkExtent2D& extent             = extent_;
 
         private:
             VulkanDevice* device_     = nullptr;

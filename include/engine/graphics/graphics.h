@@ -67,6 +67,8 @@ namespace ENGINE_NS {
 
             auto init_vulkan_() -> void;
             auto create_swapchain_() -> void;
+
+            auto draw_background_(VkCommandBuffer cmd) -> void;
             auto draw_() -> void;
     };
 } // namespace ENGINE_NS
