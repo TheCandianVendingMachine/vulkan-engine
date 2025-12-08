@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/deletion_queue.h"
+#include "engine/graphics/types.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
@@ -40,6 +41,7 @@ namespace ENGINE_NS {
         private:
             bool initialised_ = false;
 
+            GraphicsMainDeletionQueue deletion_queue_{};
             VmaAllocator allocator_{};
 
             std::thread render_thread_;
@@ -56,6 +58,7 @@ namespace ENGINE_NS {
             SDL_Window* window_ = nullptr;
             friend class Engine;
 
+            ImageAllocation draw_image_;
             VulkanInstance vulkan_instance_;
             VulkanSurface surface_;
             VulkanPhysicalDevice physical_device_;

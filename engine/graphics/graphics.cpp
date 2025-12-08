@@ -65,7 +65,6 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
 
     logger.info("Cleaning up Vulkan");
-    vmaDestroyAllocator(allocator_);
     if (device_.device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(device_.device);
         for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
@@ -78,10 +77,12 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
             }
             vkDestroyCommandPool(device_.device, frame.get().command_pool, nullptr);
 
-            frame.get().deletion_queue.flush();
+            frame.get().deletion_queue.flush(device_, allocator_);
         }
     }
+    deletion_queue_.flush(device_, allocator_);
     swapchain_.cleanup();
+    vmaDestroyAllocator(allocator_);
     device_.cleanup();
     surface_.cleanup();
     vulkan_instance_.cleanup();
@@ -135,29 +136,6 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                   .request_queue("transfer", VulkanQueueType::TRANSFER)
                   .finish(physical_device_);
 
-    create_swapchain_();
-
-    graphics_queue_ = device_.queues.at("graphics").get();
-    transfer_queue_ = device_.queues.at("transfer").get();
-
-    VkCommandPoolCreateInfo pool_info =
-        command_pool_create_info(device_.queues.at("graphics").family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-    VkSemaphoreCreateInfo semaphore_info = semaphore_create_info(0);
-    VkFenceCreateInfo fence_info         = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-
-
-    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
-        auto frame = frames_[idx].write();
-        VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frame.get().command_pool));
-
-        VkCommandBufferAllocateInfo buffer_alloc = command_buffer_allocate_info(frame.get().command_pool);
-        VK_CHECK(vkAllocateCommandBuffers(device_.device, &buffer_alloc, &frame.get().main_command_buffer));
-        frame.get().tracy_context_ =
-            TracyVkContext(physical_device_.device, device_.device, device_.queues.at("graphics").get(), frame.get().main_command_buffer);
-
-        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &frame.get().render_fence_));
-        VK_CHECK(vkCreateSemaphore(device_.device, &semaphore_info, nullptr, &frame.get().swapchain_semaphore_));
-    }
 
     VmaVulkanFunctions vma_vulkan_funcs{};
     vma_vulkan_funcs.vkAllocateMemory                    = vkAllocateMemory;
@@ -187,6 +165,30 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     allocator_info.flags            = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
     allocator_info.pVulkanFunctions = &vma_vulkan_funcs;
     vmaCreateAllocator(&allocator_info, &allocator_);
+
+    create_swapchain_();
+
+    graphics_queue_ = device_.queues.at("graphics").get();
+    transfer_queue_ = device_.queues.at("transfer").get();
+
+    VkCommandPoolCreateInfo pool_info =
+        command_pool_create_info(device_.queues.at("graphics").family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+    VkSemaphoreCreateInfo semaphore_info = semaphore_create_info(0);
+    VkFenceCreateInfo fence_info         = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+
+
+    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+        auto frame = frames_[idx].write();
+        VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frame.get().command_pool));
+
+        VkCommandBufferAllocateInfo buffer_alloc = command_buffer_allocate_info(frame.get().command_pool);
+        VK_CHECK(vkAllocateCommandBuffers(device_.device, &buffer_alloc, &frame.get().main_command_buffer));
+        frame.get().tracy_context_ =
+            TracyVkContext(physical_device_.device, device_.device, device_.queues.at("graphics").get(), frame.get().main_command_buffer);
+
+        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &frame.get().render_fence_));
+        VK_CHECK(vkCreateSemaphore(device_.device, &semaphore_info, nullptr, &frame.get().swapchain_semaphore_));
+    }
 }
 
 auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
@@ -198,6 +200,30 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
             .add_image_usage_flags(VK_IMAGE_USAGE_TRANSFER_DST_BIT)
             .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
             .finish(physical_device_, surface_, device_);
+
+    VkExtent3D draw_extent = {static_cast<std::uint32_t>(window_extent_.x), static_cast<std::uint32_t>(window_extent_.y), 1};
+    draw_image_.format     = VK_FORMAT_R16G16B16A16_SFLOAT;
+    draw_image_.extent     = draw_extent;
+
+    VkImageUsageFlags draw_image_usages{};
+    draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    draw_image_usages |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    draw_image_usages |= VK_IMAGE_USAGE_STORAGE_BIT;
+    draw_image_usages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+    VkImageCreateInfo draw_img_info             = image_create_info(draw_image_.format, draw_image_usages, draw_extent);
+
+    VmaAllocationCreateInfo draw_img_allocation = {};
+    draw_img_allocation.usage                   = VMA_MEMORY_USAGE_GPU_ONLY;
+    draw_img_allocation.requiredFlags           = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    vmaCreateImage(allocator_, &draw_img_info, &draw_img_allocation, &draw_image_.image, &draw_image_.allocation, nullptr);
+
+    VkImageViewCreateInfo draw_image_view = image_view_create_info(draw_image_.format, draw_image_.image, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    VK_CHECK(vkCreateImageView(device_.device, &draw_image_view, nullptr, &draw_image_.view));
+
+    deletion_queue_.push(draw_image_);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {

@@ -28,6 +28,8 @@ namespace ENGINE_NS {
 
     auto transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout current_layout, VkImageLayout new_layout) -> void;
     auto image_subresource_range(VkImageAspectFlags aspect_mask) -> VkImageSubresourceRange;
+    auto image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent) -> VkImageCreateInfo;
+    auto image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags) -> VkImageViewCreateInfo;
 
     auto semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore) -> VkSemaphoreSubmitInfo;
     auto command_buffer_submit_info(VkCommandBuffer command_buffer) -> VkCommandBufferSubmitInfo;

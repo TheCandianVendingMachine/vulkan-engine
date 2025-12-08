@@ -44,6 +44,7 @@ add_library(engine
     stb_image_implementation.cpp
     bitset.cpp
     deletion_queue.cpp
+    deletions.cpp
     engine.cpp
     engine_utils.cpp
     logger.cpp
