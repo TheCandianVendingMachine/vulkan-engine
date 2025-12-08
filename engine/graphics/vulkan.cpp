@@ -2,6 +2,8 @@
 // clang-format disable
 #include <Volk/volk.h>
 // clang-format enable
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
 
 auto ENGINE_NS::command_pool_create_info(std::uint32_t family_index, VkCommandPoolCreateFlags flags) -> VkCommandPoolCreateInfo {
     VkCommandPoolCreateInfo pool_info{};

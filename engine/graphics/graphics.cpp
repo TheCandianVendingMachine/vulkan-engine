@@ -65,6 +65,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 
 
     logger.info("Cleaning up Vulkan");
+    vmaDestroyAllocator(allocator_);
     if (device_.device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(device_.device);
         for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
@@ -76,6 +77,8 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
                 TracyVkDestroy(frame.get().tracy_context_);
             }
             vkDestroyCommandPool(device_.device, frame.get().command_pool, nullptr);
+
+            frame.get().deletion_queue.flush();
         }
     }
     swapchain_.cleanup();
@@ -155,6 +158,35 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
         VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &frame.get().render_fence_));
         VK_CHECK(vkCreateSemaphore(device_.device, &semaphore_info, nullptr, &frame.get().swapchain_semaphore_));
     }
+
+    VmaVulkanFunctions vma_vulkan_funcs{};
+    vma_vulkan_funcs.vkAllocateMemory                    = vkAllocateMemory;
+    vma_vulkan_funcs.vkBindBufferMemory                  = vkBindBufferMemory;
+    vma_vulkan_funcs.vkBindImageMemory                   = vkBindImageMemory;
+    vma_vulkan_funcs.vkCreateBuffer                      = vkCreateBuffer;
+    vma_vulkan_funcs.vkCreateImage                       = vkCreateImage;
+    vma_vulkan_funcs.vkDestroyBuffer                     = vkDestroyBuffer;
+    vma_vulkan_funcs.vkDestroyImage                      = vkDestroyImage;
+    vma_vulkan_funcs.vkFlushMappedMemoryRanges           = vkFlushMappedMemoryRanges;
+    vma_vulkan_funcs.vkFreeMemory                        = vkFreeMemory;
+    vma_vulkan_funcs.vkGetBufferMemoryRequirements       = vkGetBufferMemoryRequirements;
+    vma_vulkan_funcs.vkGetImageMemoryRequirements        = vkGetImageMemoryRequirements;
+    vma_vulkan_funcs.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+    vma_vulkan_funcs.vkGetPhysicalDeviceProperties       = vkGetPhysicalDeviceProperties;
+    vma_vulkan_funcs.vkInvalidateMappedMemoryRanges      = vkInvalidateMappedMemoryRanges;
+    vma_vulkan_funcs.vkMapMemory                         = vkMapMemory;
+    vma_vulkan_funcs.vkUnmapMemory                       = vkUnmapMemory;
+    vma_vulkan_funcs.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
+    vma_vulkan_funcs.vkGetInstanceProcAddr               = vkGetInstanceProcAddr;
+    vma_vulkan_funcs.vkGetDeviceProcAddr                 = vkGetDeviceProcAddr;
+
+    VmaAllocatorCreateInfo allocator_info{};
+    allocator_info.physicalDevice   = physical_device_.device;
+    allocator_info.device           = device_.device;
+    allocator_info.instance         = vulkan_instance_.instance;
+    allocator_info.flags            = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+    allocator_info.pVulkanFunctions = &vma_vulkan_funcs;
+    vmaCreateAllocator(&allocator_info, &allocator_);
 }
 
 auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {

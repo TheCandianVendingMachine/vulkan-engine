@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/deletion_queue.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
@@ -7,6 +8,7 @@
 #include <chrono>
 #include <cstdint>
 #include <thread>
+#include <vk_mem_alloc.h>
 
 namespace tracy {
     class VkCtx;
@@ -17,6 +19,7 @@ namespace ENGINE_NS {
     namespace graphics {
         constexpr std::size_t FRAME_OVERLAP = 2;
         struct FrameData {
+                GraphicsPerFrameDeletionQueue deletion_queue{};
                 VkCommandPool command_pool          = VK_NULL_HANDLE;
                 VkCommandBuffer main_command_buffer = VK_NULL_HANDLE;
                 VkSemaphore swapchain_semaphore_    = VK_NULL_HANDLE;
@@ -36,6 +39,8 @@ namespace ENGINE_NS {
 
         private:
             bool initialised_ = false;
+
+            VmaAllocator allocator_{};
 
             std::thread render_thread_;
             std::chrono::milliseconds update_rate_;

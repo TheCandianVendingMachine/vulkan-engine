@@ -9,6 +9,7 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/meta_defines.h"
     "${ENGINE_HEADER_PATH}/stb_image_write_wrapped.h"
     "${ENGINE_HEADER_PATH}/bitset.h"
+    "${ENGINE_HEADER_PATH}/deletion_queue.h"
     "${ENGINE_HEADER_PATH}/engine.h"
     "${ENGINE_HEADER_PATH}/engine_utils.h"
     "${ENGINE_HEADER_PATH}/logger.h"
@@ -42,6 +43,7 @@ set(HEADER_LIST
 add_library(engine
     stb_image_implementation.cpp
     bitset.cpp
+    deletion_queue.cpp
     engine.cpp
     engine_utils.cpp
     logger.cpp
