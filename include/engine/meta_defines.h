@@ -22,11 +22,12 @@ enum class ErrorCode : int {
     CANNOT_LOAD_LINEAR_ALGEBRA_LIBRARY,
     CANNOT_LOAD_LINEAR_ALGEBRA_FUNCTION,
     VULKAN_ERROR,
+    CANNOT_READ_FILE,
     COUNT
 };
 
 static constexpr const char* g_ERROR_CODE_STR[static_cast<size_t>(ErrorCode::COUNT)] = {
-  "Unknown", "Failed to load linear algebra library", "Failed to load linear algebra functions", "Vulkan Error"};
+  "Unknown", "Failed to load linear algebra library", "Failed to load linear algebra functions", "Vulkan Error", "Cannot read file"};
 
 namespace StaticNames {
     static constexpr const char* EngineLoop            = "Engine loop";

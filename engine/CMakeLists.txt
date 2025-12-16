@@ -17,12 +17,15 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/rwlock.h"
     "${ENGINE_HEADER_PATH}/newtype.h"
     "${ENGINE_HEADER_PATH}/version.h"
+    "${ENGINE_HEADER_PATH}/assets/library.h"
     "${ENGINE_HEADER_PATH}/ecs/default.h"
     "${ENGINE_HEADER_PATH}/ecs/defines.h"
     "${ENGINE_HEADER_PATH}/ecs/entity.h"
     "${ENGINE_HEADER_PATH}/ecs/component.h"
     "${ENGINE_HEADER_PATH}/ecs/system.h"
     "${ENGINE_HEADER_PATH}/ecs/query.h"
+    "${ENGINE_HEADER_PATH}/fileio/file.h"
+    "${ENGINE_HEADER_PATH}/fileio/error.h"
     "${ENGINE_HEADER_PATH}/graphics/graphics.h"
     "${ENGINE_HEADER_PATH}/graphics/types.h"
     "${ENGINE_HEADER_PATH}/graphics/vulkan.h"
@@ -50,6 +53,9 @@ add_library(engine
     logger.cpp
     random.cpp
     version.cpp
+    assets/library.cpp
+    fileio/error.cpp
+    fileio/file.cpp
     linalg/linalg.cpp
     linalg/vector.cpp
     linalg/vector2_operations.cpp

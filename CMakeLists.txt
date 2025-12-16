@@ -24,6 +24,7 @@ add_subdirectory(external)
 
 find_package(Vulkan REQUIRED COMPONENTS volk)
 
+add_subdirectory(tools)
 add_subdirectory(linalg)
 add_subdirectory(engine)
 add_subdirectory(game)

@@ -140,7 +140,7 @@ void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const ch
         g_ENGINE->logger.get(LogNamespaces::CORE).error("Engine crash!");
         g_ENGINE->logger.get(LogNamespaces::CORE).error("Location: {}::{}/{}", sanitized_file, function, line);
         g_ENGINE->logger.get(LogNamespaces::CORE).error("{}", g_ERROR_CODE_STR[static_cast<std::size_t>(reason)]);
-        if (*additional_message != '\0') {
+        if (additional_message[0] != '\0') {
             g_ENGINE->logger.get(LogNamespaces::CORE).error("Message: {}", additional_message);
         }
         g_ENGINE->shutdown();
