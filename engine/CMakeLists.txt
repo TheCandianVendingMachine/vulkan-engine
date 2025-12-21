@@ -26,8 +26,11 @@ set(HEADER_LIST
     "${ENGINE_HEADER_PATH}/ecs/query.h"
     "${ENGINE_HEADER_PATH}/fileio/file.h"
     "${ENGINE_HEADER_PATH}/fileio/error.h"
+    "${ENGINE_HEADER_PATH}/graphics/descriptor.h"
     "${ENGINE_HEADER_PATH}/graphics/graphics.h"
     "${ENGINE_HEADER_PATH}/graphics/types.h"
+    "${ENGINE_HEADER_PATH}/graphics/util.h"
+    "${ENGINE_HEADER_PATH}/graphics/pipeline.h"
     "${ENGINE_HEADER_PATH}/graphics/vulkan.h"
     "${ENGINE_HEADER_PATH}/pool.h"
     "${ENGINE_HEADER_PATH}/pool/types.h"
@@ -70,6 +73,7 @@ add_library(engine
     ecs/component.cpp
     ecs/system.cpp
     ecs/query.cpp
+    graphics/descriptor.cpp
     graphics/graphics.cpp
     graphics/vulkan.cpp
     graphics/vulkan_device.cpp

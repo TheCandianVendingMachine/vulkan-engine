@@ -1,4 +1,5 @@
 #include "engine/engine.h"
+#include "engine/engine_utils.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
 // clang-format disable

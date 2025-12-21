@@ -1,5 +1,8 @@
 #include "engine/graphics/graphics.h"
+#include "engine/assets/library.h"
 #include "engine/engine.h"
+#include "engine/graphics/descriptor.h"
+#include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
 // clang-format off
@@ -12,6 +15,7 @@
 #include <Tracy/common/TracySystem.hpp>
 #include <chrono>
 #include <engine/rwlock.h>
+#include <utility>
 #include <vulkan/vulkan_core.h>
 
 void ENGINE_NS::GraphicsEngine::initialise() {
@@ -67,6 +71,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     logger.info("Cleaning up Vulkan");
     if (device_.device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(device_.device);
+        global_descriptor_allocator_.destroy();
         for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
             auto frame = frames_[idx].write();
             vkDestroySemaphore(device_.device, frame.get().swapchain_semaphore_, nullptr);
@@ -189,6 +194,9 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
         VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &frame.get().render_fence_));
         VK_CHECK(vkCreateSemaphore(device_.device, &semaphore_info, nullptr, &frame.get().swapchain_semaphore_));
     }
+
+    init_descriptors_();
+    init_pipelines_();
 }
 
 auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
@@ -226,15 +234,85 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
     deletion_queue_.push(draw_image_);
 }
 
+auto ENGINE_NS::GraphicsEngine::init_descriptors_() -> void {
+    std::vector<DescriptorAllocator::PoolSizeRatio> sizes = {
+      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}
+    };
+    global_descriptor_allocator_.init(device_, 10, sizes);
+    draw_image_layout_ = VulkanDescriptorSetLayout::build()
+                             .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                             .build(device_, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
+
+    draw_image_descriptors_ = global_descriptor_allocator_.allocate(draw_image_layout_.layout);
+
+    VkDescriptorImageInfo image_info{};
+    image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    image_info.imageView   = draw_image_.view;
+
+    VkWriteDescriptorSet draw_image_write{};
+    draw_image_write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    draw_image_write.pNext           = nullptr;
+
+    draw_image_write.dstBinding      = 0;
+    draw_image_write.dstSet          = draw_image_descriptors_;
+    draw_image_write.descriptorCount = 1;
+    draw_image_write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    draw_image_write.pImageInfo      = &image_info;
+
+    vkUpdateDescriptorSets(device_.device, 1, &draw_image_write, 0, nullptr);
+    deletion_queue_.push(draw_image_layout_);
+}
+
+auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
+    init_background_pipelines_();
+}
+
+auto ENGINE_NS::GraphicsEngine::init_background_pipelines_() -> void {
+    VkPipelineLayoutCreateInfo compute_layout{};
+    compute_layout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    compute_layout.pSetLayouts    = &draw_image_layout_.layout;
+    compute_layout.setLayoutCount = 1;
+
+    VK_CHECK(vkCreatePipelineLayout(device_.device, &compute_layout, nullptr, &gradient_pipeline_.pipeline_layout));
+
+    auto shader_result = asset::BytecodeShader::load_from_file("assets/shaders/engine/gradient.spv").compile(device_);
+    if (!shader_result.has_value()) {
+        crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
+        std::unreachable();
+    }
+    auto shader = shader_result.value();
+
+    VkPipelineShaderStageCreateInfo stage_info{};
+    stage_info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stage_info.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
+    stage_info.module = shader.shader;
+    stage_info.pName  = "main";
+
+    VkComputePipelineCreateInfo compute_create_info{};
+    compute_create_info.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    compute_create_info.layout = gradient_pipeline_.pipeline_layout;
+    compute_create_info.stage  = stage_info;
+
+    VK_CHECK(vkCreateComputePipelines(device_.device, VK_NULL_HANDLE, 1, &compute_create_info, nullptr, &gradient_pipeline_.pipeline));
+
+    vkDestroyShaderModule(device_.device, shader.shader, nullptr);
+
+    deletion_queue_.push(gradient_pipeline_);
+}
+
 auto ENGINE_NS::GraphicsEngine::draw_background_(VkCommandBuffer cmd) -> void {
     VkClearColorValue clear_value;
-    float flash = std::abs(std::sin(frame_number_ / 120.f));
     clear_value = {
-      {0.f, 0.f, flash, 1.f}
+      {255.f / 255.f, 105.f / 255.f, 180.f / 255.f, 1.f}
     };
 
     VkImageSubresourceRange clear_range = image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
     vkCmdClearColorImage(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &clear_range);
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, gradient_pipeline_.pipeline);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, gradient_pipeline_.pipeline_layout, 0, 1, &draw_image_descriptors_, 0,
+                            nullptr);
+    vkCmdDispatch(cmd, (std::uint32_t)std::ceil(window_extent_.x / 16.0), (std::uint32_t)std::ceil(window_extent_.y / 16.0), 1);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {

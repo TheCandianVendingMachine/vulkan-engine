@@ -1,4 +1,5 @@
 #pragma once
+#include "engine/engine_utils.h"
 #include "engine/graphics/graphics.h"
 #include "engine/logger.h"
 #include "engine/meta_defines.h"
@@ -49,7 +50,7 @@ namespace ENGINE_NS {
             LogLocator logger_;
             GraphicsEngine graphics_;
 
-            friend void ENGINE_NS::crash(ErrorCode, int, const char*, const char*, const char*);
+            friend auto ::ENGINE_NS::crash(ErrorCode, int, const char*, const char*, const char*) -> void;
     };
 
     extern Engine* g_ENGINE;

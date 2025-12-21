@@ -57,7 +57,7 @@ auto ENGINE_NS::asset::BytecodeShader::load_from_file(const std::filesystem::pat
     } else {
         length = err.value();
     }
-    std::vector<std::uint32_t> spirv(length);
+    std::vector<std::uint32_t> spirv(length / sizeof(std::uint32_t));
     if (auto err = file.read_into(spirv); !err) {
         crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__, file_result.error().reason);
     }
@@ -70,6 +70,29 @@ auto ENGINE_NS::asset::BytecodeShader::load_from_file(const std::filesystem::pat
 
 ENGINE_NS::asset::BytecodeShader::BytecodeShader(std::vector<std::uint32_t>&& spirv, ShaderMetadata metadata) :
     spirv_(std::move(spirv)), metadata_(metadata) {
+}
+
+ENGINE_NS::asset::CompiledShader::CompiledShader(const CompiledShader& rhs) : metadata_(rhs.metadata_), shader_(rhs.shader_) {
+}
+
+ENGINE_NS::asset::CompiledShader::CompiledShader(CompiledShader&& rhs) noexcept :
+    metadata_(std::move(rhs.metadata_)), shader_(std::move(rhs.shader_)) {
+}
+
+auto ENGINE_NS::asset::CompiledShader::operator=(const CompiledShader& rhs) -> CompiledShader& {
+    if (&rhs != this) {
+        metadata_ = rhs.metadata_;
+        shader_   = rhs.shader_;
+    }
+    return *this;
+}
+
+auto ENGINE_NS::asset::CompiledShader::operator=(CompiledShader&& rhs) noexcept -> CompiledShader& {
+    if (&rhs != this) {
+        metadata_ = std::move(rhs.metadata_);
+        shader_   = std::move(rhs.shader_);
+    }
+    return *this;
 }
 
 ENGINE_NS::asset::CompiledShader::CompiledShader(VkShaderModule handle, ShaderMetadata metadata) : metadata_(metadata), shader_(handle) {

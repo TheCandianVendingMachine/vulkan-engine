@@ -1,6 +1,8 @@
 #pragma once
 #include "engine/meta_defines.h"
 #define VK_NO_PROTOTYPES
+#include "engine/assets/library.h"
+#include "engine/graphics/pipeline.h"
 #include "engine/graphics/types.h"
 #include "engine/graphics/vulkan.h"
 #include <cstdint>
@@ -64,15 +66,38 @@ namespace ENGINE_NS {
             using DeletionInterface<ImageAllocation>::operator=;
             auto destroy(VkDevice device, VmaAllocator allocator) -> void;
     };
+    template <>
+    struct Deletion<VulkanDescriptorSetLayout> : public DeletionInterface<VulkanDescriptorSetLayout> {
+            using DeletionInterface<VulkanDescriptorSetLayout>::DeletionInterface;
+            using DeletionInterface<VulkanDescriptorSetLayout>::operator=;
+            auto destroy(VkDevice device) -> void;
+    };
+    template <>
+    struct Deletion<ComputePipeline> : public DeletionInterface<ComputePipeline> {
+            using DeletionInterface<ComputePipeline>::DeletionInterface;
+            using DeletionInterface<ComputePipeline>::operator=;
+            auto destroy(VkDevice device) -> void;
+    };
+    template <>
+    struct Deletion<asset::CompiledShader> : public DeletionInterface<asset::CompiledShader> {
+            using DeletionInterface<asset::CompiledShader>::DeletionInterface;
+            using DeletionInterface<asset::CompiledShader>::operator=;
+            auto destroy(VkDevice device) -> void;
+    };
 
     class GraphicsMainDeletionQueue {
         public:
             auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
 
             auto push(ImageAllocation allocation) -> void;
+            auto push(VulkanDescriptorSetLayout layout) -> void;
+            auto push(ComputePipeline pipeline) -> void;
+
 
         private:
             Deletion<ImageAllocation> draw_image_{};
+            std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
+            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
     };
     class GraphicsPerFrameDeletionQueue {
         public:

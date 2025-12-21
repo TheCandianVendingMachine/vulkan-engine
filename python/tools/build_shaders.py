@@ -4,9 +4,10 @@ import shutil
 from pathlib import Path
 import argparse
 
+TARGET_NAME = os.environ.get('TARGET_NAME', 'shaders-compiled')
 BASE_DIRECTORY: Path = Path(os.environ.get('BASE_DIRECTORY', '.'))
 SHADER_DIRECTORY: Path = Path(os.environ.get('SHADER_DIRECTORY', 'shaders'))
-TARGET_DIRECTORY: Path = Path(os.environ.get('TARGET_DIRECTORY', 'shaders-compiled'))
+TARGET_DIRECTORY: Path = Path(os.environ.get('TARGET_DIRECTORY', TARGET_NAME))
 
 class CompileError(Exception):
     def __init__(self, message: str):

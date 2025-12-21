@@ -1,5 +1,4 @@
 #pragma once
-#include "engine/engine_utils.h"
 #include "engine/meta_defines.h"
 #include "engine/version.h"
 #include <cstdint>
@@ -9,13 +8,6 @@
 #define VK_NO_PROTOTYPES
 #include <vulkan/vulkan_core.h>
 
-#define VK_CHECK(x)                                                                                                                        \
-    do {                                                                                                                                   \
-        VkResult err = x;                                                                                                                  \
-        if (err < 0) {                                                                                                                     \
-            ::ENGINE_NS::vulkan_crash(err, __LINE__, __func__, __FILE__);                                                                  \
-        }                                                                                                                                  \
-    } while (0)
 
 struct SDL_Window;
 namespace ENGINE_NS {
@@ -301,5 +293,42 @@ namespace ENGINE_NS {
 
             friend class VulkanSwapchainBuilder;
             VulkanSwapchain(VkSwapchainCreateInfoKHR create_info, VulkanDevice& device);
+    };
+
+    class VulkanDescriptorSetLayout;
+    class VulkanDescriptorLayoutBuilder {
+        public:
+            auto with_binding(std::uint32_t binding_idx, VkDescriptorType type) -> VulkanDescriptorLayoutBuilder&;
+            auto build(VulkanDevice& device, VkShaderStageFlags shader_stages, void* next, VkDescriptorSetLayoutCreateFlags flags)
+                -> VulkanDescriptorSetLayout;
+
+        private:
+            std::vector<VkDescriptorSetLayoutBinding> bindings_{};
+
+            friend class VulkanDescriptorSetLayout;
+            VulkanDescriptorLayoutBuilder() = default;
+    };
+
+    class VulkanDescriptorSetLayout {
+        public:
+            VulkanDescriptorSetLayout(const VulkanDescriptorSetLayout& rhs);
+            VulkanDescriptorSetLayout(VulkanDescriptorSetLayout&& rhs) noexcept;
+
+
+            VulkanDescriptorSetLayout() = default;
+            static auto build() -> VulkanDescriptorLayoutBuilder;
+
+            auto operator=(const VulkanDescriptorSetLayout& rhs) -> VulkanDescriptorSetLayout&;
+            auto operator=(VulkanDescriptorSetLayout&& rhs) noexcept -> VulkanDescriptorSetLayout&;
+
+            const VkDescriptorSetLayout& layout = set_;
+
+        private:
+            VkDescriptorSetLayout set_ = VK_NULL_HANDLE;
+            bool moved_                = false;
+            bool initialised_          = false;
+
+            friend class VulkanDescriptorLayoutBuilder;
+            VulkanDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo create_info, VulkanDevice& device);
     };
 } // namespace ENGINE_NS

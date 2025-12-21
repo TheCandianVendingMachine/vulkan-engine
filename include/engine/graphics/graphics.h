@@ -1,5 +1,7 @@
 #pragma once
 #include "engine/deletion_queue.h"
+#include "engine/graphics/descriptor.h"
+#include "engine/graphics/pipeline.h"
 #include "engine/graphics/types.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
@@ -44,6 +46,12 @@ namespace ENGINE_NS {
             GraphicsMainDeletionQueue deletion_queue_{};
             VmaAllocator allocator_{};
 
+            DescriptorAllocator global_descriptor_allocator_{};
+            VkDescriptorSet draw_image_descriptors_ = VK_NULL_HANDLE;
+            VulkanDescriptorSetLayout draw_image_layout_{};
+
+            ComputePipeline gradient_pipeline_{};
+
             std::thread render_thread_;
             std::chrono::milliseconds update_rate_;
             std::atomic<bool> running_;
@@ -67,6 +75,10 @@ namespace ENGINE_NS {
 
             auto init_vulkan_() -> void;
             auto create_swapchain_() -> void;
+            auto init_descriptors_() -> void;
+
+            auto init_pipelines_() -> void;
+            auto init_background_pipelines_() -> void;
 
             auto draw_background_(VkCommandBuffer cmd) -> void;
             auto draw_() -> void;

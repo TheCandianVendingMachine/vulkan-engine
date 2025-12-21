@@ -21,6 +21,12 @@ namespace ENGINE_NS {
             public:
                 const VkShaderModule& shader = shader_;
 
+                CompiledShader(const CompiledShader& rhs);
+                CompiledShader(CompiledShader&& rhs) noexcept;
+
+                auto operator=(const CompiledShader& rhs) -> CompiledShader&;
+                auto operator=(CompiledShader&& rhs) noexcept -> CompiledShader&;
+
             private:
                 CompiledShader(VkShaderModule handle, ShaderMetadata metadata);
                 ShaderMetadata metadata_{};

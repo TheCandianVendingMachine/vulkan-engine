@@ -89,4 +89,3 @@ auto ENGINE_NS::submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInf
 
     return info;
 }
-
