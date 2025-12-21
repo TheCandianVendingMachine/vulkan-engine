@@ -102,7 +102,6 @@ auto ENGINE_NS::Engine::main_loop() -> void {
             this->fixed_update(update_rate);
             FrameMarkEnd(StaticNames::FixedUpdate);
         }
-        ImGui::ShowDemoWindow();
         imgui_lock.drop();
 
         graphics_.draw();
