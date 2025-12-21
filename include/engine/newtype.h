@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+
 #include <cstdint>
 #include <type_traits>
 #include <utility>
@@ -24,7 +25,7 @@ namespace ENGINE_NS {
                 return this->m_value;
             }
 
-            explicit operator T const&() const noexcept {
+            explicit operator const T&() const noexcept {
                 return this->m_value;
             }
 

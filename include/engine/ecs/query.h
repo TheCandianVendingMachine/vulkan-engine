@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/bitset.h"
 #include "engine/meta_defines.h"
+
 #include <string_view>
 
 namespace ENGINE_NS {

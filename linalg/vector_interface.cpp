@@ -1,5 +1,6 @@
 #include "linalg/vector.h"
 #include "linalg/vector_ops.h"
+
 #include <cstring>
 
 extern "C"

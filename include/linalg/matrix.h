@@ -1,5 +1,6 @@
 #pragma once
 #include "linalg/vector.h"
+
 #include <cstring>
 #include <utility>
 
@@ -269,7 +270,21 @@ namespace linalg {
             Matrix4(Matrix4&& other) {
                 *this = std::move(other);
             }
-            Matrix4(T r1c1, T r1c2, T r1c3, T r1c4, T r2c1, T r2c2, T r2c3, T r2c4, T r3c1, T r3c2, T r3c3, T r3c4, T r4c1, T r4c2, T r4c3,
+            Matrix4(T r1c1,
+                    T r1c2,
+                    T r1c3,
+                    T r1c4,
+                    T r2c1,
+                    T r2c2,
+                    T r2c3,
+                    T r2c4,
+                    T r3c1,
+                    T r3c2,
+                    T r3c3,
+                    T r3c4,
+                    T r4c1,
+                    T r4c2,
+                    T r4c3,
                     T r4c4) :
                 r1c1(r1c1), r1c2(r1c2), r1c3(r1c3), r1c4(r1c4), r2c1(r2c1), r2c2(r2c2), r2c3(r2c3), r2c4(r2c4), r3c1(r3c1), r3c2(r3c2),
                 r3c3(r3c3), r3c4(r3c4), r4c1(r4c1), r4c2(r4c2), r4c3(r4c3), r4c4(r4c4) {

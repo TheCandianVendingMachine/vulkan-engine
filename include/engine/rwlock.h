@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+
 #include <atomic>
 #include <cstdint>
 #include <type_traits>

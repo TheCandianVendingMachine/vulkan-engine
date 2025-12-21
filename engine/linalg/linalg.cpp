@@ -1,6 +1,8 @@
 #include "engine/linalg/linalg.h"
+
 #include "engine/engine.h"
 #include "engine/engine_utils.h"
+
 #include <Tracy/tracy.hpp>
 #include <Windows.h>
 #include <libloaderapi.h>

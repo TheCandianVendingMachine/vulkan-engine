@@ -1,4 +1,5 @@
 #include "engine/ecs/entity.h"
+
 #include <Tracy/tracy.hpp>
 #include <utility>
 

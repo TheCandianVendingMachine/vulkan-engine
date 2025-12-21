@@ -1,8 +1,10 @@
 #include "engine/graphics/descriptor.h"
+
 #include "engine/engine.h"
 #include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
+
 #include <Volk/volk.h>
 #include <cstdint>
 #include <type_traits>
@@ -19,7 +21,9 @@ auto ENGINE_NS::VulkanDescriptorLayoutBuilder::with_binding(std::uint32_t bindin
     return *this;
 }
 
-auto ENGINE_NS::VulkanDescriptorLayoutBuilder::build(VulkanDevice& device, VkShaderStageFlags shader_stages, void* next,
+auto ENGINE_NS::VulkanDescriptorLayoutBuilder::build(VulkanDevice& device,
+                                                     VkShaderStageFlags shader_stages,
+                                                     void* next,
                                                      VkDescriptorSetLayoutCreateFlags flags) -> VulkanDescriptorSetLayout {
     for (auto& binding : bindings_) {
         binding.stageFlags |= shader_stages;

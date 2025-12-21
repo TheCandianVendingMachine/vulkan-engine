@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include "engine/pool/types.h"
+
 #include <Tracy/Tracy.hpp>
 #include <cassert>
 #include <cstdint>
@@ -13,7 +14,7 @@ namespace ENGINE_NS {
         FREE = 0,
         FIRST_FREE,
         IN_USE,
-        GRAVESTONE,
+        GRAVESTONE
     };
 
     template <typename T>

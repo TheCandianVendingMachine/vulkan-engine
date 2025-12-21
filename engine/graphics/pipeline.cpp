@@ -1,6 +1,8 @@
 #include "engine/graphics/pipeline.h"
+
 #include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
+
 #include <Volk/volk.h>
 #define VK_NO_PROTOTYPES
 #include <type_traits>
@@ -51,7 +53,8 @@ ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::GraphicsPipelineBuilder>::PipelineLa
     PipelineLayoutBuilder<GraphicsPipelineBuilder>&& rhs) noexcept : from_(rhs.from_) {
 }
 
-ENGINE_NS::GraphicsPipeline::GraphicsPipeline(VulkanDevice& device, VkGraphicsPipelineCreateInfo pipeline_info,
+ENGINE_NS::GraphicsPipeline::GraphicsPipeline(VulkanDevice& device,
+                                              VkGraphicsPipelineCreateInfo pipeline_info,
                                               VkPipelineLayoutCreateInfo layout_info) {
     VK_CHECK(vkCreatePipelineLayout(device.device, &layout_info, nullptr, &layout_));
     pipeline_info.layout = layout_;

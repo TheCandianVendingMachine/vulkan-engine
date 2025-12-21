@@ -1,4 +1,5 @@
 #include "engine/graphics/vulkan.h"
+
 #include "engine/graphics/util.h"
 // clang-format disable
 #include <Volk/volk.h>
@@ -77,7 +78,8 @@ auto ENGINE_NS::command_buffer_submit_info(VkCommandBuffer command_buffer) -> Vk
     return info;
 }
 
-auto ENGINE_NS::submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signal_semaphore_info,
+auto ENGINE_NS::submit_info(VkCommandBufferSubmitInfo* cmd,
+                            VkSemaphoreSubmitInfo* signal_semaphore_info,
                             VkSemaphoreSubmitInfo* wait_semaphore_info) -> VkSubmitInfo2 {
     VkSubmitInfo2 info            = {};
     info.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;

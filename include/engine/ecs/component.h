@@ -3,6 +3,7 @@
 #include "engine/ecs/query.h"
 #include "engine/meta_defines.h"
 #include "engine/pool.h"
+
 #include <Tracy/Tracy.hpp>
 #include <algorithm>
 #include <memory>

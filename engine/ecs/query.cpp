@@ -1,6 +1,8 @@
 #include "engine/ecs/query.h"
+
 #include "engine/ecs/component.h"
 #include "engine/meta_defines.h"
+
 #include <string_view>
 #include <tracy/tracy.hpp>
 

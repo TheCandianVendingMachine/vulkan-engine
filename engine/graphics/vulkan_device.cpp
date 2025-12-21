@@ -43,7 +43,8 @@ auto ENGINE_NS::VulkanDevice::operator=(VulkanDevice&& rhs) noexcept -> VulkanDe
     return *this;
 }
 
-ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues, VulkanPhysicalDevice& physical_device,
+ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues,
+                                      VulkanPhysicalDevice& physical_device,
                                       VkDeviceCreateInfo create_info) : queues_(queues) {
     ZoneScoped;
 

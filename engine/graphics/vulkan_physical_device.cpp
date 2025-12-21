@@ -39,9 +39,12 @@ auto ENGINE_NS::VulkanPhysicalDevice::operator=(VulkanPhysicalDevice&& rhs) noex
     return *this;
 }
 
-ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device, VkPhysicalDeviceFeatures f10,
-                                                      VkPhysicalDeviceVulkan11Features f11, VkPhysicalDeviceVulkan12Features f12,
-                                                      VkPhysicalDeviceVulkan13Features f13, VkPhysicalDeviceVulkan14Features f14,
+ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device,
+                                                      VkPhysicalDeviceFeatures f10,
+                                                      VkPhysicalDeviceVulkan11Features f11,
+                                                      VkPhysicalDeviceVulkan12Features f12,
+                                                      VkPhysicalDeviceVulkan13Features f13,
+                                                      VkPhysicalDeviceVulkan14Features f14,
                                                       std::vector<std::string>&& extensions) :
     device_(device), features_10_(f10), features_11_(f11), features_12_(f12), features_13_(f13), features_14_(f14),
     extensions_(extensions) {

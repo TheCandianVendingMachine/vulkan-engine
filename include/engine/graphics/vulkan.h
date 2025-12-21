@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include "engine/version.h"
+
 #include <cstdint>
 #include <linalg/vector.h>
 #include <robin_map.h>
@@ -28,7 +29,8 @@ namespace ENGINE_NS {
 
     auto semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore) -> VkSemaphoreSubmitInfo;
     auto command_buffer_submit_info(VkCommandBuffer command_buffer) -> VkCommandBufferSubmitInfo;
-    auto submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signal_semaphore_info,
+    auto submit_info(VkCommandBufferSubmitInfo* cmd,
+                     VkSemaphoreSubmitInfo* signal_semaphore_info,
                      VkSemaphoreSubmitInfo* wait_semaphore_info) -> VkSubmitInfo2;
 
     auto attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout) -> VkRenderingAttachmentInfo;
@@ -156,9 +158,13 @@ namespace ENGINE_NS {
             VkPhysicalDeviceFeatures features_10_{};
             bool moved_ = false;
 
-            VulkanPhysicalDevice(VkPhysicalDevice device, VkPhysicalDeviceFeatures f10, VkPhysicalDeviceVulkan11Features f11,
-                                 VkPhysicalDeviceVulkan12Features f12, VkPhysicalDeviceVulkan13Features f13,
-                                 VkPhysicalDeviceVulkan14Features f14, std::vector<std::string>&& extensions);
+            VulkanPhysicalDevice(VkPhysicalDevice device,
+                                 VkPhysicalDeviceFeatures f10,
+                                 VkPhysicalDeviceVulkan11Features f11,
+                                 VkPhysicalDeviceVulkan12Features f12,
+                                 VkPhysicalDeviceVulkan13Features f13,
+                                 VkPhysicalDeviceVulkan14Features f14,
+                                 std::vector<std::string>&& extensions);
             friend class VulkanPhysicalDeviceSelector;
     };
 
@@ -250,7 +256,8 @@ namespace ENGINE_NS {
 
 
             friend class VulkanDeviceBuilder;
-            VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues, VulkanPhysicalDevice& physical_device,
+            VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&& queues,
+                         VulkanPhysicalDevice& physical_device,
                          VkDeviceCreateInfo create_info);
     };
 

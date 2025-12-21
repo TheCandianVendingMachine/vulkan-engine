@@ -1,7 +1,9 @@
 #include "engine/engine.h"
+
 #include "engine/linalg/linalg.h"
 #include "engine/linalg/matrix.h"
 #include "engine/linalg/vector.h"
+
 #include <SDL3/SDL.h>
 #include <Tracy/Tracy.hpp>
 #include <chrono>

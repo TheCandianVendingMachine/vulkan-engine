@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+
 #include <cerrno>
 #include <cstdint>
 
@@ -17,7 +18,7 @@ namespace ENGINE_NS {
                 NOT_WRITEABLE,
                 NOT_READABLE,
                 WRITE_ERROR,
-                OPEN,
+                OPEN
             };
 
             namespace types {
@@ -98,66 +99,66 @@ namespace ENGINE_NS {
                     inline Error(types::Unknown error) : error(Flag::UNKNOWN), reason(contained.unknown.reason) {
                         contained.unknown = error;
                     }
-                    inline static auto unknown() -> Error {
+                    static inline auto unknown() -> Error {
                         return Error(types::Unknown{});
                     }
 
                     inline Error(types::Indicator error) : error(Flag::INDICATOR), reason(contained.indicator.reason) {
                         contained.indicator = error;
                     }
-                    inline static auto indicator() -> Error {
+                    static inline auto indicator() -> Error {
                         return Error(types::Indicator{});
                     }
 
                     inline Error(types::Close error) : error(Flag::CLOSE), reason(contained.close.reason) {
                         contained.close = error;
                     }
-                    inline static auto close() -> Error {
+                    static inline auto close() -> Error {
                         return Error(types::Close{});
                     }
 
                     inline Error(types::GetPos error) : error(Flag::GET_POS), reason(contained.get_pos.reason) {
                         contained.get_pos = error;
                     }
-                    inline static auto get_pos() -> Error {
+                    static inline auto get_pos() -> Error {
                         return Error(types::GetPos{});
                     }
 
                     inline Error(types::Move error) : error(Flag::MOVE), reason(contained.move.reason) {
                         contained.move = error;
                     }
-                    inline static auto move() -> Error {
+                    static inline auto move() -> Error {
                         return Error(types::Move{});
                     }
 
                     inline Error(types::NotWritable error) : error(Flag::NOT_WRITEABLE), reason(contained.not_writable.reason) {
                         contained.not_writable = error;
                     }
-                    inline static auto not_writable() -> Error {
+                    static inline auto not_writable() -> Error {
                         return Error(types::NotWritable{});
                     }
 
                     inline Error(types::NotReadable error) : error(Flag::NOT_READABLE), reason(contained.not_readable.reason) {
                         contained.not_readable = error;
                     }
-                    inline static auto not_readable() -> Error {
+                    static inline auto not_readable() -> Error {
                         return Error(types::NotReadable{});
                     }
 
                     inline Error(types::Write error) : error(Flag::WRITE_ERROR), reason(contained.write.reason) {
                         contained.write = error;
                     }
-                    inline static auto write() -> Error {
+                    static inline auto write() -> Error {
                         return Error(types::Write{});
                     }
-                    inline static auto write(int error_code) -> Error {
+                    static inline auto write(int error_code) -> Error {
                         return Error(types::Write(error_code));
                     }
 
                     inline Error(types::Open error) : error(Flag::OPEN), reason(contained.open.reason) {
                         contained.open = error;
                     }
-                    inline static auto open() -> Error {
+                    static inline auto open() -> Error {
                         return Error(types::Open{});
                     }
             };

@@ -1,7 +1,9 @@
 #include "engine/ecs/component.h"
+
 #include "engine/ecs/default.h"
 #include "engine/ecs/defines.h"
 #include "engine/meta_defines.h"
+
 #include <Tracy/tracy.hpp>
 #include <utility>
 

@@ -1,4 +1,5 @@
 #include "linalg/vector_ops.h"
+
 #include <cmath>
 #include <cstring>
 

@@ -56,7 +56,9 @@ auto ENGINE_NS::VulkanQueue::operator=(VulkanQueue&& rhs) noexcept -> VulkanQueu
     return *this;
 }
 
-ENGINE_NS::VulkanQueue::VulkanQueue(std::uint32_t queue_family, std::uint32_t queue_index, std::uint32_t max_queue_index,
+ENGINE_NS::VulkanQueue::VulkanQueue(std::uint32_t queue_family,
+                                    std::uint32_t queue_index,
+                                    std::uint32_t max_queue_index,
                                     VulkanQueueType type) :
     queue_family_(queue_family), queue_index_(queue_index), max_queue_index_(max_queue_index), type_(type) {
 }

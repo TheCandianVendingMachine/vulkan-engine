@@ -99,6 +99,6 @@ KeepEmptyLines:
   AtStartOfBlock: false
   AtStartOfFile: false
 QualifierAlignment: Custom
-QualifierOrder: [friend, inline, static, const, constexpr, volatile, type]
+QualifierOrder: [friend, static, inline, constexpr, const, volatile, type]
 IncludeBlocks: Regroup
 FixNamespaceComments: true

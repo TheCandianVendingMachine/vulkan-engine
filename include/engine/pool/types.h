@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include "engine/newtype.h"
+
 #include <cstdint>
 #include <limits>
 

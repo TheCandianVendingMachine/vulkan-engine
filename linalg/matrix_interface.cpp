@@ -1,6 +1,7 @@
 #include "linalg/matrix.h"
 #include "linalg/matrix_ops.h"
 #include "linalg/vector.h"
+
 #include <cstring>
 
 extern "C"

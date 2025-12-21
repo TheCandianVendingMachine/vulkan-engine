@@ -1,4 +1,5 @@
 #include "engine/version.h"
+
 #include <fmt/format.h>
 #include <type_traits>
 

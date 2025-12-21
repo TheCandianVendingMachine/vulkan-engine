@@ -1,6 +1,7 @@
 #include "engine/linalg/matrix.h"
 #include "engine/linalg/vector.h"
 #include "engine/meta_defines.h"
+
 #include <Tracy/Tracy.hpp>
 
 using namespace linalg;

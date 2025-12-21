@@ -13,7 +13,8 @@
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL validation_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
                                                           VkDebugUtilsMessageTypeFlagsEXT messageType,
-                                                          const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void*) {
+                                                          const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                          void*) {
     ZoneScoped;
     engine::Logger* logger = nullptr;
     switch (messageType) {
@@ -86,9 +87,11 @@ ENGINE_NS::VulkanInstance::VulkanInstance(VkInstanceCreateInfo create_info) {
     if (create_info.enabledLayerCount > 0) {
         VkDebugUtilsMessengerCreateInfoEXT debug_create{};
         debug_create.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        debug_create.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+        debug_create.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+                                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        debug_create.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+        debug_create.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                                    VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         debug_create.pfnUserCallback = validation_callback;
 

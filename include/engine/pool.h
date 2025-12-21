@@ -2,6 +2,7 @@
 #include "engine/meta_defines.h"
 #include "engine/pool/region.h"
 #include "engine/pool/types.h"
+
 #include <iterator>
 #include <optional>
 #include <robin_map.h>
@@ -43,7 +44,7 @@ namespace ENGINE_NS {
                     return *this->get().value_or(nullptr);
                 }
 
-                explicit operator T const&() const {
+                explicit operator const T&() const {
                     return *this->get().value_or(nullptr);
                 }
 

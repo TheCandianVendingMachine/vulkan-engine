@@ -1,4 +1,5 @@
 #include "engine/bitset.h"
+
 #include <cassert>
 
 using namespace ::ENGINE_NS;

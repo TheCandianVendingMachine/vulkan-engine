@@ -1,4 +1,5 @@
 #include "engine/linalg/vector.h"
+
 #include <Tracy/Tracy.hpp>
 
 using namespace linalg;

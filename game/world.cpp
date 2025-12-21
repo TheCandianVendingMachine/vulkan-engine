@@ -1,4 +1,5 @@
 #include "game/world.h"
+
 #include <tracy/Tracy.hpp>
 
 auto EcsWorld::create_entity(const engine::ecs::Query& query) -> engine::ecs::EntityUid {

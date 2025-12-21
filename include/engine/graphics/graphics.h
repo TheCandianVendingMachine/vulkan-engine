@@ -8,6 +8,7 @@
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
 #include "linalg/vector.h"
+
 #include <atomic>
 #include <chrono>
 #include <cstdint>

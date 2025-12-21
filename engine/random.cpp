@@ -60,8 +60,8 @@ uint64_t rol64(uint64_t value, unsigned int shift) {
 }
 
 auto Random::random_value() -> uint64_t {
-    uint64_t const result = rol64(m_state[0] + m_state[3], 23) + m_state[0];
-    uint64_t const t      = m_state[1] << 17;
+    const uint64_t result = rol64(m_state[0] + m_state[3], 23) + m_state[0];
+    const uint64_t t      = m_state[1] << 17;
 
     m_state[2] ^= m_state[0];
     m_state[3] ^= m_state[1];

@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
@@ -18,7 +19,7 @@ namespace ENGINE_NS {
             DEBUG   = 1 << 3,
             ERROR   = 1 << 2,
             WARNING = 1 << 1,
-            INFO    = 1 << 0,
+            INFO    = 1 << 0
         };
 
         ENGINE_API Level operator&(Level lhs, Level rhs);
