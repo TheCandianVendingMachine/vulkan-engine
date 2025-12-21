@@ -7,6 +7,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
+#include <imgui.h>
 #include <thread>
 
 using namespace ::ENGINE_NS;
@@ -50,11 +51,15 @@ Engine& Engine::instance() {
 ENGINE_API auto ENGINE_NS::Engine::quit() -> void {
     if (this->running_) {
         this->running_ = false;
-        this->shutdown();
     }
 }
 
 auto Engine::run() -> void {
+    startup();
+    main_loop();
+    shutdown();
+}
+auto ENGINE_NS::Engine::main_loop() -> void {
     SDL_Event event;
 
     const auto tick_rate   = std::chrono::milliseconds(2);
@@ -71,8 +76,13 @@ auto Engine::run() -> void {
         auto frame_start = std::chrono::high_resolution_clock::now();
         auto delta       = frame_start - last_update;
         accumulator += delta.count() * 1e-9;
-        last_update = frame_start;
+        last_update     = frame_start;
 
+        auto imgui_lock = graphics_.imgui.write();
+        auto& imgui     = imgui_lock.get();
+        // auto& io                     = ImGui::GetIO();
+        // bool should_discard_mouse    = io.WantCaptureMouse;
+        // bool should_discard_keyboard = io.WantCaptureKeyboard;
         while (SDL_PollEvent(&event) != 0) {
             switch (event.type) {
                 case SDL_EVENT_QUIT:
@@ -81,7 +91,9 @@ auto Engine::run() -> void {
                 default:
                     break;
             }
+            imgui.events.push_back(event);
         }
+        imgui.start_frame();
 
         this->update();
         while (accumulator > 0.0) {
@@ -90,6 +102,8 @@ auto Engine::run() -> void {
             this->fixed_update(update_rate);
             FrameMarkEnd(StaticNames::FixedUpdate);
         }
+        ImGui::ShowDemoWindow();
+        imgui_lock.drop();
 
         graphics_.draw();
 
@@ -104,8 +118,12 @@ auto Engine::run() -> void {
         FrameMark;
     }
 }
+
 auto Engine::startup() -> void {
     ZoneScoped;
+    if (running_) {
+        return;
+    }
     logger.get(LogNamespaces::CORE).info("Starting");
 
     linalg::load_library();

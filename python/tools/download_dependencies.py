@@ -278,7 +278,7 @@ class Imgui(GitDependency, BuildSystem):
     def ignore(self, directory: str, contents: Sequence[str]) -> Sequence[str]:
         if directory.endswith('backends'):
             return [c for c in contents if c not in self.WANTED_RUNTIMES]
-        return super().ignore(directory, contents)
+        return super().ignore(directory, [c for c in contents if c not in ['imconfig.h']])
 
     def build(self):
         with header_library(self.DEPENDENCY_NAME) as build_path:
@@ -288,8 +288,8 @@ class Imgui(GitDependency, BuildSystem):
                     dst = build_path / path.name
                     print(f'{PRINT_HEADER}Copying {src} to {dst}')
                     if path.is_dir():
-                        shutil.copytree(src, dst)
-                    else:
+                        shutil.copytree(src, dst, ignore=self.ignore)
+                    elif src.name != 'imconfig.h':
                         shutil.copy2(src, dst)
 
 class Stb(GitDependency, BuildSystem):

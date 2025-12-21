@@ -1,9 +1,14 @@
 #include "engine/graphics/vulkan.h"
+#include "engine/graphics/util.h"
 // clang-format disable
 #include <Volk/volk.h>
 // clang-format enable
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
+
+auto ENGINE_NS::check_vk_result(VkResult error) -> void {
+    VK_CHECK(error);
+}
 
 auto ENGINE_NS::command_pool_create_info(std::uint32_t family_index, VkCommandPoolCreateFlags flags) -> VkCommandPoolCreateInfo {
     VkCommandPoolCreateInfo pool_info{};
@@ -88,4 +93,32 @@ auto ENGINE_NS::submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInf
     info.pCommandBufferInfos      = cmd;
 
     return info;
+}
+
+auto ENGINE_NS::attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout) -> VkRenderingAttachmentInfo {
+    VkRenderingAttachmentInfo colour_attachment{};
+    colour_attachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    colour_attachment.pNext       = nullptr;
+
+    colour_attachment.imageView   = view;
+    colour_attachment.imageLayout = layout;
+    colour_attachment.loadOp      = clear ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
+    colour_attachment.storeOp     = VK_ATTACHMENT_STORE_OP_STORE;
+    if (clear) {
+        colour_attachment.clearValue = *clear;
+    }
+
+    return colour_attachment;
+}
+
+auto ENGINE_NS::rendering_info(VkExtent2D extent, VkRenderingAttachmentInfo* color_attachment) -> VkRenderingInfo {
+    VkRenderingInfo render_info{};
+
+    render_info.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
+    render_info.colorAttachmentCount = 1;
+    render_info.pColorAttachments    = color_attachment;
+    render_info.layerCount           = 1;
+    render_info.renderArea           = VkRect2D{.offset = {}, .extent = extent};
+
+    return render_info;
 }

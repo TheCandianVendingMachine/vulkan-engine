@@ -3,6 +3,7 @@
 #include "engine/graphics/descriptor.h"
 #include "engine/graphics/pipeline.h"
 #include "engine/graphics/types.h"
+#include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
@@ -39,6 +40,7 @@ namespace ENGINE_NS {
 
             auto current_frame() -> RwLock<graphics::FrameData>&;
 
+            RwLock<graphics::ImGui> imgui{};
 
         private:
             bool initialised_ = false;
@@ -76,10 +78,12 @@ namespace ENGINE_NS {
             auto init_vulkan_() -> void;
             auto create_swapchain_() -> void;
             auto init_descriptors_() -> void;
+            auto init_imgui_() -> void;
 
             auto init_pipelines_() -> void;
             auto init_background_pipelines_() -> void;
 
+            auto draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void;
             auto draw_background_(VkCommandBuffer cmd) -> void;
             auto draw_() -> void;
     };

@@ -4,6 +4,7 @@
 #include "engine/assets/library.h"
 #include "engine/graphics/pipeline.h"
 #include "engine/graphics/types.h"
+#include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
 #include <cstdint>
 #include <type_traits>
@@ -84,6 +85,12 @@ namespace ENGINE_NS {
             using DeletionInterface<asset::CompiledShader>::operator=;
             auto destroy(VkDevice device) -> void;
     };
+    template <>
+    struct Deletion<graphics::ImGui> : public DeletionInterface<graphics::ImGui> {
+            using DeletionInterface<graphics::ImGui>::DeletionInterface;
+            using DeletionInterface<graphics::ImGui>::operator=;
+            auto destroy(VkDevice device) -> void;
+    };
 
     class GraphicsMainDeletionQueue {
         public:
@@ -92,10 +99,12 @@ namespace ENGINE_NS {
             auto push(ImageAllocation allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
             auto push(ComputePipeline pipeline) -> void;
+            auto push(graphics::ImGui imgui) -> void;
 
 
         private:
             Deletion<ImageAllocation> draw_image_{};
+            Deletion<graphics::ImGui> imgui_{};
             std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
             std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
     };

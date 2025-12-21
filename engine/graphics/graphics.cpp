@@ -15,8 +15,12 @@
 #include <Tracy/common/TracySystem.hpp>
 #include <chrono>
 #include <engine/rwlock.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_vulkan.h>
 #include <utility>
 #include <vulkan/vulkan_core.h>
+
 
 void ENGINE_NS::GraphicsEngine::initialise() {
     FrameMarkStart(StaticNames::GraphicsInit);
@@ -139,6 +143,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     device_ = VulkanDevice::build()
                   .request_queue("graphics", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
                   .request_queue("transfer", VulkanQueueType::TRANSFER)
+                  .request_queue("imgui", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
                   .finish(physical_device_);
 
 
@@ -173,8 +178,9 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
 
     create_swapchain_();
 
-    graphics_queue_ = device_.queues.at("graphics").get();
-    transfer_queue_ = device_.queues.at("transfer").get();
+    graphics_queue_           = device_.queues.at("graphics").get();
+    transfer_queue_           = device_.queues.at("transfer").get();
+    imgui.write().get().queue = device_.queues.at("imgui").get();
 
     VkCommandPoolCreateInfo pool_info =
         command_pool_create_info(device_.queues.at("graphics").family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -197,6 +203,10 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
 
     init_descriptors_();
     init_pipelines_();
+
+    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
+    logger.info("Initialising ImGui");
+    init_imgui_();
 }
 
 auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
@@ -263,6 +273,53 @@ auto ENGINE_NS::GraphicsEngine::init_descriptors_() -> void {
     deletion_queue_.push(draw_image_layout_);
 }
 
+auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
+    IMGUI_CHECKVERSION();
+    auto& imgui_                                 = imgui.write().get();
+    std::vector<VkDescriptorPoolSize> pool_sizes = {
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 * IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE},
+    };
+
+    VkDescriptorPoolCreateInfo pool_info = {};
+    pool_info.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets                    = 0;
+    for (VkDescriptorPoolSize& pool_size : pool_sizes) {
+        pool_info.maxSets += pool_size.descriptorCount;
+    }
+    pool_info.poolSizeCount = static_cast<std::uint32_t>(pool_sizes.size());
+    pool_info.pPoolSizes    = pool_sizes.data();
+
+    vkCreateDescriptorPool(device_.device, &pool_info, nullptr, &imgui_.descriptor_pool);
+
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGui_ImplSDL3_InitForVulkan(window_);
+    ImGui_ImplVulkan_InitInfo init_info                                            = {};
+    init_info.Instance                                                             = vulkan_instance_.instance;
+    init_info.PhysicalDevice                                                       = physical_device_.device;
+    init_info.Device                                                               = device_.device;
+    init_info.QueueFamily                                                          = device_.queues.at("imgui").family;
+    init_info.Queue                                                                = imgui_.queue;
+    init_info.PipelineCache                                                        = VK_NULL_HANDLE;
+    init_info.DescriptorPool                                                       = imgui_.descriptor_pool;
+    init_info.MinImageCount                                                        = 2;
+    init_info.ImageCount                                                           = 2;
+    init_info.Allocator                                                            = VK_NULL_HANDLE;
+    init_info.UseDynamicRendering                                                  = true;
+    init_info.CheckVkResultFn                                                      = check_vk_result;
+    init_info.PipelineInfoMain.MSAASamples                                         = VK_SAMPLE_COUNT_1_BIT;
+    init_info.PipelineInfoMain.PipelineRenderingCreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+    init_info.PipelineInfoMain.PipelineRenderingCreateInfo.colorAttachmentCount    = 1;
+    init_info.PipelineInfoMain.PipelineRenderingCreateInfo.pColorAttachmentFormats = &swapchain_.format;
+
+    ImGui_ImplVulkan_Init(&init_info);
+
+    deletion_queue_.push(imgui_);
+}
+
 auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
     init_background_pipelines_();
 }
@@ -298,6 +355,22 @@ auto ENGINE_NS::GraphicsEngine::init_background_pipelines_() -> void {
     vkDestroyShaderModule(device_.device, shader.shader, nullptr);
 
     deletion_queue_.push(gradient_pipeline_);
+}
+
+auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void {
+    auto lock = imgui.read();
+    ImGui::Render();
+
+    VkRenderingAttachmentInfo colour_attachment = attachment_info(image, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    VkRenderingInfo render_info                 = rendering_info(
+        VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
+        &colour_attachment);
+
+    vkCmdBeginRendering(cmd, &render_info);
+    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
+    vkCmdEndRendering(cmd);
+
+    lock.drop();
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_background_(VkCommandBuffer cmd) -> void {
@@ -341,23 +414,24 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             VkExtent2D draw_extent                  = {draw_image_.extent.width, draw_image_.extent.height};
 
             VK_CHECK(vkBeginCommandBuffer(cmd, &cmd_begin_info));
-            TracyVkZone(frame.get().tracy_context_, cmd, StaticNames::MainCommandBufferName);
-
-            transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
-            draw_background_(cmd);
-
-            transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED,
-                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-
-            blit_image(cmd, draw_image_.image, swapchain_.images[swapchain_image_index], draw_extent, swapchain_.extent);
-
-
-            transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-
             TracyVkCollect(frame.get().tracy_context_, cmd);
+            {
+                TracyVkZone(frame.get().tracy_context_, cmd, StaticNames::MainCommandBufferName);
+
+                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+
+                draw_background_(cmd);
+
+                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+                transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED,
+                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+                blit_image(cmd, draw_image_.image, swapchain_.images[swapchain_image_index], draw_extent, swapchain_.extent);
+                draw_imgui_(cmd, swapchain_.views[swapchain_image_index]);
+
+                transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+            }
             VK_CHECK(vkEndCommandBuffer(cmd));
 
             VkCommandBufferSubmitInfo cmd_info = command_buffer_submit_info(cmd);

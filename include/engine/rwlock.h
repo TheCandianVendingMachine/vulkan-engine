@@ -1,6 +1,5 @@
 #pragma once
 #include "engine/meta_defines.h"
-#include <Tracy/Tracy.hpp>
 #include <atomic>
 #include <cstdint>
 #include <type_traits>
@@ -10,8 +9,7 @@ namespace ENGINE_NS {
     class RwDataMut {
         public:
             ~RwDataMut() {
-                ZoneScoped;
-                lock_.store(false, std::memory_order_release);
+                drop();
             }
 
             auto get() -> T& {
@@ -21,27 +19,40 @@ namespace ENGINE_NS {
                 return wrapped_;
             }
 
+            auto drop() -> void {
+                if (!dropped_) {
+                    lock_.store(false, std::memory_order_release);
+                }
+                dropped_ = true;
+            }
+
         private:
             template <typename T>
             friend class RwLock;
             RwDataMut(std::atomic<bool>& lock, T& wrapped) : lock_(lock), wrapped_(wrapped) {
-                ZoneScoped;
             }
 
             std::atomic<bool>& lock_;
             T& wrapped_;
+            bool dropped_ = false;
     };
 
     template <typename T>
     class RwData {
         public:
             ~RwData() {
-                ZoneScoped;
-                currently_reading_.fetch_sub(1, std::memory_order_release);
+                drop();
             }
 
             auto get() const -> const T& {
                 return wrapped_;
+            }
+
+            auto drop() -> void {
+                if (!dropped_) {
+                    currently_reading_.fetch_sub(1, std::memory_order_release);
+                }
+                dropped_ = true;
             }
 
         private:
@@ -49,12 +60,12 @@ namespace ENGINE_NS {
             friend class RwLock;
             RwData(std::atomic<std::uint64_t>& currently_reading, const T& wrapped) :
                 currently_reading_(currently_reading), wrapped_(wrapped) {
-                ZoneScoped;
                 currently_reading_.fetch_add(1, std::memory_order_release);
             }
 
             std::atomic<std::uint64_t>& currently_reading_;
             const T& wrapped_;
+            bool dropped_ = false;
     };
 
     template <typename T>

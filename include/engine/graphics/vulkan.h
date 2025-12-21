@@ -11,6 +11,8 @@
 
 struct SDL_Window;
 namespace ENGINE_NS {
+    auto check_vk_result(VkResult err) -> void;
+
     auto command_pool_create_info(std::uint32_t family_index, VkCommandPoolCreateFlags flags) -> VkCommandPoolCreateInfo;
     auto command_buffer_allocate_info(VkCommandPool command_pool) -> VkCommandBufferAllocateInfo;
     auto command_buffer_begin_info(VkCommandBufferUsageFlags flags) -> VkCommandBufferBeginInfo;
@@ -29,6 +31,8 @@ namespace ENGINE_NS {
     auto submit_info(VkCommandBufferSubmitInfo* cmd, VkSemaphoreSubmitInfo* signal_semaphore_info,
                      VkSemaphoreSubmitInfo* wait_semaphore_info) -> VkSubmitInfo2;
 
+    auto attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout) -> VkRenderingAttachmentInfo;
+    auto rendering_info(VkExtent2D extent, VkRenderingAttachmentInfo* color_attachment) -> VkRenderingInfo;
 
     class VulkanInstance;
     class VulkanInstanceBuilder {
@@ -277,8 +281,10 @@ namespace ENGINE_NS {
 
             VkSwapchainKHR& swapchain            = swapchain_;
             std::vector<VkImage>& images         = images_;
+            std::vector<VkImageView>& views      = views_;
             std::vector<VkSemaphore>& semaphores = semaphores_;
             const VkExtent2D& extent             = extent_;
+            const VkFormat& format               = format_;
 
         private:
             VulkanDevice* device_     = nullptr;

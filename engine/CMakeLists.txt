@@ -6,6 +6,7 @@ set(LINALG_HEADER_PATH
 )
 
 set(HEADER_LIST
+    "${PROJECT_SOURCE_DIR}/include/imconfig.h"
     "${ENGINE_HEADER_PATH}/meta_defines.h"
     "${ENGINE_HEADER_PATH}/stb_image_write_wrapped.h"
     "${ENGINE_HEADER_PATH}/bitset.h"
@@ -75,6 +76,7 @@ add_library(engine
     ecs/query.cpp
     graphics/descriptor.cpp
     graphics/graphics.cpp
+    graphics/util.cpp
     graphics/vulkan.cpp
     graphics/vulkan_device.cpp
     graphics/vulkan_image.cpp
@@ -85,6 +87,13 @@ add_library(engine
     graphics/vulkan_queue.cpp
     reflection/type.cpp
     ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
+    ${EXTERNAL_HEADER_DIR}/imgui/imgui.cpp
+    ${EXTERNAL_HEADER_DIR}/imgui/imgui_demo.cpp
+    ${EXTERNAL_HEADER_DIR}/imgui/imgui_draw.cpp
+    ${EXTERNAL_HEADER_DIR}/imgui/imgui_tables.cpp
+    ${EXTERNAL_HEADER_DIR}/imgui/imgui_widgets.cpp
+    ${EXTERNAL_HEADER_DIR}/imgui/backends/imgui_impl_sdl3.cpp
+    ${EXTERNAL_HEADER_DIR}/imgui/backends/imgui_impl_vulkan.cpp
     ${HEADER_LIST}
 )
 target_compile_definitions(engine PRIVATE
@@ -101,6 +110,8 @@ target_include_directories(engine PUBLIC
     ${EXTERNAL_HEADER_DIR}/volk
     ${EXTERNAL_HEADER_DIR}/robin-map
     ${EXTERNAL_HEADER_DIR}/Tracy
+    ${EXTERNAL_HEADER_DIR}/imgui
+    ${EXTERNAL_HEADER_DIR}/imgui/backends
     ${EXTERNAL_DIR}/fastgltf/include
     ${EXTERNAL_DIR}/fmtlib/include
     ${EXTERNAL_DIR}/sdl/include

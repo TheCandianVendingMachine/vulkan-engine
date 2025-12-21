@@ -37,6 +37,8 @@ namespace ENGINE_NS {
             LogLocator& logger = logger_;
 
         private:
+            auto main_loop() -> void;
+
             auto startup() -> void;
             auto shutdown() -> void;
 
