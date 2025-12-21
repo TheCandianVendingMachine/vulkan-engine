@@ -2,6 +2,7 @@ target_sources(engine PRIVATE
     descriptor.cpp
     graphics.cpp
     util.cpp
+    pipeline.cpp
     vulkan.cpp
     vulkan_device.cpp
     vulkan_image.cpp

@@ -111,14 +111,35 @@ auto ENGINE_NS::attachment_info(VkImageView view, VkClearValue* clear, VkImageLa
     return colour_attachment;
 }
 
-auto ENGINE_NS::rendering_info(VkExtent2D extent, VkRenderingAttachmentInfo* color_attachment) -> VkRenderingInfo {
+auto ENGINE_NS::rendering_info(VkExtent2D extent, VkRenderingAttachmentInfo* color_attachment, VkRenderingAttachmentInfo* depth_attachment)
+    -> VkRenderingInfo {
     VkRenderingInfo render_info{};
 
     render_info.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
     render_info.colorAttachmentCount = 1;
     render_info.pColorAttachments    = color_attachment;
+    render_info.pDepthAttachment     = depth_attachment;
     render_info.layerCount           = 1;
     render_info.renderArea           = VkRect2D{.offset = {}, .extent = extent};
 
     return render_info;
 }
+
+auto ENGINE_NS::pipeline_layout_create_info() -> VkPipelineLayoutCreateInfo {
+    VkPipelineLayoutCreateInfo layout{};
+    layout.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    return layout;
+}
+
+auto ENGINE_NS::pipeline_shader_stage_create_info(VkShaderStageFlagBits stage, VkShaderModule shader, const char* entry)
+    -> VkPipelineShaderStageCreateInfo {
+    VkPipelineShaderStageCreateInfo info{};
+    info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    info.pNext  = nullptr;
+
+    info.stage  = stage;
+    info.module = shader;
+    info.pName  = entry;
+    return info;
+}
+

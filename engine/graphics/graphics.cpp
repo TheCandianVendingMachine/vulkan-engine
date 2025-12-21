@@ -133,8 +133,12 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     features12.bufferDeviceAddress = true;
     features12.descriptorIndexing  = true;
 
-    physical_device_               = VulkanPhysicalDevice::choose(window_)
+    VkPhysicalDeviceVulkan11Features features11{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES};
+    features11.shaderDrawParameters = true;
+
+    physical_device_                = VulkanPhysicalDevice::choose(window_)
                            .set_minimum_vulkan_version(Version(1, 3, 0))
+                           .set_required_features_11(features11)
                            .set_required_features_12(features12)
                            .set_required_features_13(features)
                            .with_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
@@ -322,13 +326,13 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
 
 auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
     init_background_pipelines_();
+    init_triangle_pipeline_();
 }
 
 auto ENGINE_NS::GraphicsEngine::init_background_pipelines_() -> void {
-    VkPipelineLayoutCreateInfo compute_layout{};
-    compute_layout.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    compute_layout.pSetLayouts    = &draw_image_layout_.layout;
-    compute_layout.setLayoutCount = 1;
+    VkPipelineLayoutCreateInfo compute_layout = pipeline_layout_create_info();
+    compute_layout.pSetLayouts                = &draw_image_layout_.layout;
+    compute_layout.setLayoutCount             = 1;
 
     VK_CHECK(vkCreatePipelineLayout(device_.device, &compute_layout, nullptr, &gradient_pipeline_.pipeline_layout));
 
@@ -337,14 +341,9 @@ auto ENGINE_NS::GraphicsEngine::init_background_pipelines_() -> void {
         crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
         std::unreachable();
     }
-    auto shader = shader_result.value();
+    auto shader                                = shader_result.value();
 
-    VkPipelineShaderStageCreateInfo stage_info{};
-    stage_info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stage_info.stage  = VK_SHADER_STAGE_COMPUTE_BIT;
-    stage_info.module = shader.shader;
-    stage_info.pName  = "main";
-
+    VkPipelineShaderStageCreateInfo stage_info = pipeline_shader_stage_create_info(VK_SHADER_STAGE_COMPUTE_BIT, shader.shader, "main");
     VkComputePipelineCreateInfo compute_create_info{};
     compute_create_info.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     compute_create_info.layout = gradient_pipeline_.pipeline_layout;
@@ -357,6 +356,32 @@ auto ENGINE_NS::GraphicsEngine::init_background_pipelines_() -> void {
     deletion_queue_.push(gradient_pipeline_);
 }
 
+auto ENGINE_NS::GraphicsEngine::init_triangle_pipeline_() -> void {
+    auto shader_result = asset::BytecodeShader::load_from_file("assets/shaders/engine/static_triangle.spv").compile(device_);
+    if (!shader_result.has_value()) {
+        crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
+        std::unreachable();
+    }
+    auto shader        = shader_result.value();
+
+    triangle_pipeline_ = GraphicsPipeline::build()
+                             .layout()
+                             .finish()
+                             .shaders(shader, shader)
+                             .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+                             .polygon_mode(VK_POLYGON_MODE_FILL)
+                             .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
+                             .set_multisampling_none()
+                             .disable_blending()
+                             .disable_depthtest()
+                             .color_attachment_format(draw_image_.format)
+                             .depth_format(VK_FORMAT_UNDEFINED)
+                             .finish(device_);
+    vkDestroyShaderModule(device_.device, shader.shader, nullptr);
+
+    deletion_queue_.push(triangle_pipeline_);
+}
+
 auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void {
     auto lock = imgui.read();
     ImGui::Render();
@@ -364,7 +389,7 @@ auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView ima
     VkRenderingAttachmentInfo colour_attachment = attachment_info(image, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     VkRenderingInfo render_info                 = rendering_info(
         VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
-        &colour_attachment);
+        &colour_attachment, nullptr);
 
     vkCmdBeginRendering(cmd, &render_info);
     ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
@@ -386,6 +411,39 @@ auto ENGINE_NS::GraphicsEngine::draw_background_(VkCommandBuffer cmd) -> void {
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, gradient_pipeline_.pipeline_layout, 0, 1, &draw_image_descriptors_, 0,
                             nullptr);
     vkCmdDispatch(cmd, (std::uint32_t)std::ceil(window_extent_.x / 16.0), (std::uint32_t)std::ceil(window_extent_.y / 16.0), 1);
+}
+
+auto ENGINE_NS::GraphicsEngine::draw_geometry_(VkCommandBuffer cmd) -> void {
+    VkRenderingAttachmentInfo colour_attachment = attachment_info(draw_image_.view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    VkRenderingInfo render_info                 = rendering_info(
+        VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
+        &colour_attachment, nullptr);
+
+    vkCmdBeginRendering(cmd, &render_info);
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, triangle_pipeline_.pipeline);
+
+    VkViewport viewport = {};
+    viewport.x          = 0;
+    viewport.y          = 0;
+    viewport.width      = static_cast<float>(window_extent_.x);
+    viewport.height     = static_cast<float>(window_extent_.y);
+    viewport.minDepth   = 0.f;
+    viewport.maxDepth   = 1.f;
+
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+    VkRect2D scissor      = {};
+    scissor.offset.x      = 0;
+    scissor.offset.y      = 0;
+    scissor.extent.width  = window_extent_.x;
+    scissor.extent.height = window_extent_.y;
+
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+
+    vkCmdEndRendering(cmd);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {
@@ -423,8 +481,13 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
                 draw_background_(cmd);
 
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+
+                draw_geometry_(cmd);
+
+                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
                 transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
 
                 blit_image(cmd, draw_image_.image, swapchain_.images[swapchain_image_index], draw_extent, swapchain_.extent);
                 draw_imgui_(cmd, swapchain_.views[swapchain_image_index]);

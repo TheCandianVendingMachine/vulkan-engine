@@ -53,6 +53,7 @@ namespace ENGINE_NS {
             VulkanDescriptorSetLayout draw_image_layout_{};
 
             ComputePipeline gradient_pipeline_{};
+            GraphicsPipeline triangle_pipeline_{};
 
             std::thread render_thread_;
             std::chrono::milliseconds update_rate_;
@@ -82,9 +83,11 @@ namespace ENGINE_NS {
 
             auto init_pipelines_() -> void;
             auto init_background_pipelines_() -> void;
+            auto init_triangle_pipeline_() -> void;
 
             auto draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void;
             auto draw_background_(VkCommandBuffer cmd) -> void;
+            auto draw_geometry_(VkCommandBuffer cmd) -> void;
             auto draw_() -> void;
     };
 } // namespace ENGINE_NS

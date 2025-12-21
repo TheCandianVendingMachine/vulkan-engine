@@ -22,6 +22,11 @@ auto ENGINE_NS::Deletion<ENGINE_NS::ComputePipeline>::destroy(VkDevice device) -
     vkDestroyPipelineLayout(device, object.pipeline_layout, nullptr);
 }
 
+auto ENGINE_NS::Deletion<ENGINE_NS::GraphicsPipeline>::destroy(VkDevice device) -> void {
+    vkDestroyPipeline(device, object.pipeline, nullptr);
+    vkDestroyPipelineLayout(device, object.layout, nullptr);
+}
+
 auto ENGINE_NS::Deletion<ENGINE_NS::asset::CompiledShader>::destroy(VkDevice device) -> void {
     vkDestroyShaderModule(device, object.shader, nullptr);
 }

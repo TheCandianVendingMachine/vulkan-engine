@@ -80,6 +80,12 @@ namespace ENGINE_NS {
             auto destroy(VkDevice device) -> void;
     };
     template <>
+    struct Deletion<GraphicsPipeline> : public DeletionInterface<GraphicsPipeline> {
+            using DeletionInterface<GraphicsPipeline>::DeletionInterface;
+            using DeletionInterface<GraphicsPipeline>::operator=;
+            auto destroy(VkDevice device) -> void;
+    };
+    template <>
     struct Deletion<asset::CompiledShader> : public DeletionInterface<asset::CompiledShader> {
             using DeletionInterface<asset::CompiledShader>::DeletionInterface;
             using DeletionInterface<asset::CompiledShader>::operator=;
@@ -99,6 +105,7 @@ namespace ENGINE_NS {
             auto push(ImageAllocation allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
             auto push(ComputePipeline pipeline) -> void;
+            auto push(GraphicsPipeline pipeline) -> void;
             auto push(graphics::ImGui imgui) -> void;
 
 
@@ -106,6 +113,7 @@ namespace ENGINE_NS {
             Deletion<ImageAllocation> draw_image_{};
             Deletion<graphics::ImGui> imgui_{};
             std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
+            std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_{};
             std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
     };
     class GraphicsPerFrameDeletionQueue {

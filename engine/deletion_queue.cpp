@@ -11,6 +11,9 @@ auto ENGINE_NS::GraphicsMainDeletionQueue::flush(VulkanDevice& device, VmaAlloca
     for (auto& pipeline : compute_pipelines_) {
         pipeline.destroy(device.device);
     }
+    for (auto& pipeline : graphics_pipelines_) {
+        pipeline.destroy(device.device);
+    }
     imgui_.destroy(device.device);
 }
 
@@ -24,6 +27,10 @@ auto ENGINE_NS::GraphicsMainDeletionQueue::push(VulkanDescriptorSetLayout layout
 
 auto ENGINE_NS::GraphicsMainDeletionQueue::push(ComputePipeline pipeline) -> void {
     compute_pipelines_.push_back(Deletion<ComputePipeline>(pipeline, 0));
+}
+
+auto ENGINE_NS::GraphicsMainDeletionQueue::push(GraphicsPipeline pipeline) -> void {
+    graphics_pipelines_.push_back(Deletion<GraphicsPipeline>(pipeline, 0));
 }
 
 auto ENGINE_NS::GraphicsMainDeletionQueue::push(graphics::ImGui imgui) -> void {

@@ -7,7 +7,8 @@
 #include <cstdint>
 #include <filesystem>
 #include <optional>
-#include <robin_map.h>
+#include <string>
+#include <string_view>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -16,10 +17,12 @@ namespace ENGINE_NS {
         class BytecodeShader;
         struct ShaderMetadata {
                 std::optional<fileio::FileMetadata> file_info{};
+                std::string entrypoint = "main";
         };
         class CompiledShader {
             public:
-                const VkShaderModule& shader = shader_;
+                const VkShaderModule& shader   = shader_;
+                const ShaderMetadata& metadata = metadata_;
 
                 CompiledShader(const CompiledShader& rhs);
                 CompiledShader(CompiledShader&& rhs) noexcept;

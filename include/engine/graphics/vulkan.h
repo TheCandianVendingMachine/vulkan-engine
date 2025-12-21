@@ -32,7 +32,12 @@ namespace ENGINE_NS {
                      VkSemaphoreSubmitInfo* wait_semaphore_info) -> VkSubmitInfo2;
 
     auto attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout) -> VkRenderingAttachmentInfo;
-    auto rendering_info(VkExtent2D extent, VkRenderingAttachmentInfo* color_attachment) -> VkRenderingInfo;
+    auto rendering_info(VkExtent2D extent, VkRenderingAttachmentInfo* color_attachment, VkRenderingAttachmentInfo* depth_attachment)
+        -> VkRenderingInfo;
+
+    auto pipeline_layout_create_info() -> VkPipelineLayoutCreateInfo;
+    auto pipeline_shader_stage_create_info(VkShaderStageFlagBits stage, VkShaderModule shader, const char* entry = "main")
+        -> VkPipelineShaderStageCreateInfo;
 
     class VulkanInstance;
     class VulkanInstanceBuilder {
