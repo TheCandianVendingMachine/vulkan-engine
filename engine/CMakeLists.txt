@@ -48,44 +48,6 @@ set(HEADER_LIST
 )
 
 add_library(engine
-    stb_image_implementation.cpp
-    bitset.cpp
-    deletion_queue.cpp
-    deletions.cpp
-    engine.cpp
-    engine_utils.cpp
-    logger.cpp
-    random.cpp
-    version.cpp
-    assets/library.cpp
-    fileio/error.cpp
-    fileio/file.cpp
-    linalg/linalg.cpp
-    linalg/vector.cpp
-    linalg/vector2_operations.cpp
-    linalg/vector3_operations.cpp
-    linalg/vector4_operations.cpp
-    linalg/matrix.cpp
-    linalg/matrix2_operations.cpp
-    linalg/matrix3_operations.cpp
-    linalg/matrix4_operations.cpp
-    ecs/default.cpp
-    ecs/entity.cpp
-    ecs/component.cpp
-    ecs/system.cpp
-    ecs/query.cpp
-    graphics/descriptor.cpp
-    graphics/graphics.cpp
-    graphics/util.cpp
-    graphics/vulkan.cpp
-    graphics/vulkan_device.cpp
-    graphics/vulkan_image.cpp
-    graphics/vulkan_instance.cpp
-    graphics/vulkan_physical_device.cpp
-    graphics/vulkan_surface.cpp
-    graphics/vulkan_swapchain.cpp
-    graphics/vulkan_queue.cpp
-    reflection/type.cpp
     ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui_demo.cpp
@@ -96,6 +58,22 @@ add_library(engine
     ${EXTERNAL_HEADER_DIR}/imgui/backends/imgui_impl_vulkan.cpp
     ${HEADER_LIST}
 )
+add_subdirectory(assets)
+add_subdirectory(ecs)
+add_subdirectory(fileio)
+add_subdirectory(graphics)
+add_subdirectory(linalg)
+add_subdirectory(reflection)
+target_sources(engine PRIVATE
+    stb_image_implementation.cpp
+    bitset.cpp
+    deletion_queue.cpp
+    deletions.cpp
+    engine.cpp
+    engine_utils.cpp
+    logger.cpp
+    random.cpp
+    version.cpp)
 target_compile_definitions(engine PRIVATE
     IS_ENGINE
 )
