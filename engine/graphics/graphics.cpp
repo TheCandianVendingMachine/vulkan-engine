@@ -54,6 +54,15 @@ void ENGINE_NS::GraphicsEngine::initialise() {
 void ENGINE_NS::GraphicsEngine::draw() {
     FrameMarkStart(StaticNames::GraphicsDraw);
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
+    {
+        auto lock = imgui.write();
+        ImGui::Render();
+        auto draw_data = ImGui::GetDrawData();
+        if (draw_data) {
+            lock.get().latest_draw = draw_data;
+        }
+    }
+
     FrameMarkEnd(StaticNames::GraphicsDraw);
 }
 
@@ -383,19 +392,18 @@ auto ENGINE_NS::GraphicsEngine::init_triangle_pipeline_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void {
-    auto lock = imgui.read();
-    ImGui::Render();
+    auto lock                                   = imgui.read();
 
     VkRenderingAttachmentInfo colour_attachment = attachment_info(image, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     VkRenderingInfo render_info                 = rendering_info(
         VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
         &colour_attachment, nullptr);
 
-    vkCmdBeginRendering(cmd, &render_info);
-    ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmd);
-    vkCmdEndRendering(cmd);
-
-    lock.drop();
+    if (lock.get().latest_draw) {
+        vkCmdBeginRendering(cmd, &render_info);
+        ImGui_ImplVulkan_RenderDrawData(lock.get().latest_draw, cmd);
+        vkCmdEndRendering(cmd);
+    }
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_background_(VkCommandBuffer cmd) -> void {
@@ -480,11 +488,11 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
 
                 draw_background_(cmd);
 
-                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
                 draw_geometry_(cmd);
 
-                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
                 transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 

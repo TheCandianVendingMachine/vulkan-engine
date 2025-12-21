@@ -3,6 +3,7 @@
 #include "engine/meta_defines.h"
 #define VK_NO_PROTOTYPES
 #include <SDL3/SDL_events.h>
+#include <imgui.h>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -19,6 +20,7 @@ namespace ENGINE_NS {
         struct ImGui {
                 VkQueue queue                    = VK_NULL_HANDLE;
                 VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
+                ImDrawData* latest_draw          = nullptr;
                 std::vector<SDL_Event> events{};
 
                 int frame_ = -1;
