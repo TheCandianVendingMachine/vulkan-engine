@@ -20,6 +20,7 @@ namespace ENGINE_NS {
             bool will_be_destroyed_ = false;
             friend class GraphicsMainDeletionQueue;
             friend class GraphicsPerFrameDeletionQueue;
+            friend class GraphicsUploadDeletionQueue;
     };
 
     struct BufferAllocation {
@@ -33,6 +34,7 @@ namespace ENGINE_NS {
             bool will_be_destroyed_ = false;
             friend class GraphicsMainDeletionQueue;
             friend class GraphicsPerFrameDeletionQueue;
+            friend class GraphicsUploadDeletionQueue;
     };
 
     struct Vertex {

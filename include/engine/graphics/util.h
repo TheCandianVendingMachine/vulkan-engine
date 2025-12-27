@@ -35,10 +35,11 @@ namespace ENGINE_NS {
                 VkFence fence                  = VK_NULL_HANDLE;
                 VkCommandBuffer command_buffer = VK_NULL_HANDLE;
                 VkCommandPool command_pool     = VK_NULL_HANDLE;
+                VkQueue queue                  = VK_NULL_HANDLE;
                 tracy::VkCtx* tracy_context    = nullptr;
 
-                auto setup(VkDevice device) -> void;
-                auto teardown(VkDevice device, VkQueue queue) -> void;
+                auto setup(VkDevice device) const -> void;
+                auto teardown(VkDevice device) const -> void;
         };
     } // namespace graphics
 } // namespace ENGINE_NS

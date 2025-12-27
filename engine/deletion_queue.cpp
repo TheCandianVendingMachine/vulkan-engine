@@ -83,3 +83,15 @@ auto ENGINE_NS::GraphicsMainDeletionQueue::push(graphics::Immediate immediate) -
     immediates_.push_back(Deletion<graphics::Immediate>(immediate, 0));
 }
 
+auto ENGINE_NS::GraphicsUploadDeletionQueue::flush(VulkanDevice& device, VmaAllocator allocator) -> void {
+    for (auto& buffer : buffers_) {
+        buffer.destroy(device.device, allocator);
+    }
+    buffers_.clear();
+    index_ = 0;
+}
+
+auto ENGINE_NS::GraphicsUploadDeletionQueue::push(BufferAllocation& allocation) -> void {
+    allocation.will_be_destroyed_ = true;
+    buffers_.push_back(Deletion<BufferAllocation>(allocation, index_++));
+}

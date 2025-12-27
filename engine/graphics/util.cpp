@@ -28,7 +28,7 @@ void ENGINE_NS::graphics::ImGui::start_frame() {
     frame_ = ::ImGui::GetFrameCount();
 }
 
-auto ENGINE_NS::graphics::Immediate::setup(VkDevice device) -> void {
+auto ENGINE_NS::graphics::Immediate::setup(VkDevice device) const -> void {
     VK_CHECK(vkResetFences(device, 1, &fence));
     VK_CHECK(vkResetCommandBuffer(command_buffer, 0));
 
@@ -39,7 +39,7 @@ auto ENGINE_NS::graphics::Immediate::setup(VkDevice device) -> void {
     TracyVkCollect(tracy_context, cmd);
 }
 
-auto ENGINE_NS::graphics::Immediate::teardown(VkDevice device, VkQueue queue) -> void {
+auto ENGINE_NS::graphics::Immediate::teardown(VkDevice device) const -> void {
     VK_CHECK(vkEndCommandBuffer(command_buffer));
 
     VkCommandBufferSubmitInfo command_info = command_buffer_submit_info(command_buffer);

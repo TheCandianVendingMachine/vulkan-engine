@@ -1,11 +1,10 @@
 #pragma once
-#include "engine/meta_defines.h"
-
 #include "engine/assets/library.h"
 #include "engine/graphics/pipeline.h"
 #include "engine/graphics/types.h"
 #include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
+#include "engine/meta_defines.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -155,6 +154,16 @@ namespace ENGINE_NS {
             std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
 
 
+            std::uint64_t index_ = 0;
+    };
+    class GraphicsUploadDeletionQueue {
+        public:
+            auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
+
+            auto push(BufferAllocation& allocation) -> void;
+
+        private:
+            std::vector<Deletion<BufferAllocation>> buffers_{};
             std::uint64_t index_ = 0;
     };
 } // namespace ENGINE_NS

@@ -16,6 +16,8 @@
 #include <Tracy/Tracy.hpp>
 #include <Tracy/TracyVulkan.hpp>
 #include <Tracy/common/TracySystem.hpp>
+#include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <cstdint>
 #include <cstring>
@@ -23,7 +25,9 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_vulkan.h>
 #include <span>
+#include <type_traits>
 #include <utility>
+#include <vector>
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
@@ -50,6 +54,13 @@ void ENGINE_NS::GraphicsEngine::initialise() {
         running_.store(true, std::memory_order_release);
         update_rate_   = std::chrono::milliseconds(8);
         render_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::draw_, this);
+    }
+
+    logger.info("Initialising upload thread");
+    {
+        ZoneScoped;
+        upload_ready_.store(false, std::memory_order_release);
+        upload_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::upload_, this);
     }
 
     initialised_ = true;
@@ -85,6 +96,11 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
             this->running_.store(false, std::memory_order_release);
             this->render_thread_.join();
         }
+    }
+    logger.info("Stopping upload thread");
+    {
+        ZoneScoped;
+        this->upload_thread_.join();
     }
 
 
@@ -146,58 +162,30 @@ auto ENGINE_NS::GraphicsEngine::destroy_buffer(BufferAllocation allocation) -> v
     frame_deletion_queue_.push(allocation);
 }
 
-auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> GPUMeshBuffers {
-    const std::size_t vertex_buffer_size = vertices.size() * sizeof(Vertex);
-    const std::size_t index_buffer_size  = indices.size() * sizeof(std::uint32_t);
+auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> std::future<GPUMeshBuffers> {
+    graphics::MeshUpload upload{};
+    upload.indices  = std::vector<std::uint32_t>(indices.begin(), indices.end());
+    upload.vertices = std::vector<Vertex>(vertices.begin(), vertices.end());
 
-    GPUMeshBuffers new_surface{};
-    new_surface.vertex_buffer =
-        allocate_buffer(vertex_buffer_size,
-                        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                        VMA_MEMORY_USAGE_GPU_ONLY);
+    auto lock       = uploads_.write();
+    auto& uploads   = lock.get();
+    uploads.push_back(std::move(upload));
+    auto future = uploads.back().promise.get_future();
 
-    VkBufferDeviceAddressInfo device_address_info{};
-    device_address_info.sType         = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-    device_address_info.buffer        = new_surface.vertex_buffer.buffer;
-    new_surface.vertex_buffer_address = vkGetBufferDeviceAddress(device_.device, &device_address_info);
+    upload_ready_.store(true, std::memory_order_release);
+    return future;
+}
 
-    new_surface.index_buffer =
-        allocate_buffer(index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-    BufferAllocation staging =
-        allocate_buffer(vertex_buffer_size + index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
-
-    void* data = nullptr;
-    vmaMapMemory(allocator_, staging.allocation, &data);
-
-    std::memcpy(data, vertices.data(), vertex_buffer_size);
-    std::memcpy(static_cast<std::uint8_t*>(data) + vertex_buffer_size, indices.data(), index_buffer_size);
-
-    immediate_submit([&](VkCommandBuffer cmd) {
-        VkBufferCopy vertex_copy{0};
-        vertex_copy.dstOffset = 0;
-        vertex_copy.srcOffset = 0;
-        vertex_copy.size      = vertex_buffer_size;
-
-        vkCmdCopyBuffer(cmd, staging.buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
-
-        VkBufferCopy index_copy{0};
-        index_copy.dstOffset = 0;
-        index_copy.srcOffset = vertex_buffer_size;
-        index_copy.size      = index_buffer_size;
-
-        vkCmdCopyBuffer(cmd, staging.buffer, new_surface.index_buffer.buffer, 1, &index_copy);
-    });
-
-    destroy_buffer(staging);
-
-    return new_surface;
+auto ENGINE_NS::GraphicsEngine::init_thread_(graphics::Thread thread) -> void {
+    thread_init_mutex_.lock();
+    thread_ids_.insert({std::this_thread::get_id(), thread});
+    thread_init_mutex_.unlock();
 }
 
 auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     auto& logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     ZoneScoped;
-    logger.info("Initialising Vulkan...");
+    logger.debug("Initialising Volk");
     VK_CHECK(volkInitialize());
     vulkan_instance_ = VulkanInstance::build()
                            .engine_name(ENGINE_NAME_STR)
@@ -207,7 +195,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .with_validation_layers(true)
                            .finish();
 
-    logger.info("Creating surface");
+    logger.debug("Creating surface");
     surface_ = VulkanSurface(window_, vulkan_instance_);
 
     // vulkan 1.3 features
@@ -223,7 +211,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     VkPhysicalDeviceVulkan11Features features11{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES};
     features11.shaderDrawParameters = true;
 
-    logger.info("Picking physical device");
+    logger.debug("Picking physical device");
     physical_device_ = VulkanPhysicalDevice::choose(window_)
                            .set_minimum_vulkan_version(Version(1, 3, 0))
                            .set_required_features_11(features11)
@@ -232,15 +220,17 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .with_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
                            .finish(vulkan_instance_);
 
-    logger.info("Initialising device");
+    logger.debug("Initialising device");
     device_ = VulkanDevice::build()
                   .request_queue("graphics", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
                   .request_queue("transfer", VulkanQueueType::TRANSFER)
                   .request_queue("imgui", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .request_queue("immediate", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+                  .request_queue("immediate_main", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+                  .request_queue("immediate_upload", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+                  .request_queue("immediate_draw", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
                   .finish(physical_device_);
 
-    logger.info("Initialising allocator");
+    logger.debug("Initialising allocator");
     VmaVulkanFunctions vma_vulkan_funcs{};
     vma_vulkan_funcs.vkAllocateMemory                    = vkAllocateMemory;
     vma_vulkan_funcs.vkBindBufferMemory                  = vkBindBufferMemory;
@@ -270,12 +260,12 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     allocator_info.pVulkanFunctions = &vma_vulkan_funcs;
     vmaCreateAllocator(&allocator_info, &allocator_);
 
-    logger.info("Initialising swapchain");
+    logger.debug("Initialising swapchain");
     create_swapchain_();
 
     graphics_queue_           = device_.queues.at("graphics").get();
     transfer_queue_           = device_.queues.at("transfer").get();
-    immediate_queue_          = device_.queues.at("immediate").get();
+
     imgui.write().get().queue = device_.queues.at("imgui").get();
 
     VkCommandPoolCreateInfo pool_info =
@@ -283,7 +273,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     VkSemaphoreCreateInfo semaphore_info = semaphore_create_info(0);
     VkFenceCreateInfo fence_info         = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
 
-    logger.info("Initialising sync structures");
+    logger.debug("Initialising sync structures");
     for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
         auto frame = frames_[idx].write();
         VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frame.get().command_pool));
@@ -298,16 +288,16 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     }
 
 
-    logger.info("Initialising descriptors");
+    logger.debug("Initialising descriptors");
     init_descriptors_();
-    logger.info("Initialising pipelines");
+    logger.debug("Initialising pipelines");
     init_pipelines_();
 
-    logger.info("Initialising ImGui");
+    logger.debug("Initialising ImGui");
     init_imgui_();
 
-    logger.info("Initialising immediates");
-    init_immediates_();
+    logger.debug("Initialising immediate");
+    init_thread_(graphics::Thread::MAIN);
 }
 
 auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
@@ -422,21 +412,66 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
-    VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-    VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate_.fence));
+    {
+        auto& immediate              = immediates_.insert({graphics::Thread::MAIN, {}}).first.value();
 
-    auto& queue                       = device_.queues.at("immediate");
+        VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
 
-    VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+        auto& queue                       = device_.queues.at("immediate_main");
+        immediate.queue                   = queue.get();
 
-    vkCreateCommandPool(device_.device, &pool_info, nullptr, &immediate_.command_pool);
-    VkCommandBufferAllocateInfo command_alloc_info = command_buffer_allocate_info(immediate_.command_pool);
+        VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
-    VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate_.command_buffer));
+        vkCreateCommandPool(device_.device, &pool_info, nullptr, &immediate.command_pool);
+        VkCommandBufferAllocateInfo command_alloc_info = command_buffer_allocate_info(immediate.command_pool);
 
-    immediate_.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate_.command_buffer);
+        VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate.command_buffer));
 
-    deletion_queue_.push(immediate_);
+        immediate.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate.command_buffer);
+
+        deletion_queue_.push(immediate);
+    }
+    {
+        auto& immediate              = immediates_.insert({graphics::Thread::UPLOAD, {}}).first.value();
+
+        VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
+
+        auto& queue                       = device_.queues.at("immediate_upload");
+        immediate.queue                   = queue.get();
+
+        VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+        vkCreateCommandPool(device_.device, &pool_info, nullptr, &immediate.command_pool);
+        VkCommandBufferAllocateInfo command_alloc_info = command_buffer_allocate_info(immediate.command_pool);
+
+        VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate.command_buffer));
+
+        immediate.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate.command_buffer);
+
+        deletion_queue_.push(immediate);
+    }
+    {
+        auto& immediate              = immediates_.insert({graphics::Thread::DRAW, {}}).first.value();
+
+        VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
+
+        auto& queue                       = device_.queues.at("immediate_draw");
+        immediate.queue                   = queue.get();
+
+        VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+        vkCreateCommandPool(device_.device, &pool_info, nullptr, &immediate.command_pool);
+        VkCommandBufferAllocateInfo command_alloc_info = command_buffer_allocate_info(immediate.command_pool);
+
+        VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate.command_buffer));
+
+        immediate.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate.command_buffer);
+
+        deletion_queue_.push(immediate);
+    }
 }
 
 auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
@@ -562,6 +597,7 @@ auto ENGINE_NS::GraphicsEngine::draw_geometry_(VkCommandBuffer cmd) -> void {
 
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {
     tracy::SetThreadName(StaticNames::GraphicsThreadName);
+    init_thread_(graphics::Thread::DRAW);
     constexpr std::uint32_t TIMEOUT = 250'000'000;
 
     while (running_.load(std::memory_order_acquire)) {
@@ -642,4 +678,112 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
         ++frame_number_;
         FrameMarkEnd(StaticNames::RenderLoop);
     }
+}
+
+auto ENGINE_NS::GraphicsEngine::upload_() -> void {
+    tracy::SetThreadName(StaticNames::UploadThreadName);
+    init_thread_(graphics::Thread::UPLOAD);
+
+    struct StagingBuffer {
+            BufferAllocation allocation{};
+            std::size_t total_size = 0;
+    };
+    std::vector<StagingBuffer> staging_buffers;
+    constexpr std::size_t MAX_TOTAL_STAGING_BUFFER_SIZE = 5ull * 1'024 * 1'024 * 1'024;
+
+    while (running_.load(std::memory_order_acquire)) {
+        while (running_.load(std::memory_order_acquire) && upload_ready_.load(std::memory_order_acquire)) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
+        auto lock     = uploads_.write();
+        auto& uploads = lock.get();
+        while (!uploads.empty()) {
+            ZoneScoped;
+            auto& mesh                           = uploads.back();
+
+            const std::size_t vertex_buffer_size = mesh.vertices.size() * sizeof(Vertex);
+            const std::size_t index_buffer_size  = mesh.indices.size() * sizeof(std::uint32_t);
+
+            GPUMeshBuffers new_surface{};
+            new_surface.vertex_buffer = allocate_buffer(
+                vertex_buffer_size,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                VMA_MEMORY_USAGE_GPU_ONLY);
+
+            VkBufferDeviceAddressInfo device_address_info{};
+            device_address_info.sType         = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+            device_address_info.buffer        = new_surface.vertex_buffer.buffer;
+            new_surface.vertex_buffer_address = vkGetBufferDeviceAddress(device_.device, &device_address_info);
+
+            new_surface.index_buffer          = allocate_buffer(
+                index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+
+            const auto desired_size   = vertex_buffer_size + index_buffer_size;
+            BufferAllocation* staging = nullptr;
+            for (auto& buffer : staging_buffers) {
+                if (buffer.total_size >= desired_size) {
+                    staging = &buffer.allocation;
+                    break;
+                }
+            }
+            if (!staging) {
+                staging_buffers.push_back(
+                    {allocate_buffer(vertex_buffer_size + index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
+                     desired_size});
+                staging = &staging_buffers.back().allocation;
+            }
+
+            void* data = nullptr;
+            vmaMapMemory(allocator_, staging->allocation, &data);
+
+            std::memcpy(data, mesh.vertices.data(), vertex_buffer_size);
+            std::memcpy(static_cast<std::uint8_t*>(data) + vertex_buffer_size, mesh.indices.data(), index_buffer_size);
+
+            immediate_submit([&](VkCommandBuffer cmd) {
+                VkBufferCopy vertex_copy{0};
+                vertex_copy.dstOffset = 0;
+                vertex_copy.srcOffset = 0;
+                vertex_copy.size      = vertex_buffer_size;
+
+                vkCmdCopyBuffer(cmd, staging->buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
+
+                VkBufferCopy index_copy{0};
+                index_copy.dstOffset = 0;
+                index_copy.srcOffset = vertex_buffer_size;
+                index_copy.size      = index_buffer_size;
+
+                vkCmdCopyBuffer(cmd, staging->buffer, new_surface.index_buffer.buffer, 1, &index_copy);
+            });
+
+            mesh.promise.set_value(std::move(new_surface));
+
+            uploads.pop_back();
+        }
+        lock.drop();
+
+        {
+            ZoneScoped;
+            std::sort(staging_buffers.begin(), staging_buffers.end(), [](const StagingBuffer& lhs, const StagingBuffer& rhs) {
+                return lhs.total_size > rhs.total_size;
+            });
+
+            std::size_t current_size = 0;
+            for (auto& buffer : staging_buffers) {
+                current_size += buffer.total_size;
+            }
+            while (current_size > MAX_TOTAL_STAGING_BUFFER_SIZE) {
+                current_size -= staging_buffers.back().total_size;
+                upload_deletion_queue_.push(staging_buffers.back().allocation);
+                staging_buffers.pop_back();
+            }
+            upload_deletion_queue_.flush(device_, allocator_);
+        }
+        upload_ready_ = false;
+    }
+
+    for (auto& buffer : staging_buffers) {
+        upload_deletion_queue_.push(buffer.allocation);
+    }
+    upload_deletion_queue_.flush(device_, allocator_);
 }

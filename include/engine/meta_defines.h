@@ -36,6 +36,7 @@ namespace StaticNames {
     static constexpr const char* GraphicsDeinit             = "Graphics Deinit";
     static constexpr const char* GraphicsDraw               = "Graphics Draw";
     static constexpr const char* GraphicsThreadName         = "Renderer";
+    static constexpr const char* UploadThreadName           = "Uploader";
     static constexpr const char* RenderLoop                 = "Render Loop";
     static constexpr const char* MainCommandBufferName      = "MainCommandBuffer";
     static constexpr const char* ImmediateCommandBufferName = "ImmediateCommandBuffer";

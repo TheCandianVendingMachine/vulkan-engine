@@ -13,10 +13,16 @@
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <future>
+#include <mutex>
+#include <robin_map.h>
 #include <span>
 #include <thread>
+#include <vector>
 #include <vk_mem_alloc.h>
+
 // clang-format off
+#include <Tracy/Tracy.hpp>
 #include <Tracy/TracyVulkan.hpp>
 // clang-format on
 
@@ -38,6 +44,18 @@ namespace ENGINE_NS {
                 VkFence render_fence_               = VK_NULL_HANDLE;
                 tracy::VkCtx* tracy_context_        = nullptr;
         };
+
+        struct MeshUpload {
+                std::promise<GPUMeshBuffers> promise;
+                std::vector<std::uint32_t> indices;
+                std::vector<Vertex> vertices;
+        };
+
+        enum class Thread {
+            MAIN,
+            UPLOAD,
+            DRAW
+        };
     } // namespace graphics
 
     class GraphicsEngine {
@@ -51,16 +69,19 @@ namespace ENGINE_NS {
             auto allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation;
             auto destroy_buffer(BufferAllocation allocation) -> void;
 
-            auto upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> GPUMeshBuffers;
+            auto upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> std::future<GPUMeshBuffers>;
 
             template <typename TFunc>
             auto immediate_submit(const TFunc&& func) -> void {
-                immediate_.setup(device_.device);
+                ZoneScoped;
+                auto thread     = thread_ids_.at(std::this_thread::get_id());
+                auto& immediate = immediates_.at(thread);
+                immediate.setup(device_.device);
                 {
-                    TracyVkZone(immediate_.tracy_context, immediate_.command_buffer, StaticNames::ImmediateCommandBufferName);
-                    func(immediate_.command_buffer);
+                    TracyVkZone(immediate.tracy_context, immediate.command_buffer, StaticNames::ImmediateCommandBufferName);
+                    func(immediate.command_buffer);
                 }
-                immediate_.teardown(device_.device, immediate_queue_);
+                immediate.teardown(device_.device);
             }
 
             RwLock<graphics::ImGui> imgui{};
@@ -81,15 +102,22 @@ namespace ENGINE_NS {
 
             std::thread render_thread_;
             std::chrono::milliseconds update_rate_;
+
+            GraphicsUploadDeletionQueue upload_deletion_queue_{};
+            RwLock<std::vector<graphics::MeshUpload>> uploads_;
+            std::thread upload_thread_;
+            std::atomic<bool> upload_ready_;
+
             std::atomic<bool> running_;
 
             std::atomic<std::uint64_t> frame_number_                     = 0;
             RwLock<graphics::FrameData> frames_[graphics::FRAME_OVERLAP] = {};
             VkQueue graphics_queue_                                      = VK_NULL_HANDLE;
             VkQueue transfer_queue_                                      = VK_NULL_HANDLE;
-            VkQueue immediate_queue_                                     = VK_NULL_HANDLE;
 
-            graphics::Immediate immediate_{};
+            std::mutex thread_init_mutex_{};
+            tsl::robin_map<graphics::Thread, graphics::Immediate> immediates_{};
+            tsl::robin_map<std::thread::id, graphics::Thread> thread_ids_{};
 
             ::linalg::Vector2<int> window_extent_{1'700, 900};
 
@@ -102,6 +130,8 @@ namespace ENGINE_NS {
             VulkanPhysicalDevice physical_device_;
             VulkanDevice device_;
             VulkanSwapchain swapchain_;
+
+            auto init_thread_(graphics::Thread thread) -> void;
 
             auto init_vulkan_() -> void;
             auto create_swapchain_() -> void;
@@ -117,5 +147,7 @@ namespace ENGINE_NS {
             auto draw_background_(VkCommandBuffer cmd) -> void;
             auto draw_geometry_(VkCommandBuffer cmd) -> void;
             auto draw_() -> void;
+
+            auto upload_() -> void;
     };
 } // namespace ENGINE_NS
