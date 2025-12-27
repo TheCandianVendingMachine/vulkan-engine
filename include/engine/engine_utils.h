@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
-#define VK_NO_PROTOTYPES
+
 #include <vulkan/vulkan_core.h>
 
 namespace ENGINE_NS {

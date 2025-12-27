@@ -1,6 +1,40 @@
 #include "engine/deletion_queue.h"
 
-auto ENGINE_NS::GraphicsPerFrameDeletionQueue::flush(VulkanDevice&, VmaAllocator) -> void {
+#include "engine/graphics/pipeline.h"
+#include "engine/graphics/vulkan.h"
+
+auto ENGINE_NS::GraphicsPerFrameDeletionQueue::flush(VulkanDevice& device, VmaAllocator allocator) -> void {
+    for (auto& image : images_) {
+        image.destroy(device.device, allocator);
+    }
+    for (auto& buffer : buffers_) {
+        buffer.destroy(device.device, allocator);
+    }
+    for (auto& layout : layouts_) {
+        layout.destroy(device.device);
+    }
+    images_.clear();
+    buffers_.clear();
+    layouts_.clear();
+    index_ = 0;
+}
+
+auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(ImageAllocation& allocation) -> void {
+    allocation.will_be_destroyed_ = true;
+    images_.push_back(Deletion<ImageAllocation>(allocation, index_++));
+}
+
+auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(BufferAllocation& allocation) -> void {
+    allocation.will_be_destroyed_ = true;
+    buffers_.push_back(Deletion<BufferAllocation>(allocation, index_++));
+}
+
+auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(VulkanDescriptorSetLayout layout) -> void {
+    layouts_.push_back(Deletion<VulkanDescriptorSetLayout>(layout, index_++));
+}
+
+auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(GPUMeshBuffers& buffers) -> void {
+    mesh_buffers_.push_back(Deletion<GPUMeshBuffers>(buffers, index_++));
 }
 
 auto ENGINE_NS::GraphicsMainDeletionQueue::flush(VulkanDevice& device, VmaAllocator allocator) -> void {
@@ -14,11 +48,15 @@ auto ENGINE_NS::GraphicsMainDeletionQueue::flush(VulkanDevice& device, VmaAlloca
     for (auto& pipeline : graphics_pipelines_) {
         pipeline.destroy(device.device);
     }
+    for (auto& immediate : immediates_) {
+        immediate.destroy(device.device);
+    }
     imgui_.destroy(device.device);
 }
 
-auto ENGINE_NS::GraphicsMainDeletionQueue::push(ImageAllocation allocation) -> void {
-    draw_image_ = Deletion<ImageAllocation>(allocation, 0);
+auto ENGINE_NS::GraphicsMainDeletionQueue::push(ImageAllocation& allocation) -> void {
+    allocation.will_be_destroyed_ = true;
+    draw_image_                   = Deletion<ImageAllocation>(allocation, 0);
 }
 
 auto ENGINE_NS::GraphicsMainDeletionQueue::push(VulkanDescriptorSetLayout layout) -> void {
@@ -35,5 +73,13 @@ auto ENGINE_NS::GraphicsMainDeletionQueue::push(GraphicsPipeline pipeline) -> vo
 
 auto ENGINE_NS::GraphicsMainDeletionQueue::push(graphics::ImGui imgui) -> void {
     imgui_ = Deletion<graphics::ImGui>(imgui, 0);
+}
+
+auto ENGINE_NS::GraphicsMainDeletionQueue::push(GPUMeshBuffers& buffers) -> void {
+    mesh_buffers_.push_back(Deletion<GPUMeshBuffers>(buffers, 0));
+}
+
+auto ENGINE_NS::GraphicsMainDeletionQueue::push(graphics::Immediate immediate) -> void {
+    immediates_.push_back(Deletion<graphics::Immediate>(immediate, 0));
 }
 

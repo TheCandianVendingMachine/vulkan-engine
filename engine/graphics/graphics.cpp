@@ -3,9 +3,11 @@
 #include "engine/assets/library.h"
 #include "engine/engine.h"
 #include "engine/graphics/descriptor.h"
+#include "engine/graphics/types.h"
 #include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
+#include "engine/rwlock.h"
 // clang-format off
 #include <volk/volk.h>
 // clang-format on
@@ -15,13 +17,15 @@
 #include <Tracy/TracyVulkan.hpp>
 #include <Tracy/common/TracySystem.hpp>
 #include <chrono>
-#include <engine/rwlock.h>
+#include <cstdint>
+#include <cstring>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_vulkan.h>
+#include <span>
 #include <utility>
+#include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
-
 
 void ENGINE_NS::GraphicsEngine::initialise() {
     FrameMarkStart(StaticNames::GraphicsInit);
@@ -55,6 +59,8 @@ void ENGINE_NS::GraphicsEngine::initialise() {
 void ENGINE_NS::GraphicsEngine::draw() {
     FrameMarkStart(StaticNames::GraphicsDraw);
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
+    frame_deletion_queue_.flush(device_, allocator_);
+
     {
         auto lock = imgui.write();
         ImGui::Render();
@@ -99,6 +105,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
             frame.get().deletion_queue.flush(device_, allocator_);
         }
     }
+    frame_deletion_queue_.flush(device_, allocator_);
     deletion_queue_.flush(device_, allocator_);
     swapchain_.cleanup();
     vmaDestroyAllocator(allocator_);
@@ -120,8 +127,77 @@ auto ENGINE_NS::GraphicsEngine::current_frame() -> RwLock<graphics::FrameData>& 
     return frames_[frame_number_ % graphics::FRAME_OVERLAP];
 }
 
+auto ENGINE_NS::GraphicsEngine::allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation {
+    VkBufferCreateInfo buffer_info = {};
+    buffer_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size               = size;
+    buffer_info.usage              = flags;
+
+    VmaAllocationCreateInfo alloc_info{};
+    alloc_info.usage = usage;
+    alloc_info.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+    BufferAllocation buffer{};
+    VK_CHECK(vmaCreateBuffer(allocator_, &buffer_info, &alloc_info, &buffer.buffer, &buffer.allocation, &buffer.info));
+    return buffer;
+}
+
+auto ENGINE_NS::GraphicsEngine::destroy_buffer(BufferAllocation allocation) -> void {
+    frame_deletion_queue_.push(allocation);
+}
+
+auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> GPUMeshBuffers {
+    const std::size_t vertex_buffer_size = vertices.size() * sizeof(Vertex);
+    const std::size_t index_buffer_size  = indices.size() * sizeof(std::uint32_t);
+
+    GPUMeshBuffers new_surface{};
+    new_surface.vertex_buffer =
+        allocate_buffer(vertex_buffer_size,
+                        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                        VMA_MEMORY_USAGE_GPU_ONLY);
+
+    VkBufferDeviceAddressInfo device_address_info{};
+    device_address_info.sType         = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+    device_address_info.buffer        = new_surface.vertex_buffer.buffer;
+    new_surface.vertex_buffer_address = vkGetBufferDeviceAddress(device_.device, &device_address_info);
+
+    new_surface.index_buffer =
+        allocate_buffer(index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+
+    BufferAllocation staging =
+        allocate_buffer(vertex_buffer_size + index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
+
+    void* data = nullptr;
+    vmaMapMemory(allocator_, staging.allocation, &data);
+
+    std::memcpy(data, vertices.data(), vertex_buffer_size);
+    std::memcpy(static_cast<std::uint8_t*>(data) + vertex_buffer_size, indices.data(), index_buffer_size);
+
+    immediate_submit([&](VkCommandBuffer cmd) {
+        VkBufferCopy vertex_copy{0};
+        vertex_copy.dstOffset = 0;
+        vertex_copy.srcOffset = 0;
+        vertex_copy.size      = vertex_buffer_size;
+
+        vkCmdCopyBuffer(cmd, staging.buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
+
+        VkBufferCopy index_copy{0};
+        index_copy.dstOffset = 0;
+        index_copy.srcOffset = vertex_buffer_size;
+        index_copy.size      = index_buffer_size;
+
+        vkCmdCopyBuffer(cmd, staging.buffer, new_surface.index_buffer.buffer, 1, &index_copy);
+    });
+
+    destroy_buffer(staging);
+
+    return new_surface;
+}
+
 auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
+    auto& logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     ZoneScoped;
+    logger.info("Initialising Vulkan...");
     VK_CHECK(volkInitialize());
     vulkan_instance_ = VulkanInstance::build()
                            .engine_name(ENGINE_NAME_STR)
@@ -131,6 +207,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .with_validation_layers(true)
                            .finish();
 
+    logger.info("Creating surface");
     surface_ = VulkanSurface(window_, vulkan_instance_);
 
     // vulkan 1.3 features
@@ -146,7 +223,8 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     VkPhysicalDeviceVulkan11Features features11{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES};
     features11.shaderDrawParameters = true;
 
-    physical_device_                = VulkanPhysicalDevice::choose(window_)
+    logger.info("Picking physical device");
+    physical_device_ = VulkanPhysicalDevice::choose(window_)
                            .set_minimum_vulkan_version(Version(1, 3, 0))
                            .set_required_features_11(features11)
                            .set_required_features_12(features12)
@@ -154,13 +232,15 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .with_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
                            .finish(vulkan_instance_);
 
+    logger.info("Initialising device");
     device_ = VulkanDevice::build()
                   .request_queue("graphics", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
                   .request_queue("transfer", VulkanQueueType::TRANSFER)
                   .request_queue("imgui", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+                  .request_queue("immediate", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
                   .finish(physical_device_);
 
-
+    logger.info("Initialising allocator");
     VmaVulkanFunctions vma_vulkan_funcs{};
     vma_vulkan_funcs.vkAllocateMemory                    = vkAllocateMemory;
     vma_vulkan_funcs.vkBindBufferMemory                  = vkBindBufferMemory;
@@ -190,10 +270,12 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     allocator_info.pVulkanFunctions = &vma_vulkan_funcs;
     vmaCreateAllocator(&allocator_info, &allocator_);
 
+    logger.info("Initialising swapchain");
     create_swapchain_();
 
     graphics_queue_           = device_.queues.at("graphics").get();
     transfer_queue_           = device_.queues.at("transfer").get();
+    immediate_queue_          = device_.queues.at("immediate").get();
     imgui.write().get().queue = device_.queues.at("imgui").get();
 
     VkCommandPoolCreateInfo pool_info =
@@ -201,7 +283,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     VkSemaphoreCreateInfo semaphore_info = semaphore_create_info(0);
     VkFenceCreateInfo fence_info         = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
 
-
+    logger.info("Initialising sync structures");
     for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
         auto frame = frames_[idx].write();
         VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frame.get().command_pool));
@@ -215,12 +297,17 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
         VK_CHECK(vkCreateSemaphore(device_.device, &semaphore_info, nullptr, &frame.get().swapchain_semaphore_));
     }
 
+
+    logger.info("Initialising descriptors");
     init_descriptors_();
+    logger.info("Initialising pipelines");
     init_pipelines_();
 
-    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.info("Initialising ImGui");
     init_imgui_();
+
+    logger.info("Initialising immediates");
+    init_immediates_();
 }
 
 auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
@@ -332,6 +419,24 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
     ImGui_ImplVulkan_Init(&init_info);
 
     deletion_queue_.push(imgui_);
+}
+
+auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
+    VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+    VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate_.fence));
+
+    auto& queue                       = device_.queues.at("immediate");
+
+    VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+    vkCreateCommandPool(device_.device, &pool_info, nullptr, &immediate_.command_pool);
+    VkCommandBufferAllocateInfo command_alloc_info = command_buffer_allocate_info(immediate_.command_pool);
+
+    VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate_.command_buffer));
+
+    immediate_.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate_.command_buffer);
+
+    deletion_queue_.push(immediate_);
 }
 
 auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
@@ -469,6 +574,7 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
         {
             auto frame = current_frame().write();
             VK_CHECK(vkResetFences(device_.device, 1, &frame.get().render_fence_));
+            frame.get().deletion_queue.flush(device_, allocator_);
 
             std::uint32_t swapchain_image_index = 0;
             VK_CHECK(vkAcquireNextImageKHR(device_.device, swapchain_.swapchain, TIMEOUT, frame.get().swapchain_semaphore_, VK_NULL_HANDLE,

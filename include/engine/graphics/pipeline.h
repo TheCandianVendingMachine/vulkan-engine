@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/assets/library.h"
 #include "engine/engine_utils.h"
-#define VK_NO_PROTOTYPES
+
 #include <vector>
 #include <vulkan/vulkan_core.h>
 

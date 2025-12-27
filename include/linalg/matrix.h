@@ -35,11 +35,11 @@ namespace linalg {
                     T elements[4];
             };
 
-            static auto identity() -> Matrix2 {
+            static constexpr auto identity() -> Matrix2 {
                 return Matrix2(T(1), T(0), T(0), T(1));
             }
 
-            static auto zero() -> Matrix2 {
+            static constexpr auto zero() -> Matrix2 {
                 return Matrix2(T(0), T(0), T(0), T(0));
             }
 
@@ -124,11 +124,11 @@ namespace linalg {
                     T elements[9];
             };
 
-            static auto identity() -> Matrix3 {
+            static constexpr auto identity() -> Matrix3 {
                 return Matrix3(T(1), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(1));
             }
 
-            static auto zero() -> Matrix3 {
+            static constexpr auto zero() -> Matrix3 {
                 return Matrix3(T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0));
             }
 
@@ -250,11 +250,11 @@ namespace linalg {
                     T elements[16];
             };
 
-            static auto identity() -> Matrix4 {
+            static constexpr auto identity() -> Matrix4 {
                 return Matrix4(T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1), T(0), T(0), T(0), T(0), T(1));
             }
 
-            static auto zero() -> Matrix4 {
+            static constexpr auto zero() -> Matrix4 {
                 return Matrix4(T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0), T(0));
             }
 

@@ -124,6 +124,10 @@ else()
     )
 endif()
 
+target_compile_definitions(engine PRIVATE
+    VK_NO_PROTOTYPES
+)
+
 target_link_libraries(engine PRIVATE
     fastgltf::fastgltf
     fmt::fmt

@@ -4,7 +4,7 @@
 #include "engine/graphics/vulkan.h"
 
 #include <Volk/volk.h>
-#define VK_NO_PROTOTYPES
+
 #include <type_traits>
 #include <vulkan/vulkan_core.h>
 

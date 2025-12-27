@@ -38,7 +38,9 @@ else()
         -Werror
     )
 endif()
+target_compile_definitions(game PRIVATE VK_NO_PROTOTYPES)
 target_link_libraries(game PRIVATE
     engine
+    volk
     PUBLIC
     Tracy::TracyClient)

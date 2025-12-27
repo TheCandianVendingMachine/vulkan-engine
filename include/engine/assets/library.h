@@ -3,7 +3,7 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 #include "engine/pool.h"
-#define VK_NO_PROTOTYPES
+
 #include <cstdint>
 #include <filesystem>
 #include <optional>

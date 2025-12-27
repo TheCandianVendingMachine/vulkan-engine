@@ -1,9 +1,8 @@
 #include "engine/graphics/vulkan.h"
 
 #include "engine/graphics/util.h"
-// clang-format disable
+
 #include <Volk/volk.h>
-// clang-format enable
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 

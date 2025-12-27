@@ -8,7 +8,7 @@
 #include <Volk/volk.h>
 #include <cstdint>
 #include <type_traits>
-#define VK_NO_PROTOTYPES
+
 #include <vulkan/vulkan_core.h>
 
 auto ENGINE_NS::VulkanDescriptorLayoutBuilder::with_binding(std::uint32_t binding_idx, VkDescriptorType type)

@@ -1,6 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
-#define VK_NO_PROTOTYPES
+
 #include "engine/assets/library.h"
 #include "engine/graphics/pipeline.h"
 #include "engine/graphics/types.h"
@@ -69,6 +69,18 @@ namespace ENGINE_NS {
             auto destroy(VkDevice device, VmaAllocator allocator) -> void;
     };
     template <>
+    struct Deletion<BufferAllocation> : public DeletionInterface<BufferAllocation> {
+            using DeletionInterface<BufferAllocation>::DeletionInterface;
+            using DeletionInterface<BufferAllocation>::operator=;
+            auto destroy(VkDevice device, VmaAllocator allocator) -> void;
+    };
+    template <>
+    struct Deletion<GPUMeshBuffers> : public DeletionInterface<GPUMeshBuffers> {
+            using DeletionInterface<GPUMeshBuffers>::DeletionInterface;
+            using DeletionInterface<GPUMeshBuffers>::operator=;
+            auto destroy(VkDevice device, VmaAllocator allocator) -> void;
+    };
+    template <>
     struct Deletion<VulkanDescriptorSetLayout> : public DeletionInterface<VulkanDescriptorSetLayout> {
             using DeletionInterface<VulkanDescriptorSetLayout>::DeletionInterface;
             using DeletionInterface<VulkanDescriptorSetLayout>::operator=;
@@ -98,16 +110,24 @@ namespace ENGINE_NS {
             using DeletionInterface<graphics::ImGui>::operator=;
             auto destroy(VkDevice device) -> void;
     };
+    template <>
+    struct Deletion<graphics::Immediate> : public DeletionInterface<graphics::Immediate> {
+            using DeletionInterface<graphics::Immediate>::DeletionInterface;
+            using DeletionInterface<graphics::Immediate>::operator=;
+            auto destroy(VkDevice device) -> void;
+    };
 
     class GraphicsMainDeletionQueue {
         public:
             auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
 
-            auto push(ImageAllocation allocation) -> void;
+            auto push(ImageAllocation& allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
             auto push(ComputePipeline pipeline) -> void;
             auto push(GraphicsPipeline pipeline) -> void;
             auto push(graphics::ImGui imgui) -> void;
+            auto push(GPUMeshBuffers& buffers) -> void;
+            auto push(graphics::Immediate immediate) -> void;
 
 
         private:
@@ -116,12 +136,25 @@ namespace ENGINE_NS {
             std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
             std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_{};
             std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
+            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
+            std::vector<Deletion<graphics::Immediate>> immediates_{};
     };
     class GraphicsPerFrameDeletionQueue {
         public:
             auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
 
+            auto push(ImageAllocation& allocation) -> void;
+            auto push(BufferAllocation& allocation) -> void;
+            auto push(VulkanDescriptorSetLayout layout) -> void;
+            auto push(GPUMeshBuffers& buffers) -> void;
+
         private:
+            std::vector<Deletion<ImageAllocation>> images_{};
+            std::vector<Deletion<BufferAllocation>> buffers_{};
+            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
+            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
+
+
             std::uint64_t index_ = 0;
     };
 } // namespace ENGINE_NS

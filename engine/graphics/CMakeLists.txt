@@ -1,6 +1,7 @@
 target_sources(engine PRIVATE
     descriptor.cpp
     graphics.cpp
+    types.cpp
     util.cpp
     pipeline.cpp
     vulkan.cpp

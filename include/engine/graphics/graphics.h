@@ -9,11 +9,17 @@
 #include "engine/rwlock.h"
 #include "linalg/vector.h"
 
+#include <Volk/volk.h>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <span>
 #include <thread>
 #include <vk_mem_alloc.h>
+// clang-format off
+#include <Tracy/TracyVulkan.hpp>
+// clang-format on
+
 
 namespace tracy {
     class VkCtx;
@@ -24,6 +30,7 @@ namespace ENGINE_NS {
     namespace graphics {
         constexpr std::size_t FRAME_OVERLAP = 2;
         struct FrameData {
+                // Allocations that are created in the process of rendering. Should never be pushed to outside the render thread
                 GraphicsPerFrameDeletionQueue deletion_queue{};
                 VkCommandPool command_pool          = VK_NULL_HANDLE;
                 VkCommandBuffer main_command_buffer = VK_NULL_HANDLE;
@@ -41,12 +48,28 @@ namespace ENGINE_NS {
 
             auto current_frame() -> RwLock<graphics::FrameData>&;
 
+            auto allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation;
+            auto destroy_buffer(BufferAllocation allocation) -> void;
+
+            auto upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> GPUMeshBuffers;
+
+            template <typename TFunc>
+            auto immediate_submit(const TFunc&& func) -> void {
+                immediate_.setup(device_.device);
+                {
+                    TracyVkZone(immediate_.tracy_context, immediate_.command_buffer, StaticNames::ImmediateCommandBufferName);
+                    func(immediate_.command_buffer);
+                }
+                immediate_.teardown(device_.device, immediate_queue_);
+            }
+
             RwLock<graphics::ImGui> imgui{};
 
         private:
             bool initialised_ = false;
 
             GraphicsMainDeletionQueue deletion_queue_{};
+            GraphicsPerFrameDeletionQueue frame_deletion_queue_{};
             VmaAllocator allocator_{};
 
             DescriptorAllocator global_descriptor_allocator_{};
@@ -64,6 +87,9 @@ namespace ENGINE_NS {
             RwLock<graphics::FrameData> frames_[graphics::FRAME_OVERLAP] = {};
             VkQueue graphics_queue_                                      = VK_NULL_HANDLE;
             VkQueue transfer_queue_                                      = VK_NULL_HANDLE;
+            VkQueue immediate_queue_                                     = VK_NULL_HANDLE;
+
+            graphics::Immediate immediate_{};
 
             ::linalg::Vector2<int> window_extent_{1'700, 900};
 
@@ -81,6 +107,7 @@ namespace ENGINE_NS {
             auto create_swapchain_() -> void;
             auto init_descriptors_() -> void;
             auto init_imgui_() -> void;
+            auto init_immediates_() -> void;
 
             auto init_pipelines_() -> void;
             auto init_background_pipelines_() -> void;

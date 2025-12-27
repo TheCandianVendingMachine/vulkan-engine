@@ -6,7 +6,7 @@
 #include <linalg/vector.h>
 #include <robin_map.h>
 #include <string>
-#define VK_NO_PROTOTYPES
+
 #include <vulkan/vulkan_core.h>
 
 
