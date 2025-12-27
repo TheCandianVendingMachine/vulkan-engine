@@ -692,8 +692,11 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     constexpr std::size_t MAX_TOTAL_STAGING_BUFFER_SIZE = 5ull * 1'024 * 1'024 * 1'024;
 
     while (running_.load(std::memory_order_acquire)) {
-        while (running_.load(std::memory_order_acquire) && upload_ready_.load(std::memory_order_acquire)) {
+        while (running_.load(std::memory_order_acquire) && !upload_ready_.load(std::memory_order_acquire)) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+        if (!running_) {
+            break;
         }
 
         auto lock     = uploads_.write();
