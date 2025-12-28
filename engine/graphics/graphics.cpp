@@ -619,6 +619,18 @@ auto ENGINE_NS::GraphicsEngine::draw_geometry_(VkCommandBuffer cmd) -> void {
 
     vkCmdDraw(cmd, 3, 1, 0, 0);
 
+    if (rectangle_.index_buffer.buffer != VK_NULL_HANDLE) {
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mesh_pipeline_.pipeline);
+
+        GPUDrawPushConstants push_constants{};
+        push_constants.world_matrix  = ::linalg::Matrix4<float>::identity();
+        push_constants.vertex_buffer = rectangle_.vertex_buffer_address;
+
+        vkCmdPushConstants(cmd, mesh_pipeline_.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
+        vkCmdBindIndexBuffer(cmd, rectangle_.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
+    }
+
     vkCmdEndRendering(cmd);
 }
 
