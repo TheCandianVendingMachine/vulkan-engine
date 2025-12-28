@@ -15,22 +15,61 @@
 using namespace ::ENGINE_NS;
 
 LogLocator::LogLocator() :
-    loggers_({LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build(),
-              LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build(),
-              LoggerBuilder().with_identifier("VULKAN").with_stream({stdout, logger::Level::DEBUG}).build(),
-              LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build(),
-              LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build()}) {
+    loggers_({LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+              LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+              LoggerBuilder().with_identifier("VULKAN").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+              LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+              LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx)}) {
 }
 
 auto LogLocator::get(LogNamespaces ns) -> RwDataMut<Logger> {
-    auto logger_lock = loggers_[static_cast<std::uint8_t>(ns)].write();
-    auto& logger     = logger_lock.get();
-    logger.set_index(m_log_idx);
-    m_log_idx += 1;
-    return logger_lock;
+    return loggers_[static_cast<std::uint8_t>(ns)].write();
 }
 auto LogLocator::get(LogNamespaces ns) const -> RwData<Logger> {
     return loggers_[static_cast<std::uint8_t>(ns)].read();
+}
+
+auto ENGINE_NS::LogLocator::imgui() -> void {
+    if (ImGui::Begin("Logs")) {
+        std::vector<const logger::Entry*> entries = {};
+        for (auto& logger : loggers_) {
+            auto lock         = logger.read();
+            auto& log         = lock.get();
+            auto last_entries = log.last_entries(128);
+            entries.insert(entries.end(), last_entries.begin(), last_entries.end());
+        }
+        std::sort(entries.begin(), entries.end(), [](const logger::Entry* lhs, const logger::Entry* rhs) {
+            return lhs->index < rhs->index;
+        });
+
+        for (auto& entry : entries) {
+            ImVec4 level_colour = {1, 1, 1, 1};
+            switch (entry->level) {
+                case logger::Level::DEBUG:
+                    level_colour = {204.f, 255.f, 51.f, 255.f};
+                    break;
+                case logger::Level::ERROR:
+                    level_colour = {255.f, 51.f, 102.f, 255.f};
+                    break;
+                case logger::Level::WARNING:
+                    level_colour = {255.f, 204.f, 85.f, 255.f};
+                    break;
+                case logger::Level::INFO:
+                    level_colour = {68.f, 170.f, 238.f, 255.f};
+                    break;
+            }
+            level_colour.x /= 255.f;
+            level_colour.y /= 255.f;
+            level_colour.z /= 255.f;
+            level_colour.w /= 255.f;
+            ImGui::Text("[%s]", entry->owner.c_str());
+            ImGui::SameLine();
+            ImGui::TextColored(level_colour, logger::level_to_string(entry->level).data());
+            ImGui::SameLine();
+            ImGui::Text(entry->message.c_str());
+        }
+    }
+    ImGui::End();
 }
 
 Engine::Engine() {
@@ -104,6 +143,7 @@ auto ENGINE_NS::Engine::main_loop() -> void {
             this->fixed_update(update_rate);
             FrameMarkEnd(StaticNames::FixedUpdate);
         }
+        // logger_.imgui();
         imgui_lock.drop();
 
         graphics_.draw();

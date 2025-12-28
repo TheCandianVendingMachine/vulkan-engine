@@ -23,6 +23,8 @@ namespace ENGINE_NS {
             ENGINE_API auto get(LogNamespaces ns) -> RwDataMut<Logger>;
             ENGINE_API auto get(LogNamespaces ns) const -> RwData<Logger>;
 
+            auto imgui() -> void;
+
         private:
             uint64_t m_log_idx{};
             std::array<RwLock<Logger>, static_cast<std::uint8_t>(LogNamespaces::COUNT)> loggers_;

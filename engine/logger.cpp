@@ -76,12 +76,12 @@ auto LoggerBuilder::with_stream(Stream stream) -> LoggerBuilder& {
     return *this;
 }
 
-auto LoggerBuilder::build() -> Logger {
-    return Logger(m_identifier, std::move(m_streams));
+auto LoggerBuilder::build(std::uint64_t& idx) -> Logger {
+    return Logger(m_identifier, std::move(m_streams), idx);
 }
 
-Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams) :
-    m_streams(std::move(streams)), m_identifier(identifier), start_time_(logger::Clock::now()) {
+Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams, std::uint64_t& idx) :
+    m_streams(std::move(streams)), m_identifier(identifier), start_time_(logger::Clock::now()), m_log_idx(idx) {
 }
 
 auto Logger::last_entries(uint64_t count) const -> std::vector<const logger::Entry*> {
@@ -125,10 +125,6 @@ auto Logger::last_entries_of(uint64_t count, logger::Level filter) const -> std:
         entries.resize(currentCount);
     }
     return entries;
-}
-
-auto Logger::set_index(uint64_t index) -> void {
-    m_log_idx = index;
 }
 
 void Logger::append(logger::Level level, std::string&& message) {
