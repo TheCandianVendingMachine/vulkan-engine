@@ -654,10 +654,20 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
 
     while (running_.load(std::memory_order_acquire)) {
         FrameMarkStart(StaticNames::UploadLoop);
-        auto enter_time = std::chrono::steady_clock::now();
+        auto enter_time       = std::chrono::steady_clock::now();
+        bool has_time_elapsed = false;
         while (running_.load(std::memory_order_acquire) && !upload_ready_.load(std::memory_order_acquire)) {
             std::this_thread::yield();
-            if (std::chrono::steady_clock::now() - enter_time > std::chrono::seconds(1)) {
+            auto dt = std::chrono::steady_clock::now() - enter_time;
+            if (!has_time_elapsed && dt > std::chrono::seconds(10)) {
+                has_time_elapsed = true;
+                for (auto& staging : staging_buffers) {
+                    upload_deletion_queue_.push(staging.allocation);
+                }
+                upload_deletion_queue_.flush(device_, allocator_);
+                staging_buffers.clear();
+            }
+            if (dt > std::chrono::seconds(1)) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
