@@ -650,7 +650,7 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
             std::size_t total_size = 0;
     };
     std::vector<StagingBuffer> staging_buffers;
-    constexpr std::size_t MAX_TOTAL_STAGING_BUFFER_SIZE = 5ull * 1'024 * 1'024 * 1'024;
+    constexpr std::size_t MAX_CACHED_STAGING_BUFFER_SIZE = 1ull * 1'024 * 1'024 * 1'024;
 
     while (running_.load(std::memory_order_acquire)) {
         FrameMarkStart(StaticNames::UploadLoop);
@@ -746,7 +746,7 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
             for (auto& buffer : staging_buffers) {
                 current_size += buffer.total_size;
             }
-            while (current_size > MAX_TOTAL_STAGING_BUFFER_SIZE) {
+            while (current_size > MAX_CACHED_STAGING_BUFFER_SIZE) {
                 current_size -= staging_buffers.back().total_size;
                 upload_deletion_queue_.push(staging_buffers.back().allocation);
                 staging_buffers.pop_back();
