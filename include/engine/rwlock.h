@@ -135,15 +135,19 @@ namespace ENGINE_NS {
             template <typename = std::enable_if_t<std::is_default_constructible<T>::value>>
             RwLock() : wrapped_(T{}) {
             }
-            template <typename = std::enable_if_t<std::is_move_constructible<T>::value>>
-            RwLock(T&& contained) : wrapped_(std::move(contained)) {
-            }
+
             template <typename... TArgs>
             RwLock(TArgs&&... args) : wrapped_(std::forward<TArgs>(args)...) {
             }
 
             template <typename = std::enable_if_t<std::is_copy_constructible<T>::value>>
+            RwLock(const T& contained) : wrapped_(contained) {
+            }
+            template <typename = std::enable_if_t<std::is_copy_constructible<T>::value>>
             RwLock(const RwLock<T>& rhs) : wrapped_(rhs.wrapped_) {
+            }
+            template <typename = std::enable_if_t<std::is_move_constructible<T>::value>>
+            RwLock(T&& contained) : wrapped_(std::move(contained)) {
             }
             template <typename = std::enable_if_t<std::is_move_constructible<T>::value>>
             RwLock(RwLock<T>&& rhs) noexcept : wrapped_(std::move(rhs.wrapped_)) {
