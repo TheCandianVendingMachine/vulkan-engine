@@ -119,11 +119,10 @@ namespace linalg {
                 if (&rhs == this) {
                     return *this;
                 }
-                x        = std::move(rhs.x);
-                y        = std::move(rhs.y);
-                z        = std::move(rhs.z);
-                w        = std::move(rhs.w);
-                elements = std::move(rhs.elements);
+                x = std::move(rhs.x);
+                y = std::move(rhs.y);
+                z = std::move(rhs.z);
+                w = std::move(rhs.w);
                 return *this;
             }
     };

@@ -17,6 +17,7 @@
 #include <Tracy/TracyVulkan.hpp>
 #include <Tracy/common/TracySystem.hpp>
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
@@ -64,7 +65,12 @@ void ENGINE_NS::GraphicsEngine::initialise() {
         upload_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::upload_, this);
     }
 
+    init_immediates_();
+
     initialised_ = true;
+
+    init_mesh_data_();
+
     FrameMarkEnd(StaticNames::GraphicsInit);
 }
 
@@ -123,6 +129,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     }
     frame_deletion_queue_.flush(device_, allocator_);
     deletion_queue_.flush(device_, allocator_);
+    upload_deletion_queue_.flush(device_, allocator_);
     swapchain_.cleanup();
     vmaDestroyAllocator(allocator_);
     device_.cleanup();
@@ -438,6 +445,7 @@ auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
 auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
     init_background_pipelines_();
     init_triangle_pipeline_();
+    init_mesh_pipeline_();
 }
 
 auto ENGINE_NS::GraphicsEngine::init_background_pipelines_() -> void {
@@ -491,6 +499,64 @@ auto ENGINE_NS::GraphicsEngine::init_triangle_pipeline_() -> void {
     vkDestroyShaderModule(device_.device, shader.shader, nullptr);
 
     deletion_queue_.push(triangle_pipeline_);
+}
+
+auto ENGINE_NS::GraphicsEngine::init_mesh_pipeline_() -> void {
+    auto shader_result = asset::BytecodeShader::load_from_file("assets/shaders/engine/mesh_triangle.spv").compile(device_);
+    if (!shader_result.has_value()) {
+        crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
+        std::unreachable();
+    }
+    auto& shader = shader_result.value();
+
+    VkPushConstantRange buffer_range{};
+    buffer_range.offset     = 0;
+    buffer_range.size       = sizeof(GPUDrawPushConstants);
+    buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
+    mesh_pipeline_          = GraphicsPipeline::build()
+                         .layout()
+                         .push_constant_range(buffer_range)
+                         .finish()
+                         .shaders(shader, shader)
+                         .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+                         .polygon_mode(VK_POLYGON_MODE_FILL)
+                         .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
+                         .set_multisampling_none()
+                         .disable_blending()
+                         .disable_depthtest()
+                         .color_attachment_format(draw_image_.format)
+                         .depth_format(VK_FORMAT_UNDEFINED)
+                         .finish(device_);
+    vkDestroyShaderModule(device_.device, shader.shader, nullptr);
+
+    deletion_queue_.push(mesh_pipeline_);
+}
+
+auto ENGINE_NS::GraphicsEngine::init_mesh_data_() -> void {
+    std::array<Vertex, 4> rect_vertices{};
+    rect_vertices[0].position = {0.5, -0.5, 0};
+    rect_vertices[1].position = {0.5, 0.5, 0};
+    rect_vertices[2].position = {-0.5, -0.5, 0};
+    rect_vertices[3].position = {-0.5, 0.5, 0};
+
+    rect_vertices[0].colour   = {0, 0, 0, 1};
+    rect_vertices[1].colour   = {0.5, 0.5, 0.5, 1};
+    rect_vertices[2].colour   = {1, 0, 0, 1};
+    rect_vertices[3].colour   = {0, 1, 0, 1};
+
+    std::array<std::uint32_t, 6> rect_indices{};
+
+    rect_indices[0] = 0;
+    rect_indices[1] = 1;
+    rect_indices[2] = 2;
+
+    rect_indices[3] = 2;
+    rect_indices[4] = 1;
+    rect_indices[5] = 3;
+
+    rectangle_      = upload_mesh(rect_indices, rect_vertices).get();
+    deletion_queue_.push(rectangle_);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void {
@@ -560,6 +626,9 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
     tracy::SetThreadName(StaticNames::GraphicsThreadName);
     init_thread_(graphics::Thread::DRAW);
     constexpr std::uint32_t TIMEOUT = 250'000'000;
+
+    while (!initialised_) {
+    }
 
     while (running_.load(std::memory_order_acquire)) {
         FrameMarkStart(StaticNames::RenderLoop);
@@ -645,8 +714,12 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     tracy::SetThreadName(StaticNames::UploadThreadName);
     init_thread_(graphics::Thread::UPLOAD);
 
+    while (!initialised_) {
+    }
+
     struct StagingBuffer {
             BufferAllocation allocation{};
+            void* mapped_data      = nullptr;
             std::size_t total_size = 0;
     };
     std::vector<StagingBuffer> staging_buffers;
@@ -704,26 +777,24 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
             new_surface.index_buffer          = allocate_buffer(
                 index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-            const auto desired_size   = vertex_buffer_size + index_buffer_size;
-            BufferAllocation* staging = nullptr;
+            const auto desired_size = vertex_buffer_size + index_buffer_size;
+            StagingBuffer* staging  = nullptr;
             for (auto& buffer : staging_buffers) {
                 if (buffer.total_size >= desired_size) {
-                    staging = &buffer.allocation;
+                    staging = &buffer;
                     break;
                 }
             }
             if (!staging) {
+                auto alloc_size = desired_size + (1'024 - (desired_size % 1'024));
                 staging_buffers.push_back(
-                    {allocate_buffer(vertex_buffer_size + index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
-                     desired_size});
-                staging = &staging_buffers.back().allocation;
+                    {allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY), nullptr, alloc_size});
+                vmaMapMemory(allocator_, staging_buffers.back().allocation.allocation, &staging_buffers.back().mapped_data);
+                staging = &staging_buffers.back();
             }
 
-            void* data = nullptr;
-            vmaMapMemory(allocator_, staging->allocation, &data);
-
-            std::memcpy(data, mesh.vertices.data(), vertex_buffer_size);
-            std::memcpy(static_cast<std::uint8_t*>(data) + vertex_buffer_size, mesh.indices.data(), index_buffer_size);
+            std::memcpy(staging->mapped_data, mesh.vertices.data(), vertex_buffer_size);
+            std::memcpy(static_cast<std::uint8_t*>(staging->mapped_data) + vertex_buffer_size, mesh.indices.data(), index_buffer_size);
 
             immediate_submit([&](VkCommandBuffer cmd) {
                 VkBufferCopy vertex_copy{0};
@@ -731,14 +802,14 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
                 vertex_copy.srcOffset = 0;
                 vertex_copy.size      = vertex_buffer_size;
 
-                vkCmdCopyBuffer(cmd, staging->buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
+                vkCmdCopyBuffer(cmd, staging->allocation.buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
 
                 VkBufferCopy index_copy{0};
                 index_copy.dstOffset = 0;
                 index_copy.srcOffset = vertex_buffer_size;
                 index_copy.size      = index_buffer_size;
 
-                vkCmdCopyBuffer(cmd, staging->buffer, new_surface.index_buffer.buffer, 1, &index_copy);
+                vkCmdCopyBuffer(cmd, staging->allocation.buffer, new_surface.index_buffer.buffer, 1, &index_copy);
             });
 
             mesh.promise.set_value(std::move(new_surface));
@@ -760,6 +831,7 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
             while (current_size > MAX_CACHED_STAGING_BUFFER_SIZE) {
                 current_size -= staging_buffers.back().total_size;
                 upload_deletion_queue_.push(staging_buffers.back().allocation);
+                vmaUnmapMemory(allocator_, staging_buffers.back().allocation.allocation);
                 staging_buffers.pop_back();
             }
             upload_deletion_queue_.flush(device_, allocator_);
@@ -770,8 +842,8 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
 
     for (auto& buffer : staging_buffers) {
         upload_deletion_queue_.push(buffer.allocation);
+        vmaUnmapMemory(allocator_, buffer.allocation.allocation);
     }
-    upload_deletion_queue_.flush(device_, allocator_);
 }
 
 auto ENGINE_NS::graphics::thread_name(Thread thread) -> std::string {

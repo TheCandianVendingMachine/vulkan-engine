@@ -17,8 +17,7 @@ auto ENGINE_NS::Deletion<ENGINE_NS::ImageAllocation>::destroy(VkDevice device, V
     vmaDestroyImage(allocator, object.image, object.allocation);
 }
 
-auto ENGINE_NS::Deletion<ENGINE_NS::BufferAllocation>::destroy(VkDevice device, VmaAllocator allocator) -> void {
-    vkDestroyBuffer(device, object.buffer, nullptr);
+auto ENGINE_NS::Deletion<ENGINE_NS::BufferAllocation>::destroy(VkDevice, VmaAllocator allocator) -> void {
     vmaDestroyBuffer(allocator, object.buffer, object.allocation);
 }
 

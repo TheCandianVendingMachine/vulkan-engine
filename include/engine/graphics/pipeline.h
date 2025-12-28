@@ -20,10 +20,13 @@ namespace ENGINE_NS {
         public:
             auto finish() -> GraphicsPipelineBuilder&;
 
+            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<GraphicsPipelineBuilder>&;
+
             PipelineLayoutBuilder<GraphicsPipelineBuilder>(const PipelineLayoutBuilder<GraphicsPipelineBuilder>& rhs);
             PipelineLayoutBuilder<GraphicsPipelineBuilder>(PipelineLayoutBuilder<GraphicsPipelineBuilder>&& rhs) noexcept;
 
         private:
+            std::vector<VkPushConstantRange> push_constants_{};
             GraphicsPipelineBuilder& from_;
 
             friend GraphicsPipelineBuilder;

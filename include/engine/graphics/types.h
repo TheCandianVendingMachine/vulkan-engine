@@ -14,24 +14,40 @@ namespace ENGINE_NS {
             VkExtent3D extent{};
             VkFormat format{};
 
+            ImageAllocation()                                              = default;
+            ImageAllocation(const ImageAllocation& rhs)                    = default;
+            auto operator=(const ImageAllocation& rhs) -> ImageAllocation& = default;
+
+            ImageAllocation(ImageAllocation&& rhs) noexcept;
+            auto operator=(ImageAllocation&& rhs) noexcept -> ImageAllocation&;
+
             ~ImageAllocation();
 
         private:
             bool will_be_destroyed_ = false;
+            bool moved_             = false;
             friend class GraphicsMainDeletionQueue;
             friend class GraphicsPerFrameDeletionQueue;
             friend class GraphicsUploadDeletionQueue;
     };
 
     struct BufferAllocation {
-            VkBuffer buffer          = VK_NULL_HANDLE;
-            VmaAllocation allocation = VK_NULL_HANDLE;
-            VmaAllocationInfo info   = {};
+            VkBuffer buffer                                                  = VK_NULL_HANDLE;
+            VmaAllocation allocation                                         = VK_NULL_HANDLE;
+            VmaAllocationInfo info                                           = {};
+
+            BufferAllocation()                                               = default;
+            BufferAllocation(const BufferAllocation& rhs)                    = default;
+            auto operator=(const BufferAllocation& rhs) -> BufferAllocation& = default;
+
+            BufferAllocation(BufferAllocation&& rhs) noexcept;
+            auto operator=(BufferAllocation&& rhs) noexcept -> BufferAllocation&;
 
             ~BufferAllocation();
 
         private:
             bool will_be_destroyed_ = false;
+            bool moved_             = false;
             friend class GraphicsMainDeletionQueue;
             friend class GraphicsPerFrameDeletionQueue;
             friend class GraphicsUploadDeletionQueue;
