@@ -653,6 +653,7 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     constexpr std::size_t MAX_TOTAL_STAGING_BUFFER_SIZE = 5ull * 1'024 * 1'024 * 1'024;
 
     while (running_.load(std::memory_order_acquire)) {
+        FrameMarkStart(StaticNames::UploadLoop);
         auto enter_time = std::chrono::steady_clock::now();
         while (running_.load(std::memory_order_acquire) && !upload_ready_.load(std::memory_order_acquire)) {
             std::this_thread::yield();
@@ -753,6 +754,7 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
             upload_deletion_queue_.flush(device_, allocator_);
         }
         upload_ready_ = false;
+        FrameMarkEnd(StaticNames::UploadLoop);
     }
 
     for (auto& buffer : staging_buffers) {
