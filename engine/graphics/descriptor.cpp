@@ -75,9 +75,9 @@ auto ENGINE_NS::VulkanDescriptorSetLayout::operator=(VulkanDescriptorSetLayout&&
 
 
 void ENGINE_NS::DescriptorAllocator::init(VulkanDevice& device, std::uint32_t max_sets, std::span<PoolSizeRatio> ratios) {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (moved_) {
-        logger.info("Descriptor set allocator requesting initialisation has been moved!");
+        logger.get().info("Descriptor set allocator requesting initialisation has been moved!");
         return;
     }
     device_ = &device;
@@ -97,18 +97,18 @@ void ENGINE_NS::DescriptorAllocator::init(VulkanDevice& device, std::uint32_t ma
 }
 
 void ENGINE_NS::DescriptorAllocator::clear_descriptors() {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (moved_) {
-        logger.info("Descriptor set allocator clearing descriptors has been moved!");
+        logger.get().info("Descriptor set allocator clearing descriptors has been moved!");
         return;
     }
     vkResetDescriptorPool(device_->device, pool_, 0);
 }
 
 void ENGINE_NS::DescriptorAllocator::destroy() {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (moved_) {
-        logger.info("Descriptor set allocator trying to be destroy has been moved!");
+        logger.get().info("Descriptor set allocator trying to be destroy has been moved!");
         return;
     }
     vkDestroyDescriptorPool(device_->device, pool_, nullptr);
@@ -117,9 +117,9 @@ void ENGINE_NS::DescriptorAllocator::destroy() {
 }
 
 auto ENGINE_NS::DescriptorAllocator::allocate(VkDescriptorSetLayout layout) -> VkDescriptorSet {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (moved_) {
-        logger.info("Descriptor set allocator trying to be allocate has been moved!");
+        logger.get().info("Descriptor set allocator trying to be allocate has been moved!");
         return VK_NULL_HANDLE;
     }
     VkDescriptorSetAllocateInfo alloc_info{};

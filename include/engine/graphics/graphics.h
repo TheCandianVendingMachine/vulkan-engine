@@ -34,7 +34,8 @@ namespace tracy {
 struct SDL_Window;
 namespace ENGINE_NS {
     namespace graphics {
-        constexpr std::size_t FRAME_OVERLAP = 2;
+        constexpr std::size_t FRAME_OVERLAP  = 2;
+        constexpr const char* IMMEDIATE_NAME = "immediate";
         struct FrameData {
                 // Allocations that are created in the process of rendering. Should never be pushed to outside the render thread
                 GraphicsPerFrameDeletionQueue deletion_queue{};
@@ -56,6 +57,8 @@ namespace ENGINE_NS {
             UPLOAD,
             DRAW
         };
+        auto thread_name(Thread thread) -> std::string;
+        auto thread_immediate_name(Thread thread) -> std::string;
     } // namespace graphics
 
     class GraphicsEngine {

@@ -21,6 +21,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
+#include <fmt/format.h>
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_vulkan.h>
@@ -34,9 +35,9 @@
 void ENGINE_NS::GraphicsEngine::initialise() {
     FrameMarkStart(StaticNames::GraphicsInit);
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
-    logger.info("Creating graphics engine");
+    logger.get().info("Creating graphics engine");
 
-    logger.info("Initialising SDL");
+    logger.get().info("Initialising SDL");
     SDL_Init(SDL_INIT_VIDEO);
     {
         ZoneScoped;
@@ -45,10 +46,10 @@ void ENGINE_NS::GraphicsEngine::initialise() {
         window_                      = SDL_CreateWindow("Vulkan Engine", window_extent_.x, window_extent_.y, window_flags);
     }
 
-    logger.info("Initialising Vulkan");
+    logger.get().info("Initialising Vulkan");
     init_vulkan_();
 
-    logger.info("Initialising render thread");
+    logger.get().info("Initialising render thread");
     {
         ZoneScoped;
         running_.store(true, std::memory_order_release);
@@ -56,7 +57,7 @@ void ENGINE_NS::GraphicsEngine::initialise() {
         render_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::draw_, this);
     }
 
-    logger.info("Initialising upload thread");
+    logger.get().info("Initialising upload thread");
     {
         ZoneScoped;
         upload_ready_.store(false, std::memory_order_release);
@@ -69,7 +70,6 @@ void ENGINE_NS::GraphicsEngine::initialise() {
 
 void ENGINE_NS::GraphicsEngine::draw() {
     FrameMarkStart(StaticNames::GraphicsDraw);
-    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     frame_deletion_queue_.flush(device_, allocator_);
 
     {
@@ -87,9 +87,9 @@ void ENGINE_NS::GraphicsEngine::draw() {
 void ENGINE_NS::GraphicsEngine::cleanup() {
     FrameMarkStart(StaticNames::GraphicsDeinit);
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
-    logger.info("Cleaning up graphics engine");
+    logger.get().info("Cleaning up graphics engine");
 
-    logger.info("Stopping render thread");
+    logger.get().info("Stopping render thread");
     {
         ZoneScoped;
         if (this->running_.load(std::memory_order_acquire)) {
@@ -97,14 +97,14 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
             this->render_thread_.join();
         }
     }
-    logger.info("Stopping upload thread");
+    logger.get().info("Stopping upload thread");
     {
         ZoneScoped;
         this->upload_thread_.join();
     }
 
 
-    logger.info("Cleaning up Vulkan");
+    logger.get().info("Cleaning up Vulkan");
     if (device_.device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(device_.device);
         global_descriptor_allocator_.destroy();
@@ -129,7 +129,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     surface_.cleanup();
     vulkan_instance_.cleanup();
 
-    logger.info("Cleaning up SDL");
+    logger.get().info("Cleaning up SDL");
     {
         ZoneScoped;
         SDL_DestroyWindow(window_);
@@ -183,9 +183,9 @@ auto ENGINE_NS::GraphicsEngine::init_thread_(graphics::Thread thread) -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
-    auto& logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
+    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     ZoneScoped;
-    logger.debug("Initialising Volk");
+    logger.get().debug("Initialising Volk");
     VK_CHECK(volkInitialize());
     vulkan_instance_ = VulkanInstance::build()
                            .engine_name(ENGINE_NAME_STR)
@@ -195,7 +195,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .with_validation_layers(true)
                            .finish();
 
-    logger.debug("Creating surface");
+    logger.get().debug("Creating surface");
     surface_ = VulkanSurface(window_, vulkan_instance_);
 
     // vulkan 1.3 features
@@ -211,7 +211,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     VkPhysicalDeviceVulkan11Features features11{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES};
     features11.shaderDrawParameters = true;
 
-    logger.debug("Picking physical device");
+    logger.get().debug("Picking physical device");
     physical_device_ = VulkanPhysicalDevice::choose(window_)
                            .set_minimum_vulkan_version(Version(1, 3, 0))
                            .set_required_features_11(features11)
@@ -220,17 +220,18 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
                            .with_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME)
                            .finish(vulkan_instance_);
 
-    logger.debug("Initialising device");
-    device_ = VulkanDevice::build()
-                  .request_queue("graphics", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .request_queue("transfer", VulkanQueueType::TRANSFER)
-                  .request_queue("imgui", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .request_queue("immediate_main", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .request_queue("immediate_upload", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .request_queue("immediate_draw", VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
-                  .finish(physical_device_);
+    logger.get().debug("Initialising device");
+    device_ =
+        VulkanDevice::build()
+            .request_queue("graphics", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+            .request_queue("transfer", VulkanQueueType::TRANSFER)
+            .request_queue("imgui", VulkanQueueType::GRAPHICS | VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+            .request_queue(graphics::thread_immediate_name(graphics::Thread::MAIN), VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+            .request_queue(graphics::thread_immediate_name(graphics::Thread::UPLOAD), VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+            .request_queue(graphics::thread_immediate_name(graphics::Thread::DRAW), VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+            .finish(physical_device_);
 
-    logger.debug("Initialising allocator");
+    logger.get().debug("Initialising allocator");
     VmaVulkanFunctions vma_vulkan_funcs{};
     vma_vulkan_funcs.vkAllocateMemory                    = vkAllocateMemory;
     vma_vulkan_funcs.vkBindBufferMemory                  = vkBindBufferMemory;
@@ -260,7 +261,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     allocator_info.pVulkanFunctions = &vma_vulkan_funcs;
     vmaCreateAllocator(&allocator_info, &allocator_);
 
-    logger.debug("Initialising swapchain");
+    logger.get().debug("Initialising swapchain");
     create_swapchain_();
 
     graphics_queue_           = device_.queues.at("graphics").get();
@@ -273,7 +274,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     VkSemaphoreCreateInfo semaphore_info = semaphore_create_info(0);
     VkFenceCreateInfo fence_info         = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
 
-    logger.debug("Initialising sync structures");
+    logger.get().debug("Initialising sync structures");
     for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
         auto frame = frames_[idx].write();
         VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frame.get().command_pool));
@@ -288,15 +289,15 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     }
 
 
-    logger.debug("Initialising descriptors");
+    logger.get().debug("Initialising descriptors");
     init_descriptors_();
-    logger.debug("Initialising pipelines");
+    logger.get().debug("Initialising pipelines");
     init_pipelines_();
 
-    logger.debug("Initialising ImGui");
+    logger.get().debug("Initialising ImGui");
     init_imgui_();
 
-    logger.debug("Initialising immediate");
+    logger.get().debug("Initialising immediate");
     init_thread_(graphics::Thread::MAIN);
 }
 
@@ -412,53 +413,13 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
-    {
-        auto& immediate              = immediates_.insert({graphics::Thread::MAIN, {}}).first.value();
+    for (auto& thread : {graphics::Thread::MAIN, graphics::Thread::DRAW, graphics::Thread::UPLOAD}) {
+        auto& immediate              = immediates_.insert({thread, {}}).first.value();
 
         VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
         VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
 
-        auto& queue                       = device_.queues.at("immediate_main");
-        immediate.queue                   = queue.get();
-
-        VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-
-        vkCreateCommandPool(device_.device, &pool_info, nullptr, &immediate.command_pool);
-        VkCommandBufferAllocateInfo command_alloc_info = command_buffer_allocate_info(immediate.command_pool);
-
-        VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate.command_buffer));
-
-        immediate.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate.command_buffer);
-
-        deletion_queue_.push(immediate);
-    }
-    {
-        auto& immediate              = immediates_.insert({graphics::Thread::UPLOAD, {}}).first.value();
-
-        VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
-
-        auto& queue                       = device_.queues.at("immediate_upload");
-        immediate.queue                   = queue.get();
-
-        VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
-
-        vkCreateCommandPool(device_.device, &pool_info, nullptr, &immediate.command_pool);
-        VkCommandBufferAllocateInfo command_alloc_info = command_buffer_allocate_info(immediate.command_pool);
-
-        VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate.command_buffer));
-
-        immediate.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate.command_buffer);
-
-        deletion_queue_.push(immediate);
-    }
-    {
-        auto& immediate              = immediates_.insert({graphics::Thread::DRAW, {}}).first.value();
-
-        VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-        VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
-
-        auto& queue                       = device_.queues.at("immediate_draw");
+        auto& queue                       = device_.queues.at(graphics::thread_immediate_name(thread));
         immediate.queue                   = queue.get();
 
         VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
@@ -684,6 +645,8 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     tracy::SetThreadName(StaticNames::UploadThreadName);
     init_thread_(graphics::Thread::UPLOAD);
 
+    auto logger = g_ENGINE->logger.get(LogNamespaces::GRAPHICS);
+
     struct StagingBuffer {
             BufferAllocation allocation{};
             std::size_t total_size = 0;
@@ -692,15 +655,21 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     constexpr std::size_t MAX_TOTAL_STAGING_BUFFER_SIZE = 5ull * 1'024 * 1'024 * 1'024;
 
     while (running_.load(std::memory_order_acquire)) {
+        auto enter_time = std::chrono::steady_clock::now();
         while (running_.load(std::memory_order_acquire) && !upload_ready_.load(std::memory_order_acquire)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            std::this_thread::yield();
+            if (std::chrono::steady_clock::now() - enter_time > std::chrono::seconds(1)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
         }
         if (!running_) {
             break;
         }
 
+
         auto lock     = uploads_.write();
         auto& uploads = lock.get();
+        logger.get().debug("Uploading {} meshes", uploads.size());
         while (!uploads.empty()) {
             ZoneScoped;
             auto& mesh                           = uploads.back();
@@ -789,4 +758,20 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
         upload_deletion_queue_.push(buffer.allocation);
     }
     upload_deletion_queue_.flush(device_, allocator_);
+}
+
+auto ENGINE_NS::graphics::thread_name(Thread thread) -> std::string {
+    switch (thread) {
+        case Thread::MAIN:
+            return "main";
+        case Thread::DRAW:
+            return "draw";
+        case Thread::UPLOAD:
+            return "upload";
+    }
+    std::unreachable();
+}
+
+auto ENGINE_NS::graphics::thread_immediate_name(Thread thread) -> std::string {
+    return fmt::format("{}_{}", IMMEDIATE_NAME, thread_name(thread));
 }

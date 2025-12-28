@@ -17,8 +17,8 @@ namespace ENGINE_NS {
     namespace linalg {
         void load_vector_functions(const void* clibrary) {
             ZoneScoped;
-            auto& logger = engine::g_ENGINE->logger.get(engine::LogNamespaces::CORE);
-            logger.info("Linking vector functions");
+            auto logger = engine::g_ENGINE->logger.get(engine::LogNamespaces::CORE);
+            logger.get().info("Linking vector functions");
             HMODULE library               = static_cast<HMODULE>(const_cast<void*>(clibrary));
             // Vector2
             blas1::vector2::float32::axpy = reinterpret_cast<blas1::vector2::float32::axpy_def>(GetProcAddress(library, "saxpy2"));
@@ -141,7 +141,7 @@ namespace ENGINE_NS {
             blas1::vector4::float64::component_max =
                 reinterpret_cast<blas1::vector4::float64::component_max_def>(GetProcAddress(library, "dcomponentmax4"));
             VERIFY(blas1::vector4::float64::component_max);
-            logger.info("Successfully linked vector functions");
+            logger.get().info("Successfully linked vector functions");
         }
     } // namespace linalg
 } // namespace ENGINE_NS

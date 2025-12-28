@@ -3,26 +3,29 @@
 #include "engine/graphics/graphics.h"
 #include "engine/logger.h"
 #include "engine/meta_defines.h"
+#include "engine/rwlock.h"
 
-#include <robin_map.h>
+#include <array>
 
 namespace ENGINE_NS {
-    enum class LogNamespaces {
-        CORE,
+    enum class LogNamespaces : std::uint8_t {
+        CORE = 0,
         GRAPHICS,
         VULKAN,
         VULKAN_VALIDATION,
-        VULKAN_PERFORMANCE
+        VULKAN_PERFORMANCE,
+        COUNT
     };
 
     class LogLocator {
         public:
             ENGINE_API LogLocator();
-            ENGINE_API auto get(LogNamespaces ns) -> Logger&;
+            ENGINE_API auto get(LogNamespaces ns) -> RwDataMut<Logger>;
+            ENGINE_API auto get(LogNamespaces ns) const -> RwData<Logger>;
 
         private:
             uint64_t m_log_idx{};
-            tsl::robin_map<LogNamespaces, Logger> m_loggers{};
+            std::array<RwLock<Logger>, static_cast<std::uint8_t>(LogNamespaces::COUNT)> loggers_;
     };
 
     class Engine {

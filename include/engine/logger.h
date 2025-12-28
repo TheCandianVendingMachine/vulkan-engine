@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+#include "engine/rwlock.h"
 
 #include <chrono>
 #include <cstdint>
@@ -9,6 +10,7 @@
 #include <iterator>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace ENGINE_NS {
@@ -48,6 +50,12 @@ namespace ENGINE_NS {
 
     class Logger {
         public:
+            Logger(const Logger&) = delete;
+            Logger(Logger&& rhs) noexcept :
+                m_log_idx(std::move(rhs.m_log_idx)), start_time_(std::move(rhs.start_time_)), m_streams(std::move(rhs.m_streams)),
+                m_entries(std::move(rhs.m_entries)), m_identifier(std::move(rhs.m_identifier)) {
+            }
+
             template <typename... T>
             auto debug(fmt::format_string<T...> fmt, T&&... args) -> void {
                 this->log(logger::Level::DEBUG, fmt, std::forward<T>(args)...);
@@ -79,6 +87,14 @@ namespace ENGINE_NS {
             ENGINE_API auto last_entries_of(uint64_t count, logger::Level filter) const -> std::vector<const logger::Entry*>;
 
             ENGINE_API auto set_index(uint64_t index) -> void;
+
+            friend auto swap(Logger& a, Logger& b) noexcept -> void {
+                std::swap(a.m_log_idx, b.m_log_idx);
+                std::swap(a.start_time_, b.start_time_);
+                std::swap(a.m_streams, b.m_streams);
+                std::swap(a.m_entries, b.m_entries);
+                std::swap(a.m_identifier, b.m_identifier);
+            }
 
             friend class LoggerBuilder;
 

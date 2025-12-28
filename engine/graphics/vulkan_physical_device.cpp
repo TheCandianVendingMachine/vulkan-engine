@@ -61,7 +61,7 @@ ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device,
 auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -> VulkanPhysicalDevice {
     ZoneScoped;
 
-    auto& logger               = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger               = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
 
     std::uint32_t device_count = 0;
     vkEnumeratePhysicalDevices(instance.instance, &device_count, nullptr);
@@ -73,16 +73,16 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
 
     const auto api_version = VK_MAKE_API_VERSION(0, vulkan_version_.major, vulkan_version_.minor, vulkan_version_.patch);
 
-    logger.debug("Requesting a device with API version {}", api_version);
+    logger.get().debug("Requesting a device with API version {}", api_version);
 
     std::vector<std::pair<VkPhysicalDevice, int>> available_devices{};
 
     for (auto& device : devices) {
         VkPhysicalDeviceProperties properties{};
         vkGetPhysicalDeviceProperties(device, &properties);
-        logger.debug("Found device '{}' with API version {}", properties.deviceName, properties.apiVersion);
+        logger.get().debug("Found device '{}' with API version {}", properties.deviceName, properties.apiVersion);
         if (properties.apiVersion < api_version) {
-            logger.debug("Invalid API version");
+            logger.get().debug("Invalid API version");
             continue;
         }
         VkPhysicalDeviceFeatures2 features{};
@@ -116,7 +116,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
             }
         }
         if (!has_all_features_) {
-            logger.debug("Device does not have a desired Vulkan 1.0 feature");
+            logger.get().debug("Device does not have a desired Vulkan 1.0 feature");
             continue;
         }
 
@@ -131,7 +131,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
             }
         }
         if (!has_all_features_) {
-            logger.debug("Device does not have a desired Vulkan 1.1 feature");
+            logger.get().debug("Device does not have a desired Vulkan 1.1 feature");
             continue;
         }
 
@@ -146,7 +146,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
             }
         }
         if (!has_all_features_) {
-            logger.debug("Device does not have a desired Vulkan 1.2 feature");
+            logger.get().debug("Device does not have a desired Vulkan 1.2 feature");
             continue;
         }
 
@@ -161,7 +161,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
             }
         }
         if (!has_all_features_) {
-            logger.debug("Device does not have a desired Vulkan 1.3 feature");
+            logger.get().debug("Device does not have a desired Vulkan 1.3 feature");
             continue;
         }
 
@@ -176,11 +176,11 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
             }
         }
         if (!has_all_features_) {
-            logger.debug("Device does not have a desired Vulkan 1.4 feature");
+            logger.get().debug("Device does not have a desired Vulkan 1.4 feature");
             continue;
         }
 
-        logger.debug("Device has all requested features");
+        logger.get().debug("Device has all requested features");
 
         std::uint32_t extension_count = 0;
         vkEnumerateDeviceExtensionProperties(device, nullptr, &extension_count, nullptr);
@@ -197,15 +197,15 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
                 }
             }
             if (!found) {
-                logger.debug("Could not find extension '{}' in device", desired_extension);
+                logger.get().debug("Could not find extension '{}' in device", desired_extension);
                 break;
             }
         }
         if (!found) {
-            logger.debug("Device does not all wanted extensions");
+            logger.get().debug("Device does not all wanted extensions");
             continue;
         }
-        logger.debug("Device has all requested extensions");
+        logger.get().debug("Device has all requested extensions");
 
         int score = 10'000;
         if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU) {
@@ -220,7 +220,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
         if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_OTHER) {
             score -= 377;
         }
-        logger.debug("Device has a score of {}", score);
+        logger.get().debug("Device has a score of {}", score);
         available_devices.push_back(std::make_pair(device, score));
     }
 
@@ -234,7 +234,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
 
     VkPhysicalDeviceProperties properties{};
     vkGetPhysicalDeviceProperties(available_devices[0].first, &properties);
-    logger.info("Using {}", properties.deviceName);
+    logger.get().info("Using {}", properties.deviceName);
 
     return VulkanPhysicalDevice(available_devices[0].first, features_10_, features_11_, features_12_, features_13_, features_14_,
                                 std::move(extensions_));

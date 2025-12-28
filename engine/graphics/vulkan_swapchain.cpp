@@ -30,13 +30,13 @@ auto ENGINE_NS::VulkanSwapchain::operator=(VulkanSwapchain&& rhs) noexcept -> Vu
 }
 
 auto ENGINE_NS::VulkanSwapchain::cleanup() -> void {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (moved_) {
-        logger.info("Swapchain has already been moved or cleaned up");
+        logger.get().info("Swapchain has already been moved or cleaned up");
         return;
     }
     if (!initialised_) {
-        logger.warning("Swapchain is not initialised and is trying to be cleaned up");
+        logger.get().warning("Swapchain is not initialised and is trying to be cleaned up");
         return;
     }
     for (auto& semaphore : semaphores_) {
@@ -91,7 +91,7 @@ ENGINE_NS::VulkanSwapchain::VulkanSwapchain(VkSwapchainCreateInfoKHR create_info
 
 auto ENGINE_NS::VulkanSwapchainBuilder::finish(VulkanPhysicalDevice& physical_device, VulkanSurface& surface, VulkanDevice& device)
     -> VulkanSwapchain {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     VkSurfaceCapabilitiesKHR capabilities{};
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device.device, surface.surface, &capabilities);
 
@@ -151,7 +151,7 @@ auto ENGINE_NS::VulkanSwapchainBuilder::finish(VulkanPhysicalDevice& physical_de
     if (!does_combination_exist) {
         assert(!does_format_exist || !does_color_space_exist);
         if (!does_format_exist && !does_color_space_exist) {
-            logger.warning("Requested format and color space does not exist on device. Falling back to a valid format");
+            logger.get().warning("Requested format and color space does not exist on device. Falling back to a valid format");
             if (formats.size() > 0) {
                 create_info.imageFormat     = formats[0].format;
                 create_info.imageColorSpace = formats[0].colorSpace;
@@ -159,15 +159,16 @@ auto ENGINE_NS::VulkanSwapchainBuilder::finish(VulkanPhysicalDevice& physical_de
                 crash(ErrorCode::VULKAN_ERROR, __LINE__, __FUNCTION__, __FILE__, "No formats exist on the device for this surface");
             }
         } else if (does_format_exist && !does_color_space_exist) {
-            logger.warning(
+            logger.get().warning(
                 "Requested format exists on device, however the desired colour space does not. Falling back to a valid color space");
             create_info.imageColorSpace = formats[first_similar_color_space].colorSpace;
         } else if (!does_format_exist && does_color_space_exist) {
-            logger.warning("Requested color space exists on device, however the desired format does not. Falling back to a valid format");
+            logger.get().warning(
+                "Requested color space exists on device, however the desired format does not. Falling back to a valid format");
             create_info.imageFormat = formats[first_similar_format].format;
         }
     } else {
-        logger.debug("Requested format and color space exists.");
+        logger.get().debug("Requested format and color space exists.");
     }
 
     return VulkanSwapchain(create_info, device);

@@ -14,23 +14,23 @@
 
 using namespace ::ENGINE_NS;
 
-LogLocator::LogLocator() {
-    m_loggers = {
-      {LogNamespaces::CORE,               LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build()  },
-      {LogNamespaces::GRAPHICS,           LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build()},
-      {LogNamespaces::VULKAN,             LoggerBuilder().with_identifier("VULKAN").with_stream({stdout, logger::Level::DEBUG}).build()  },
-      {LogNamespaces::VULKAN_PERFORMANCE,
-       LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build()                       },
-      {LogNamespaces::VULKAN_VALIDATION,
-       LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build()                        },
-    };
+LogLocator::LogLocator() :
+    loggers_({LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build(),
+              LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build(),
+              LoggerBuilder().with_identifier("VULKAN").with_stream({stdout, logger::Level::DEBUG}).build(),
+              LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build(),
+              LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build()}) {
 }
 
-auto LogLocator::get(LogNamespaces ns) -> Logger& {
-    auto& logger = m_loggers.at(ns);
+auto LogLocator::get(LogNamespaces ns) -> RwDataMut<Logger> {
+    auto logger_lock = loggers_[static_cast<std::uint8_t>(ns)].write();
+    auto& logger     = logger_lock.get();
     logger.set_index(m_log_idx);
     m_log_idx += 1;
-    return logger;
+    return logger_lock;
+}
+auto LogLocator::get(LogNamespaces ns) const -> RwData<Logger> {
+    return loggers_[static_cast<std::uint8_t>(ns)].read();
 }
 
 Engine::Engine() {
@@ -125,7 +125,8 @@ auto Engine::startup() -> void {
     if (running_) {
         return;
     }
-    logger.get(LogNamespaces::CORE).info("Starting");
+    auto my_logger = logger_.get(LogNamespaces::CORE);
+    my_logger.get().info("Starting");
 
     linalg::load_library();
     linalg::load_vector_functions(linalg::g_VECTOR_LIBRARY->library);
@@ -133,13 +134,14 @@ auto Engine::startup() -> void {
 
     graphics_.initialise();
 
-    logger.get(LogNamespaces::CORE).info("Engine ready");
+    my_logger.get().info("Engine ready");
     running_ = true;
 }
 
 auto Engine::shutdown() -> void {
     ZoneScoped;
-    logger.get(LogNamespaces::CORE).info("Shutdown");
+    auto my_logger = logger_.get(LogNamespaces::CORE);
+    my_logger.get().info("Shutdown");
 
     graphics_.cleanup();
 

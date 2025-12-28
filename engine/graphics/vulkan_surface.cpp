@@ -16,16 +16,16 @@ ENGINE_NS::VulkanSurface::VulkanSurface(SDL_Window* window, VulkanInstance& inst
 }
 
 auto ENGINE_NS::VulkanSurface::cleanup() -> void {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (moved_ || !window_) {
-        logger.info("Surface has already been moved or cleaned up");
+        logger.get().info("Surface has already been moved or cleaned up");
         return;
     }
     if (!initialised_) {
-        logger.warning("Surface is not initialised and is trying to be cleaned up");
+        logger.get().warning("Surface is not initialised and is trying to be cleaned up");
         return;
     }
-    logger.info("Destroying surface");
+    logger.get().info("Destroying surface");
     SDL_Vulkan_DestroySurface(instance_->instance, surface_, nullptr);
     window_   = nullptr;
     instance_ = nullptr;

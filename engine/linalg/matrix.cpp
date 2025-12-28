@@ -15,8 +15,8 @@
 
 void ENGINE_NS::linalg::load_matrix_functions(const void* clibrary) {
     ZoneScoped;
-    auto& logger = engine::g_ENGINE->logger.get(engine::LogNamespaces::CORE);
-    logger.info("Linking matrix functions");
+    auto logger = engine::g_ENGINE->logger.get(engine::LogNamespaces::CORE);
+    logger.get().info("Linking matrix functions");
     HMODULE library = static_cast<HMODULE>(const_cast<void*>(clibrary));
     // Matrix2
     blas2::matrix2::float32::matrix_vector_product =
@@ -90,7 +90,7 @@ void ENGINE_NS::linalg::load_matrix_functions(const void* clibrary) {
     VERIFY(blas2::matrix4::float64::solve_upper_triangular);
     blas2::matrix4::float64::solve = reinterpret_cast<blas2::matrix4::float64::solve_def>(GetProcAddress(library, "dsolve4"));
     VERIFY(blas2::matrix4::float64::solve);
-    logger.info("Successfully linked matrix functions");
+    logger.get().info("Successfully linked matrix functions");
 }
 
 namespace ENGINE_NS {

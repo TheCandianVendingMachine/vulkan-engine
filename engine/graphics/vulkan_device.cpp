@@ -18,15 +18,15 @@ auto ENGINE_NS::VulkanDevice::build() -> VulkanDeviceBuilder {
 }
 
 auto ENGINE_NS::VulkanDevice::cleanup() -> void {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (this->moved_) {
-        logger.info("Device has already been moved or destroyed");
+        logger.get().info("Device has already been moved or destroyed");
         return;
     }
     if (!this->initialised_) {
-        logger.warning("Attempting to cleanup unitialised device");
+        logger.get().warning("Attempting to cleanup unitialised device");
     }
-    logger.info("Destroying device");
+    logger.get().info("Destroying device");
     vkDestroyDevice(device_, nullptr);
     this->device_      = VK_NULL_HANDLE;
     this->moved_       = true;
@@ -62,7 +62,7 @@ ENGINE_NS::VulkanDevice::VulkanDevice(tsl::robin_map<std::string, VulkanQueue>&&
 }
 
 auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_device) -> VulkanDevice {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     ZoneScoped;
 
     std::uint32_t count = 0;
@@ -142,7 +142,7 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
     std::vector<const char*> extensions;
     for (auto& extension : physical_device.extensions) {
         extensions.push_back(extension.c_str());
-        logger.debug("Loading extension '{}'", extension);
+        logger.get().debug("Loading extension '{}'", extension);
     }
 
     VkDeviceCreateInfo create_info{};

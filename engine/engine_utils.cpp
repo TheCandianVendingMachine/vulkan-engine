@@ -120,6 +120,8 @@ void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const ch
 
 void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const char* file, const char* additional_message) {
     if (g_ENGINE) {
+        auto logger                = g_ENGINE->logger.get(LogNamespaces::CORE);
+
         const char* sanitized_file = file;
         char buffer[256]           = {};
         size_t idx                 = 0;
@@ -139,11 +141,11 @@ void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const ch
                 buffer[idx++] = c;
             }
         }
-        g_ENGINE->logger.get(LogNamespaces::CORE).error("Engine crash!");
-        g_ENGINE->logger.get(LogNamespaces::CORE).error("Location: {}::{}/{}", sanitized_file, function, line);
-        g_ENGINE->logger.get(LogNamespaces::CORE).error("{}", g_ERROR_CODE_STR[static_cast<std::size_t>(reason)]);
+        logger.get().error("Engine crash!");
+        logger.get().error("Location: {}::{}/{}", sanitized_file, function, line);
+        logger.get().error("{}", g_ERROR_CODE_STR[static_cast<std::size_t>(reason)]);
         if (additional_message[0] != '\0') {
-            g_ENGINE->logger.get(LogNamespaces::CORE).error("Message: {}", additional_message);
+            logger.get().error("Message: {}", additional_message);
         }
         g_ENGINE->shutdown();
     }

@@ -2,6 +2,7 @@
 #include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
+#include "engine/rwlock.h"
 // clang-format disable
 #include <Volk/volk.h>
 // clang-format enable
@@ -16,16 +17,16 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL validation_callback(VkDebugUtilsMessageSev
                                                           const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                                                           void*) {
     ZoneScoped;
-    engine::Logger* logger = nullptr;
+    ENGINE_NS::RwDataMut<engine::Logger> logger;
     switch (messageType) {
         case VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT:
-            logger = &ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN);
+            logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN);
             break;
         case VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT:
-            logger = &ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN_VALIDATION);
+            logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN_VALIDATION);
             break;
         case VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT:
-            logger = &ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN_PERFORMANCE);
+            logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::VULKAN_PERFORMANCE);
             break;
         default:
             assert(false);
@@ -33,13 +34,13 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL validation_callback(VkDebugUtilsMessageSev
     }
 
     if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-        logger->error("{}", pCallbackData->pMessage);
+        logger.get().error("{}", pCallbackData->pMessage);
     } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-        logger->warning("{}", pCallbackData->pMessage);
+        logger.get().warning("{}", pCallbackData->pMessage);
     } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-        logger->info("{}", pCallbackData->pMessage);
+        logger.get().info("{}", pCallbackData->pMessage);
     } else if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-        logger->debug("{}", pCallbackData->pMessage);
+        logger.get().debug("{}", pCallbackData->pMessage);
     }
 
     return VK_FALSE;
@@ -61,16 +62,16 @@ auto ENGINE_NS::VulkanInstance::operator=(VulkanInstance&& rhs) noexcept -> Vulk
 }
 
 auto ENGINE_NS::VulkanInstance::cleanup() -> void {
-    auto& logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
     if (this->moved_) {
-        logger.info("Instance has already been moved or destroyed");
+        logger.get().info("Instance has already been moved or destroyed");
         return;
     }
     if (!this->initialised_) {
-        logger.warning("Instance has not been initialised");
+        logger.get().warning("Instance has not been initialised");
         return;
     }
-    logger.info("Destroying instance");
+    logger.get().info("Destroying instance");
 
     if (has_debug_messenger_) {
         vkDestroyDebugUtilsMessengerEXT(instance_, debug_messenger_, nullptr);
