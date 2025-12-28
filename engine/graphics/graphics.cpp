@@ -645,8 +645,6 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     tracy::SetThreadName(StaticNames::UploadThreadName);
     init_thread_(graphics::Thread::UPLOAD);
 
-    auto logger = g_ENGINE->logger.get(LogNamespaces::GRAPHICS);
-
     struct StagingBuffer {
             BufferAllocation allocation{};
             std::size_t total_size = 0;
@@ -669,7 +667,10 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
 
         auto lock     = uploads_.write();
         auto& uploads = lock.get();
-        logger.get().debug("Uploading {} meshes", uploads.size());
+        {
+            auto logger = g_ENGINE->logger.get(LogNamespaces::GRAPHICS);
+            logger.get().debug("Uploading {} meshes", uploads.size());
+        }
         while (!uploads.empty()) {
             ZoneScoped;
             auto& mesh                           = uploads.back();
