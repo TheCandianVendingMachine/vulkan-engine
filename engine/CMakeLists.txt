@@ -13,7 +13,6 @@ add_subdirectory(graphics)
 add_subdirectory(linalg)
 add_subdirectory(reflection)
 target_sources(engine PRIVATE
-    "${PROJECT_SOURCE_DIR}/include/imconfig.h"
     "${ENGINE_HEADER_PATH}/bitset.h"
     "${ENGINE_HEADER_PATH}/deletion_queue.h"
     "${ENGINE_HEADER_PATH}/engine.h"
@@ -53,10 +52,17 @@ source_group(
     ${ENGINE_SOURCES}
 )
 source_group(
-    TREE "${PROJECT_SOURCE_DIR}/include"
+    TREE "${PROJECT_SOURCE_DIR}/include/engine"
     PREFIX "Headers"
     FILES
     ${ENGINE_HEADERS}
+)
+target_sources(engine PRIVATE "${PROJECT_SOURCE_DIR}/include/imconfig.h")
+source_group(
+    TREE "${PROJECT_SOURCE_DIR}/include"
+    PREFIX "Configs"
+    FILES
+    "${PROJECT_SOURCE_DIR}/include/imconfig.h"
 )
 
 target_sources(engine PRIVATE
