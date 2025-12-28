@@ -732,9 +732,14 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
         while (running_.load(std::memory_order_acquire) && !upload_ready_.load(std::memory_order_acquire)) {
             auto dt = std::chrono::steady_clock::now() - enter_time;
             if (!has_time_elapsed && dt > std::chrono::minutes(1)) {
+                {
+                    auto logger = g_ENGINE->logger.get(LogNamespaces::GRAPHICS);
+                    logger.get().debug("Freeing cached staging buffers");
+                }
                 has_time_elapsed = true;
                 for (auto& staging : staging_buffers) {
                     upload_deletion_queue_.push(staging.allocation);
+                    vmaUnmapMemory(allocator_, staging.allocation.allocation);
                 }
                 upload_deletion_queue_.flush(device_, allocator_);
                 staging_buffers.clear();
