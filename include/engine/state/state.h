@@ -31,26 +31,16 @@ namespace ENGINE_NS {
 
     class State {
         public:
-            virtual auto setup() -> void {
-            }
-            virtual auto teardown() -> void {
-            }
-            virtual auto play() -> void {
-            }
-            virtual auto stop() -> void {
-            }
-            virtual auto pre_update() -> void {
-            }
-            virtual auto update() -> void {
-            }
-            virtual auto post_update() -> void {
-            }
-            virtual auto update_fixed(float) -> void {
-            }
+            virtual auto setup() -> void;
+            virtual auto teardown() -> void;
+            virtual auto play() -> void;
+            virtual auto stop() -> void;
+            virtual auto pre_update() -> void;
+            virtual auto update() -> void;
+            virtual auto post_update() -> void;
+            virtual auto update_fixed(double delta_time) -> void;
 
-            virtual auto init_pipelines() -> std::vector<std::unique_ptr<StatePipeline>> {
-                return {};
-            }
+            virtual auto init_pipelines() -> std::vector<std::unique_ptr<StatePipeline>>;
 
         private:
             friend class StatePipeline;

@@ -22,6 +22,7 @@ LogLocator::LogLocator() :
       LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
       LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
       LoggerBuilder().with_identifier("GAMESTATE").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+      LoggerBuilder().with_identifier("GAME").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
     }) {
 }
 
@@ -139,6 +140,8 @@ auto ENGINE_NS::Engine::main_loop() -> void {
         }
         imgui.start_frame();
 
+        this->state_manager.start_frame(this->graphics_);
+
         this->update();
         while (accumulator > 0.0) {
             FrameMarkStart(StaticNames::FixedUpdate);
@@ -146,8 +149,10 @@ auto ENGINE_NS::Engine::main_loop() -> void {
             this->fixed_update(update_rate);
             FrameMarkEnd(StaticNames::FixedUpdate);
         }
-        // logger_.imgui();
+        // logger.imgui();
         imgui_lock.drop();
+
+        this->state_manager.end_frame();
 
         graphics_.draw();
 
@@ -168,7 +173,7 @@ auto Engine::startup() -> void {
     if (running_) {
         return;
     }
-    auto my_logger = logger_.get(LogNamespaces::CORE);
+    auto my_logger = logger.get(LogNamespaces::CORE);
     my_logger.get().info("Starting");
 
     linalg::load_library();
@@ -183,7 +188,7 @@ auto Engine::startup() -> void {
 
 auto Engine::shutdown() -> void {
     ZoneScoped;
-    auto my_logger = logger_.get(LogNamespaces::CORE);
+    auto my_logger = logger.get(LogNamespaces::CORE);
     my_logger.get().info("Shutdown");
 
     graphics_.cleanup();
@@ -193,9 +198,13 @@ auto Engine::shutdown() -> void {
 }
 
 auto ENGINE_NS::Engine::update() -> void {
+    this->state_manager.pre_update();
+    this->state_manager.update();
+    this->state_manager.post_update();
 }
 
-auto ENGINE_NS::Engine::fixed_update(double) -> void {
+auto ENGINE_NS::Engine::fixed_update(double delta_time) -> void {
+    this->state_manager.update_fixed(delta_time);
 }
 
 Engine* engine::g_ENGINE = nullptr;

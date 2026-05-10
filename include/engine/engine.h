@@ -4,6 +4,7 @@
 #include "engine/logger.h"
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
+#include "engine/state/manager.h"
 
 #include <array>
 
@@ -15,6 +16,7 @@ namespace ENGINE_NS {
         VULKAN_VALIDATION,
         VULKAN_PERFORMANCE,
         GAMESTATE,
+        GAME,
         COUNT
     };
 
@@ -41,7 +43,8 @@ namespace ENGINE_NS {
             ENGINE_API auto quit() -> void;
             ENGINE_API auto run() -> void;
 
-            LogLocator& logger = logger_;
+            StateManager state_manager{};
+            LogLocator logger{};
 
         private:
             auto main_loop() -> void;
@@ -56,7 +59,6 @@ namespace ENGINE_NS {
             bool running_              = false;
             std::uint64_t frame_count_ = 0;
 
-            LogLocator logger_;
             GraphicsEngine graphics_;
 
             friend auto ::ENGINE_NS::crash(ErrorCode, int, const char*, const char*, const char*) -> void;

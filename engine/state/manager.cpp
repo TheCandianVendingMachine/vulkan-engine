@@ -13,7 +13,7 @@ auto ENGINE_NS::StateManager::pop() -> void {
     this->queued_pops_ += 1;
 }
 
-auto ENGINE_NS::StateManager::tick(float delta_time, GraphicsEngine& engine) -> void {
+auto ENGINE_NS::StateManager::start_frame(GraphicsEngine& engine) -> void {
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GAMESTATE);
 
     while (this->queued_pops_ > 0) {
@@ -56,30 +56,40 @@ auto ENGINE_NS::StateManager::tick(float delta_time, GraphicsEngine& engine) -> 
     if (this->state_stack_.size() == 0) {
         return;
     }
-
-    auto& state = *this->state_stack_.back();
-    state.state_update_mutex_.lock();
-
-    this->pre_update_(state);
-    this->update_(state);
-    this->post_update_(state);
-    this->update_fixed_(state, delta_time);
-
-    state.state_update_mutex_.unlock();
+    this->state_stack_.back()->state_update_mutex_.lock();
 }
 
-auto ENGINE_NS::StateManager::pre_update_(State& state) -> void {
-    state.pre_update();
+auto ENGINE_NS::StateManager::pre_update() -> void {
+    if (this->state_stack_.size() == 0) {
+        return;
+    }
+    this->state_stack_.back()->pre_update();
 }
 
-auto ENGINE_NS::StateManager::update_(State& state) -> void {
-    state.update();
+auto ENGINE_NS::StateManager::update() -> void {
+    if (this->state_stack_.size() == 0) {
+        return;
+    }
+    this->state_stack_.back()->update();
 }
 
-auto ENGINE_NS::StateManager::post_update_(State& state) -> void {
-    state.post_update();
+auto ENGINE_NS::StateManager::post_update() -> void {
+    if (this->state_stack_.size() == 0) {
+        return;
+    }
+    this->state_stack_.back()->post_update();
 }
 
-auto ENGINE_NS::StateManager::update_fixed_(State& state, float delta_time) -> void {
-    state.update_fixed(delta_time);
+auto ENGINE_NS::StateManager::update_fixed(double delta_time) -> void {
+    if (this->state_stack_.size() == 0) {
+        return;
+    }
+    this->state_stack_.back()->update_fixed(delta_time);
+}
+
+auto ENGINE_NS::StateManager::end_frame() -> void {
+    if (this->state_stack_.size() == 0) {
+        return;
+    }
+    this->state_stack_.back()->state_update_mutex_.unlock();
 }

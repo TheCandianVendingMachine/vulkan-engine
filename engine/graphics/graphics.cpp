@@ -761,10 +761,12 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
                 {
-                    auto in_use_pipelines     = in_use_pipelines_.write();
-                    auto registered_pipelines = registered_pipelines_.write();
-                    for (auto& pipeline_id : frame.get().in_use_pipelines) {
-                        in_use_pipelines.get().at(pipeline_id) -= 1;
+                    auto in_use_pipelines = in_use_pipelines_.write();
+                    {
+                        auto registered_pipelines = registered_pipelines_.write();
+                        for (auto& pipeline_id : frame.get().in_use_pipelines) {
+                            in_use_pipelines.get().at(pipeline_id) -= 1;
+                        }
                     }
                     frame.get().in_use_pipelines.clear();
                     draw_registered_(frame, cmd);

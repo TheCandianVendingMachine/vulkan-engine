@@ -13,22 +13,21 @@ namespace ENGINE_NS {
         public:
             template <typename T>
             auto queue() -> void {
-                queued_states_.push_back(T{});
+                queued_states_.emplace_back(std::make_unique<T>());
             }
             template <typename T, typename... Args>
             auto queue(Args&&... args) -> void {
-                queued_states_.push_back(std::make_unique<T>(std::forward<Args>(args...)));
+                queued_states_.emplace_back(std::make_unique<T>(std::forward<Args>(args...)));
             }
 
             auto pop() -> void;
 
-            auto tick(float delta_time, GraphicsEngine& engine) -> void;
-
-        private:
-            auto pre_update_(State& state) -> void;
-            auto update_(State& state) -> void;
-            auto post_update_(State& state) -> void;
-            auto update_fixed_(State& state, float delta_time) -> void;
+            auto start_frame(GraphicsEngine& engine) -> void;
+            auto pre_update() -> void;
+            auto update() -> void;
+            auto post_update() -> void;
+            auto update_fixed(double delta_time) -> void;
+            auto end_frame() -> void;
 
         private:
             std::vector<std::unique_ptr<State>> queued_states_ = {};
