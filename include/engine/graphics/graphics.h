@@ -23,6 +23,7 @@
 #include <span>
 #include <string>
 #include <thread>
+#include <type_traits>
 #include <vector>
 #include <vk_mem_alloc.h>
 
@@ -58,29 +59,46 @@ namespace ENGINE_NS {
                 std::vector<Vertex> vertices;
         };
 
-        struct RegisteredPipeline {
-                GraphicsRegisteredPipelineDeletionQueue deletion_queue{};
-                std::optional<GraphicsPipeline> pipeline            = std::nullopt;
-                std::uint64_t id                                    = std::numeric_limits<std::uint64_t>::max();
+        class RegisteredPipeline {
+            public:
+                RegisteredPipeline() = default;
+                RegisteredPipeline(RegisteredPipeline&& other) noexcept;
+                virtual ~RegisteredPipeline();
 
-                virtual auto name() const -> std::string            = 0;
-                virtual auto record(VkCommandBuffer buffer) -> void = 0;
+                virtual auto operator=(RegisteredPipeline&& rhs) noexcept -> RegisteredPipeline&;
+
+                virtual auto name() const -> std::string                                                                        = 0;
+                virtual auto record(VkCommandBuffer buffer) -> void                                                             = 0;
                 virtual auto build_pipeline(GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
 
                 auto init_pipeline(VulkanDevice& device) -> void;
                 auto destroy(VulkanDevice& device, VmaAllocator allocator) -> void;
-        };
 
-        class RegisteredPipelineReciept {
-            public:
-                ~RegisteredPipelineReciept();
+                friend class GraphicsEngine;
+
+            protected:
+                GraphicsRegisteredPipelineDeletionQueue deletion_queue{};
+                std::optional<GraphicsPipeline> pipeline = std::nullopt;
+                std::uint64_t id                         = std::numeric_limits<std::uint64_t>::max();
 
             private:
-                RegisteredPipelineReciept(GraphicsEngine& engine, std::vector<std::uint64_t>&& ids);
+                bool moved = false;
+        };
+
+        class RegisteredPipelineReceipt {
+            public:
+                RegisteredPipelineReceipt(RegisteredPipelineReceipt&& other) noexcept;
+                ~RegisteredPipelineReceipt();
+
+                auto operator=(RegisteredPipelineReceipt&& rhs) noexcept -> RegisteredPipelineReceipt&;
+
+            private:
+                RegisteredPipelineReceipt(GraphicsEngine& engine, std::vector<std::uint64_t>&& ids);
 
                 friend class GraphicsEngine;
                 GraphicsEngine& engine_;
                 std::vector<std::uint64_t> pipeline_ids_{};
+                bool moved_ = false;
         };
 
         enum class Thread {
@@ -121,7 +139,7 @@ namespace ENGINE_NS {
 
             [[nodiscard("When return value has its deconstructor called it will queue destruction of all pipelines.")]]
             auto register_pipelines(std::vector<std::unique_ptr<graphics::RegisteredPipeline>>&& pipelines)
-                -> graphics::RegisteredPipelineReciept;
+                -> graphics::RegisteredPipelineReceipt;
             auto deregister_pipelines(std::vector<std::uint64_t>& ids) -> void;
 
             RwLock<graphics::ImGui> imgui{};

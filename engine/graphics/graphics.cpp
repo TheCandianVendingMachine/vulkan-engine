@@ -189,7 +189,7 @@ auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, st
 }
 
 auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<graphics::RegisteredPipeline>>&& pipelines)
-    -> graphics::RegisteredPipelineReciept {
+    -> graphics::RegisteredPipelineReceipt {
     std::vector<std::uint64_t> ids;
     auto in_use_pipelines     = in_use_pipelines_.write();
     auto registered_pipelines = registered_pipelines_.write();
@@ -201,7 +201,7 @@ auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<g
         in_use_pipelines.get().insert({pipeline_uid, 0});
         ids.emplace_back(pipeline_uid);
     }
-    return graphics::RegisteredPipelineReciept(*this, std::move(ids));
+    return graphics::RegisteredPipelineReceipt(*this, std::move(ids));
 }
 
 auto ENGINE_NS::GraphicsEngine::deregister_pipelines(std::vector<std::uint64_t>& ids) -> void {
@@ -968,12 +968,45 @@ auto ENGINE_NS::graphics::thread_immediate_name(Thread thread) -> std::string {
     return fmt::format("{}_{}", IMMEDIATE_NAME, thread_name(thread));
 }
 
-ENGINE_NS::graphics::RegisteredPipelineReciept::RegisteredPipelineReciept(GraphicsEngine& engine, std::vector<std::uint64_t>&& ids) :
+ENGINE_NS::graphics::RegisteredPipelineReceipt::RegisteredPipelineReceipt(GraphicsEngine& engine, std::vector<std::uint64_t>&& ids) :
     engine_(engine), pipeline_ids_(std::move(ids)) {
 }
 
-ENGINE_NS::graphics::RegisteredPipelineReciept::~RegisteredPipelineReciept() {
+ENGINE_NS::graphics::RegisteredPipelineReceipt::RegisteredPipelineReceipt(RegisteredPipelineReceipt&& other) noexcept :
+    engine_(other.engine_), pipeline_ids_(std::move(other.pipeline_ids_)) {
+}
+
+ENGINE_NS::graphics::RegisteredPipelineReceipt::~RegisteredPipelineReceipt() {
+    if (moved_) {
+        return;
+    }
     engine_.deregister_pipelines(pipeline_ids_);
+}
+
+auto ENGINE_NS::graphics::RegisteredPipelineReceipt::operator=(RegisteredPipelineReceipt&& rhs) noexcept -> RegisteredPipelineReceipt& {
+    if (this != &rhs) {
+        this->pipeline_ids_ = std::move(rhs.pipeline_ids_);
+    }
+    rhs.moved_ = true;
+    return *this;
+}
+
+ENGINE_NS::graphics::RegisteredPipeline::RegisteredPipeline(RegisteredPipeline&& other) noexcept :
+    deletion_queue(std::move(other.deletion_queue)), pipeline(std::move(other.pipeline)), id(other.id) {
+    other.moved = true;
+}
+
+ENGINE_NS::graphics::RegisteredPipeline::~RegisteredPipeline() {
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::operator=(RegisteredPipeline&& rhs) noexcept -> RegisteredPipeline& {
+    if (this != &rhs) {
+        this->deletion_queue = std::move(rhs.deletion_queue);
+        this->pipeline       = std::move(rhs.pipeline);
+        this->id             = rhs.id;
+    }
+    rhs.moved = true;
+    return *this;
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(VulkanDevice& device) -> void {

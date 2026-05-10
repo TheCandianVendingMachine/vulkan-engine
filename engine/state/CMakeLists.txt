@@ -4,4 +4,5 @@ target_sources(engine PRIVATE
 )
 target_sources(engine PRIVATE
     manager.cpp
+    state.cpp
 )

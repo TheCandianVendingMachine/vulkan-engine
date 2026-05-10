@@ -3,6 +3,7 @@
 #include "engine/meta_defines.h"
 #include "engine/state/state.h"
 
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -16,20 +17,22 @@ namespace ENGINE_NS {
             }
             template <typename T, typename... Args>
             auto queue(Args&&... args) -> void {
-            queued_states_.push_back(T(std::forward<Args>(args...));
+                queued_states_.push_back(std::make_unique<T>(std::forward<Args>(args...)));
             }
+
+            auto pop() -> void;
 
             auto tick(float delta_time, GraphicsEngine& engine) -> void;
 
         private:
-            auto pre_update_() -> void;
-            auto update_() -> void;
-            auto post_update_() -> void;
-            auto update_fixed_(float delta_time) -> void;
-            auto draw_(GraphicsEngine& engine) -> void;
+            auto pre_update_(State& state) -> void;
+            auto update_(State& state) -> void;
+            auto post_update_(State& state) -> void;
+            auto update_fixed_(State& state, float delta_time) -> void;
 
         private:
             std::vector<std::unique_ptr<State>> queued_states_ = {};
             std::vector<std::unique_ptr<State>> state_stack_   = {};
+            std::uint64_t queued_pops_                         = 0;
     };
 } // namespace ENGINE_NS
