@@ -41,4 +41,5 @@ namespace StaticNames {
     static constexpr const char* UploadLoop                 = "Upload Loop";
     static constexpr const char* MainCommandBufferName      = "MainCommandBuffer";
     static constexpr const char* ImmediateCommandBufferName = "ImmediateCommandBuffer";
+    static constexpr const char* DeleteRegisteredPipelines  = "Delete Registered Pipelines";
 } // namespace StaticNames

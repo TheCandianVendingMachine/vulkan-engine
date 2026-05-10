@@ -15,9 +15,13 @@
 #include <cstdint>
 #include <deque>
 #include <future>
+#include <limits>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <robin_map.h>
 #include <span>
+#include <string>
 #include <thread>
 #include <vector>
 #include <vk_mem_alloc.h>
@@ -40,6 +44,7 @@ namespace ENGINE_NS {
         struct FrameData {
                 // Allocations that are created in the process of rendering. Should never be pushed to outside the render thread
                 GraphicsPerFrameDeletionQueue deletion_queue{};
+                std::vector<std::uint64_t> in_use_pipelines{};
                 VkCommandPool command_pool          = VK_NULL_HANDLE;
                 VkCommandBuffer main_command_buffer = VK_NULL_HANDLE;
                 VkSemaphore swapchain_semaphore_    = VK_NULL_HANDLE;
@@ -51,6 +56,31 @@ namespace ENGINE_NS {
                 std::promise<GPUMeshBuffers> promise;
                 std::vector<std::uint32_t> indices;
                 std::vector<Vertex> vertices;
+        };
+
+        struct RegisteredPipeline {
+                GraphicsRegisteredPipelineDeletionQueue deletion_queue{};
+                std::optional<GraphicsPipeline> pipeline            = std::nullopt;
+                std::uint64_t id                                    = std::numeric_limits<std::uint64_t>::max();
+
+                virtual auto name() const -> std::string            = 0;
+                virtual auto record(VkCommandBuffer buffer) -> void = 0;
+                virtual auto build_pipeline(GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
+
+                auto init_pipeline(VulkanDevice& device) -> void;
+                auto destroy(VulkanDevice& device, VmaAllocator allocator) -> void;
+        };
+
+        class RegisteredPipelineReciept {
+            public:
+                ~RegisteredPipelineReciept();
+
+            private:
+                RegisteredPipelineReciept(GraphicsEngine& engine, std::vector<std::uint64_t>&& ids);
+
+                friend class GraphicsEngine;
+                GraphicsEngine& engine_;
+                std::vector<std::uint64_t> pipeline_ids_{};
         };
 
         enum class Thread {
@@ -69,6 +99,7 @@ namespace ENGINE_NS {
             auto cleanup() -> void;
 
             auto current_frame() -> RwLock<graphics::FrameData>&;
+            auto next_frame() -> RwLock<graphics::FrameData>&;
 
             auto allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation;
             auto destroy_buffer(BufferAllocation allocation) -> void;
@@ -88,6 +119,11 @@ namespace ENGINE_NS {
                 immediate.teardown(device_.device);
             }
 
+            [[nodiscard("When return value has its deconstructor called it will queue destruction of all pipelines.")]]
+            auto register_pipelines(std::vector<std::unique_ptr<graphics::RegisteredPipeline>>&& pipelines)
+                -> graphics::RegisteredPipelineReciept;
+            auto deregister_pipelines(std::vector<std::uint64_t>& ids) -> void;
+
             RwLock<graphics::ImGui> imgui{};
 
         private:
@@ -106,6 +142,11 @@ namespace ENGINE_NS {
 
             GPUMeshBuffers rectangle_{};
             GraphicsPipeline mesh_pipeline_{};
+
+            RwLock<tsl::robin_map<std::uint64_t, std::unique_ptr<graphics::RegisteredPipeline>>> registered_pipelines_{};
+            RwLock<tsl::robin_map<std::uint64_t, std::uint64_t>> in_use_pipelines_{};
+            RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> to_delete_pipelines_{};
+            std::uint64_t next_pipeline_uid_ = 0;
 
             std::thread render_thread_;
             std::chrono::milliseconds update_rate_;
@@ -155,6 +196,7 @@ namespace ENGINE_NS {
             auto draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void;
             auto draw_background_(VkCommandBuffer cmd) -> void;
             auto draw_geometry_(VkCommandBuffer cmd) -> void;
+            auto draw_registered_(RwDataMut<graphics::FrameData>& frame, VkCommandBuffer cmd) -> void;
             auto draw_() -> void;
 
             auto upload_() -> void;

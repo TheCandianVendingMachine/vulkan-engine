@@ -21,4 +21,3 @@ target_sources(engine PRIVATE
     vulkan_surface.cpp
     vulkan_swapchain.cpp
 )
-add_subdirectory(scene)

@@ -231,6 +231,13 @@ namespace ENGINE_NS {
                 auto index = m_handles.at(object.handle);
                 return (*this)[index];
             }
+            auto get(Handle handle) -> std::optional<T*> {
+                if (!m_handles.contains(handle)) {
+                    return std::nullopt;
+                }
+                auto index = m_handles.at(handle);
+                return (*this)[index];
+            }
 
             auto operator[](Index idx) const -> std::optional<const T*> {
                 if (idx == Index::gravestone()) {

@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/assets/library.h"
 #include "engine/engine_utils.h"
+#include "engine/graphics/scene/draw_context.h"
 
 #include <vector>
 #include <vulkan/vulkan_core.h>
@@ -90,5 +91,34 @@ namespace ENGINE_NS {
 
             GraphicsPipeline(VulkanDevice& device, VkGraphicsPipelineCreateInfo pipeline_info, VkPipelineLayoutCreateInfo layout_info);
             friend class GraphicsPipelineBuilder;
+    };
+
+    struct UserPipelineInfo {
+            enum class Kind {
+                COMPUTE
+            };
+            enum class Lifetime {
+                PROGRAM
+            };
+
+            union Pipeline {
+                    GraphicsPipelineBuilder graphics;
+                    ~Pipeline() {
+                    }
+            } pipeline;
+            Kind pipeline_type{};
+            Lifetime lifetime{};
+    };
+
+    // pipelines will hold scenes and render
+    // notably, scenes are not GAME scenes, they are purely for rendering
+    // Likewise, each pipeline will return a "RenderContext" object which will then be injected into the scene
+    // Scenes will be inherited from a base scene that pipelines can use at will, or something. idk
+    class GraphicsEngine;
+    class IPipeline {
+        public:
+            virtual auto build() -> UserPipelineInfo         = 0;
+            virtual auto record(VkCommandBuffer cmd) -> void = 0;
+            virtual auto dirty() -> bool                     = 0;
     };
 } // namespace ENGINE_NS

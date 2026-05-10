@@ -11,7 +11,9 @@ add_subdirectory(ecs)
 add_subdirectory(fileio)
 add_subdirectory(graphics)
 add_subdirectory(linalg)
+add_subdirectory(pool)
 add_subdirectory(reflection)
+add_subdirectory(state)
 target_sources(engine PRIVATE
     "${ENGINE_HEADER_PATH}/bitset.h"
     "${ENGINE_HEADER_PATH}/deletion_queue.h"

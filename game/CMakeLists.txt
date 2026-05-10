@@ -13,6 +13,7 @@ add_executable(game
     ${HEADER_LIST}
 
 )
+add_subdirectory(level)
 target_include_directories(game PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_HEADER_DIR}/Tracy

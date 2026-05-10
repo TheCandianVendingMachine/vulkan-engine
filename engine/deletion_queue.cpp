@@ -106,3 +106,51 @@ auto ENGINE_NS::GraphicsUploadDeletionQueue::push(BufferAllocation& allocation) 
     allocation.will_be_destroyed_ = true;
     buffers_.push_back(Deletion<BufferAllocation>(allocation, index_++));
 }
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& device, VmaAllocator allocator) -> void {
+    for (auto& layout : layouts_) {
+        layout.destroy(device.device);
+    }
+    for (auto& image : images_) {
+        image.destroy(device.device, allocator);
+    }
+    for (auto& pipeline : compute_pipelines_) {
+        pipeline.destroy(device.device);
+    }
+    for (auto& pipeline : graphics_pipelines_) {
+        pipeline.destroy(device.device);
+    }
+    for (auto& mesh_buffer : mesh_buffers_) {
+        mesh_buffer.destroy(device.device, allocator);
+    }
+    for (auto& immediate : immediates_) {
+        immediate.destroy(device.device);
+    }
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(ImageAllocation& allocation) -> void {
+    allocation.will_be_destroyed_ = true;
+    images_.push_back(Deletion<ImageAllocation>(allocation, 0));
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(VulkanDescriptorSetLayout layout) -> void {
+    layouts_.push_back(Deletion<VulkanDescriptorSetLayout>(layout, 0));
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(ComputePipeline pipeline) -> void {
+    compute_pipelines_.push_back(Deletion<ComputePipeline>(pipeline, 0));
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(GraphicsPipeline pipeline) -> void {
+    graphics_pipelines_.push_back(Deletion<GraphicsPipeline>(pipeline, 0));
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(GPUMeshBuffers& buffers) -> void {
+    buffers.index_buffer.will_be_destroyed_  = true;
+    buffers.vertex_buffer.will_be_destroyed_ = true;
+    mesh_buffers_.push_back(Deletion<GPUMeshBuffers>(buffers, index_++));
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(graphics::Immediate immediate) -> void {
+    immediates_.push_back(Deletion<graphics::Immediate>(immediate, 0));
+}

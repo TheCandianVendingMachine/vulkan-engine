@@ -26,6 +26,7 @@
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_vulkan.h>
+#include <memory>
 #include <span>
 #include <type_traits>
 #include <utility>
@@ -147,7 +148,11 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
 }
 
 auto ENGINE_NS::GraphicsEngine::current_frame() -> RwLock<graphics::FrameData>& {
-    return frames_[frame_number_ % graphics::FRAME_OVERLAP];
+    return frames_[frame_number_.load(std::memory_order_acquire) % graphics::FRAME_OVERLAP];
+}
+
+auto ENGINE_NS::GraphicsEngine::next_frame() -> RwLock<graphics::FrameData>& {
+    return frames_[(frame_number_.load(std::memory_order_acquire) + 1) % graphics::FRAME_OVERLAP];
 }
 
 auto ENGINE_NS::GraphicsEngine::allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation {
@@ -181,6 +186,32 @@ auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, st
 
     upload_ready_.store(true, std::memory_order_release);
     return future;
+}
+
+auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<graphics::RegisteredPipeline>>&& pipelines)
+    -> graphics::RegisteredPipelineReciept {
+    std::vector<std::uint64_t> ids;
+    auto in_use_pipelines     = in_use_pipelines_.write();
+    auto registered_pipelines = registered_pipelines_.write();
+    for (auto& pipeline : pipelines) {
+        std::uint64_t pipeline_uid = this->next_pipeline_uid_++;
+        pipeline->id               = pipeline_uid;
+        pipeline->init_pipeline(device_);
+        registered_pipelines.get()[pipeline_uid] = std::move(pipeline);
+        in_use_pipelines.get().insert({pipeline_uid, 0});
+        ids.emplace_back(pipeline_uid);
+    }
+    return graphics::RegisteredPipelineReciept(*this, std::move(ids));
+}
+
+auto ENGINE_NS::GraphicsEngine::deregister_pipelines(std::vector<std::uint64_t>& ids) -> void {
+    auto to_delete_pipelines  = to_delete_pipelines_.write();
+    auto registered_pipelines = registered_pipelines_.write();
+
+    for (auto& pipeline : ids) {
+        to_delete_pipelines.get().emplace_back(std::move(registered_pipelines.get().at(pipeline)));
+        registered_pipelines.get().erase(pipeline);
+    }
 }
 
 auto ENGINE_NS::GraphicsEngine::init_thread_(graphics::Thread thread) -> void {
@@ -348,9 +379,9 @@ auto ENGINE_NS::GraphicsEngine::init_descriptors_() -> void {
       {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}
     };
     global_descriptor_allocator_.init(device_, 10, sizes);
-    draw_image_layout_ = VulkanDescriptorSetLayout::build()
-                             .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
-                             .build(device_, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
+    draw_image_layout_      = VulkanDescriptorSetLayout::build()
+                                  .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                  .build(device_, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
 
     draw_image_descriptors_ = global_descriptor_allocator_.allocate(draw_image_layout_.layout);
 
@@ -515,19 +546,19 @@ auto ENGINE_NS::GraphicsEngine::init_mesh_pipeline_() -> void {
     buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     mesh_pipeline_          = GraphicsPipeline::build()
-                         .layout()
-                         .push_constant_range(buffer_range)
-                         .finish()
-                         .shaders(shader, shader)
-                         .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                         .polygon_mode(VK_POLYGON_MODE_FILL)
-                         .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
-                         .set_multisampling_none()
-                         .disable_blending()
-                         .disable_depthtest()
-                         .color_attachment_format(draw_image_.format)
-                         .depth_format(VK_FORMAT_UNDEFINED)
-                         .finish(device_);
+                                  .layout()
+                                  .push_constant_range(buffer_range)
+                                  .finish()
+                                  .shaders(shader, shader)
+                                  .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+                                  .polygon_mode(VK_POLYGON_MODE_FILL)
+                                  .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
+                                  .set_multisampling_none()
+                                  .disable_blending()
+                                  .disable_depthtest()
+                                  .color_attachment_format(draw_image_.format)
+                                  .depth_format(VK_FORMAT_UNDEFINED)
+                                  .finish(device_);
     vkDestroyShaderModule(device_.device, shader.shader, nullptr);
 
     deletion_queue_.push(mesh_pipeline_);
@@ -634,6 +665,42 @@ auto ENGINE_NS::GraphicsEngine::draw_geometry_(VkCommandBuffer cmd) -> void {
     vkCmdEndRendering(cmd);
 }
 
+auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>& frame, VkCommandBuffer cmd) -> void {
+    VkRenderingAttachmentInfo colour_attachment = attachment_info(draw_image_.view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    VkRenderingInfo render_info                 = rendering_info(
+        VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
+        &colour_attachment, nullptr);
+
+    vkCmdBeginRendering(cmd, &render_info);
+
+    VkViewport viewport = {};
+    viewport.x          = 0;
+    viewport.y          = 0;
+    viewport.width      = static_cast<float>(window_extent_.x);
+    viewport.height     = static_cast<float>(window_extent_.y);
+    viewport.minDepth   = 0.f;
+    viewport.maxDepth   = 1.f;
+
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+    VkRect2D scissor      = {};
+    scissor.offset.x      = 0;
+    scissor.offset.y      = 0;
+    scissor.extent.width  = window_extent_.x;
+    scissor.extent.height = window_extent_.y;
+
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+    auto registered_pipelines = registered_pipelines_.read();
+    for (auto& [id, pipeline] : registered_pipelines.get()) {
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline.value().pipeline);
+        pipeline->record(cmd);
+        frame.get().in_use_pipelines.push_back(id);
+    }
+
+    vkCmdEndRendering(cmd);
+}
+
 auto ENGINE_NS::GraphicsEngine::draw_() -> void {
     tracy::SetThreadName(StaticNames::GraphicsThreadName);
     init_thread_(graphics::Thread::DRAW);
@@ -675,7 +742,17 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
 
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-                draw_geometry_(cmd);
+                {
+                    auto in_use_pipelines = in_use_pipelines_.write();
+                    for (auto& pipeline_id : frame.get().in_use_pipelines) {
+                        in_use_pipelines.get().at(pipeline_id) -= 1;
+                    }
+                    frame.get().in_use_pipelines.clear();
+                    draw_registered_(frame, cmd);
+                    for (auto& pipeline_id : frame.get().in_use_pipelines) {
+                        in_use_pipelines.get().at(pipeline_id) += 1;
+                    }
+                }
 
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
                 transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED,
@@ -712,12 +789,24 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
 
             VK_CHECK(vkQueuePresentKHR(graphics_queue_, &present_info));
         }
+        {
+            ZoneScopedN(StaticNames::DeleteRegisteredPipelines);
+            auto to_delete_pipelines = to_delete_pipelines_.read();
+            auto in_use_pipelines    = in_use_pipelines_.write();
+            for (auto& to_delete : to_delete_pipelines.get()) {
+                if (in_use_pipelines.get().at(to_delete->id) != 0) {
+                    continue;
+                }
+                in_use_pipelines.get().erase(to_delete->id);
+                to_delete->destroy(device_, allocator_);
+            }
+        }
         auto frame_delta = std::chrono::high_resolution_clock::now() - frame_start;
         if (frame_delta < this->update_rate_) {
             auto sleep = this->update_rate_ - frame_delta;
             std::this_thread::sleep_for(sleep);
         }
-        ++frame_number_;
+        frame_number_.fetch_add(1, std::memory_order_release);
         FrameMarkEnd(StaticNames::RenderLoop);
     }
 }
@@ -877,4 +966,21 @@ auto ENGINE_NS::graphics::thread_name(Thread thread) -> std::string {
 
 auto ENGINE_NS::graphics::thread_immediate_name(Thread thread) -> std::string {
     return fmt::format("{}_{}", IMMEDIATE_NAME, thread_name(thread));
+}
+
+ENGINE_NS::graphics::RegisteredPipelineReciept::RegisteredPipelineReciept(GraphicsEngine& engine, std::vector<std::uint64_t>&& ids) :
+    engine_(engine), pipeline_ids_(std::move(ids)) {
+}
+
+ENGINE_NS::graphics::RegisteredPipelineReciept::~RegisteredPipelineReciept() {
+    engine_.deregister_pipelines(pipeline_ids_);
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(VulkanDevice& device) -> void {
+    this->pipeline = std::move(this->build_pipeline(this->deletion_queue).finish(device));
+    this->deletion_queue.push(this->pipeline.value());
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaAllocator allocator) -> void {
+    this->deletion_queue.flush(device, allocator);
 }

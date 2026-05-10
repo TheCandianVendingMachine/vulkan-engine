@@ -166,4 +166,25 @@ namespace ENGINE_NS {
             std::vector<Deletion<BufferAllocation>> buffers_{};
             std::uint64_t index_ = 0;
     };
+    class GraphicsRegisteredPipelineDeletionQueue {
+        public:
+            auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
+
+            auto push(ImageAllocation& allocation) -> void;
+            auto push(VulkanDescriptorSetLayout layout) -> void;
+            auto push(ComputePipeline pipeline) -> void;
+            auto push(GraphicsPipeline pipeline) -> void;
+            auto push(GPUMeshBuffers& buffers) -> void;
+            auto push(graphics::Immediate immediate) -> void;
+
+        private:
+            std::vector<Deletion<ImageAllocation>> images_{};
+            std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
+            std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_{};
+            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
+            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
+            std::vector<Deletion<graphics::Immediate>> immediates_{};
+
+            std::uint64_t index_ = 0;
+    };
 } // namespace ENGINE_NS

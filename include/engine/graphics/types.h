@@ -29,6 +29,7 @@ namespace ENGINE_NS {
             friend class GraphicsMainDeletionQueue;
             friend class GraphicsPerFrameDeletionQueue;
             friend class GraphicsUploadDeletionQueue;
+            friend class GraphicsRegisteredPipelineDeletionQueue;
     };
 
     struct BufferAllocation {
@@ -51,6 +52,7 @@ namespace ENGINE_NS {
             friend class GraphicsMainDeletionQueue;
             friend class GraphicsPerFrameDeletionQueue;
             friend class GraphicsUploadDeletionQueue;
+            friend class GraphicsRegisteredPipelineDeletionQueue;
     };
 
     struct Vertex {
