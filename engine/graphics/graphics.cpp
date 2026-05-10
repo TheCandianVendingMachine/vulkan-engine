@@ -680,6 +680,7 @@ auto ENGINE_NS::GraphicsEngine::draw_geometry_(VkCommandBuffer cmd) -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>& frame, VkCommandBuffer cmd) -> void {
+    ZoneScoped;
     VkRenderingAttachmentInfo colour_attachment = attachment_info(draw_image_.view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     VkRenderingInfo render_info                 = rendering_info(
         VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
@@ -707,6 +708,7 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
 
     auto registered_pipelines = registered_pipelines_.read();
     for (auto& [id, pipeline] : registered_pipelines.get()) {
+        ZoneScoped;
         auto paused_count = pipeline->paused_.load(std::memory_order_acquire);
         if (paused_count > 0) {
             continue;
@@ -735,6 +737,7 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             VK_CHECK(vkWaitForFences(device_.device, 1, &frame.get().render_fence_, true, TIMEOUT));
         }
         {
+            ZoneScoped;
             auto frame = current_frame().write();
             VK_CHECK(vkResetFences(device_.device, 1, &frame.get().render_fence_));
             frame.get().deletion_queue.flush(device_, allocator_);
@@ -752,6 +755,7 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             VK_CHECK(vkBeginCommandBuffer(cmd, &cmd_begin_info));
             TracyVkCollect(frame.get().tracy_context_, cmd);
             {
+                ZoneScoped;
                 TracyVkZone(frame.get().tracy_context_, cmd, StaticNames::MainCommandBufferName);
 
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);

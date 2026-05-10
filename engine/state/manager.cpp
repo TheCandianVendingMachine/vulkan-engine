@@ -6,6 +6,7 @@
 #include "engine/state/state.h"
 
 #include <memory>
+#include <tracy/Tracy.hpp>
 #include <type_traits>
 #include <vector>
 
@@ -14,22 +15,27 @@ auto ENGINE_NS::StateManager::pop() -> void {
 }
 
 auto ENGINE_NS::StateManager::start_frame(GraphicsEngine& engine) -> void {
+    ZoneScoped;
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GAMESTATE);
 
-    while (this->queued_pops_ > 0) {
-        auto& back_state = this->state_stack_.back();
-        logger.get().debug("Popping state");
-        back_state->stop();
-        back_state->teardown();
-        this->state_stack_.pop_back();
-        engine.resume_registered_pipelines();
-        if (!this->state_stack_.empty()) {
-            this->state_stack_.back()->play();
+    {
+        ZoneScopedN(StaticNames::PopGameStates);
+        while (this->queued_pops_ > 0) {
+            auto& back_state = this->state_stack_.back();
+            logger.get().debug("Popping state");
+            back_state->stop();
+            back_state->teardown();
+            this->state_stack_.pop_back();
+            engine.resume_registered_pipelines();
+            if (!this->state_stack_.empty()) {
+                this->state_stack_.back()->play();
+            }
+            this->queued_pops_ -= 1;
         }
-        this->queued_pops_ -= 1;
     }
 
     if (this->queued_states_.size() > 0) {
+        ZoneScopedN(StaticNames::PushGameStates);
         for (auto& queued_state : this->queued_states_) {
             logger.get().debug("Pushing state");
 
@@ -60,6 +66,7 @@ auto ENGINE_NS::StateManager::start_frame(GraphicsEngine& engine) -> void {
 }
 
 auto ENGINE_NS::StateManager::pre_update() -> void {
+    ZoneScoped;
     if (this->state_stack_.size() == 0) {
         return;
     }
@@ -67,6 +74,7 @@ auto ENGINE_NS::StateManager::pre_update() -> void {
 }
 
 auto ENGINE_NS::StateManager::update() -> void {
+    ZoneScoped;
     if (this->state_stack_.size() == 0) {
         return;
     }
@@ -74,6 +82,7 @@ auto ENGINE_NS::StateManager::update() -> void {
 }
 
 auto ENGINE_NS::StateManager::post_update() -> void {
+    ZoneScoped;
     if (this->state_stack_.size() == 0) {
         return;
     }
@@ -81,6 +90,7 @@ auto ENGINE_NS::StateManager::post_update() -> void {
 }
 
 auto ENGINE_NS::StateManager::update_fixed(double delta_time) -> void {
+    ZoneScoped;
     if (this->state_stack_.size() == 0) {
         return;
     }
@@ -88,6 +98,7 @@ auto ENGINE_NS::StateManager::update_fixed(double delta_time) -> void {
 }
 
 auto ENGINE_NS::StateManager::end_frame() -> void {
+    ZoneScoped;
     if (this->state_stack_.size() == 0) {
         return;
     }

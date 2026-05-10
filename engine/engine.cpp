@@ -198,12 +198,14 @@ auto Engine::shutdown() -> void {
 }
 
 auto ENGINE_NS::Engine::update() -> void {
+    ZoneScoped;
     this->state_manager.pre_update();
     this->state_manager.update();
     this->state_manager.post_update();
 }
 
 auto ENGINE_NS::Engine::fixed_update(double delta_time) -> void {
+    ZoneScoped;
     this->state_manager.update_fixed(delta_time);
 }
 

@@ -3,8 +3,8 @@
 #include "engine/graphics/graphics.h"
 #include "engine/graphics/pipeline.h"
 #include "engine/meta_defines.h"
-#include "engine/rwlock.h"
 
+#include <Tracy/Tracy.hpp>
 #include <memory>
 #include <mutex>
 #include <optional>
@@ -31,6 +31,8 @@ namespace ENGINE_NS {
 
     class State {
         public:
+            virtual ~State() = default;
+
             virtual auto setup() -> void;
             virtual auto teardown() -> void;
             virtual auto play() -> void;
@@ -46,6 +48,6 @@ namespace ENGINE_NS {
             friend class StatePipeline;
             friend class StateManager;
             std::optional<graphics::RegisteredPipelineReceipt> pipeline_receipt_ = std::nullopt;
-            std::mutex state_update_mutex_{};
+            TracyLockable(std::mutex, state_update_mutex_);
     };
 } // namespace ENGINE_NS

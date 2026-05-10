@@ -42,4 +42,6 @@ namespace StaticNames {
     static constexpr const char* MainCommandBufferName      = "MainCommandBuffer";
     static constexpr const char* ImmediateCommandBufferName = "ImmediateCommandBuffer";
     static constexpr const char* DeleteRegisteredPipelines  = "Delete Registered Pipelines";
+    static constexpr const char* PopGameStates              = "Pop Game Stats";
+    static constexpr const char* PushGameStates             = "Push Game Stats";
 } // namespace StaticNames
