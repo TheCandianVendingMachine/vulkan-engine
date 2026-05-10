@@ -1,19 +1,28 @@
 #include "engine/state/manager.h"
 
+#include "engine/engine.h"
 #include "engine/graphics/graphics.h"
+#include "engine/logger.h"
 #include "engine/state/state.h"
 
+#include <memory>
 #include <type_traits>
+#include <vector>
 
 auto ENGINE_NS::StateManager::pop() -> void {
     this->queued_pops_ += 1;
 }
 
 auto ENGINE_NS::StateManager::tick(float delta_time, GraphicsEngine& engine) -> void {
+    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GAMESTATE);
+
     while (this->queued_pops_ > 0) {
-        this->state_stack_.back()->stop();
-        this->state_stack_.back()->teardown();
+        auto& back_state = this->state_stack_.back();
+        logger.get().debug("Popping state");
+        back_state->stop();
+        back_state->teardown();
         this->state_stack_.pop_back();
+        engine.resume_registered_pipelines();
         if (!this->state_stack_.empty()) {
             this->state_stack_.back()->play();
         }
@@ -22,12 +31,15 @@ auto ENGINE_NS::StateManager::tick(float delta_time, GraphicsEngine& engine) -> 
 
     if (this->queued_states_.size() > 0) {
         for (auto& queued_state : this->queued_states_) {
+            logger.get().debug("Pushing state");
+
             std::vector<std::unique_ptr<graphics::RegisteredPipeline>> converted_pipelines{};
             if (!this->state_stack_.empty()) {
                 this->state_stack_.back()->stop();
             }
-            this->state_stack_.emplace_back(std::move(queued_state));
+            engine.pause_registered_pipelines();
 
+            this->state_stack_.emplace_back(std::move(queued_state));
             auto& back_state = this->state_stack_.back();
             back_state->setup();
             auto pipelines = back_state->init_pipelines();

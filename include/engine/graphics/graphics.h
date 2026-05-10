@@ -77,12 +77,13 @@ namespace ENGINE_NS {
                 friend class GraphicsEngine;
 
             protected:
-                GraphicsRegisteredPipelineDeletionQueue deletion_queue{};
-                std::optional<GraphicsPipeline> pipeline = std::nullopt;
-                std::uint64_t id                         = std::numeric_limits<std::uint64_t>::max();
+                GraphicsRegisteredPipelineDeletionQueue deletion_queue_{};
+                std::optional<GraphicsPipeline> pipeline_ = std::nullopt;
+                std::uint64_t id_                         = std::numeric_limits<std::uint64_t>::max();
+                std::atomic<std::uint64_t> paused_        = 0;
 
             private:
-                bool moved = false;
+                bool moved_ = false;
         };
 
         class RegisteredPipelineReceipt {
@@ -136,6 +137,9 @@ namespace ENGINE_NS {
                 }
                 immediate.teardown(device_.device);
             }
+
+            auto pause_registered_pipelines() -> void;
+            auto resume_registered_pipelines() -> void;
 
             [[nodiscard("When return value has its deconstructor called it will queue destruction of all pipelines.")]]
             auto register_pipelines(std::vector<std::unique_ptr<graphics::RegisteredPipeline>>&& pipelines)

@@ -14,6 +14,7 @@ namespace ENGINE_NS {
         VULKAN,
         VULKAN_VALIDATION,
         VULKAN_PERFORMANCE,
+        GAMESTATE,
         COUNT
     };
 

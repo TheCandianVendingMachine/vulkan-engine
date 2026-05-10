@@ -188,6 +188,20 @@ auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, st
     return future;
 }
 
+auto ENGINE_NS::GraphicsEngine::pause_registered_pipelines() -> void {
+    auto registered_pipelines = registered_pipelines_.write();
+    for (auto& [_, pipeline] : registered_pipelines.get()) {
+        pipeline->paused_.fetch_add(1, std::memory_order_release);
+    }
+}
+
+auto ENGINE_NS::GraphicsEngine::resume_registered_pipelines() -> void {
+    auto registered_pipelines = registered_pipelines_.write();
+    for (auto& [_, pipeline] : registered_pipelines.get()) {
+        pipeline->paused_.fetch_sub(1, std::memory_order_release);
+    }
+}
+
 auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<graphics::RegisteredPipeline>>&& pipelines)
     -> graphics::RegisteredPipelineReceipt {
     std::vector<std::uint64_t> ids;
@@ -195,7 +209,7 @@ auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<g
     auto registered_pipelines = registered_pipelines_.write();
     for (auto& pipeline : pipelines) {
         std::uint64_t pipeline_uid = this->next_pipeline_uid_++;
-        pipeline->id               = pipeline_uid;
+        pipeline->id_              = pipeline_uid;
         pipeline->init_pipeline(device_);
         registered_pipelines.get()[pipeline_uid] = std::move(pipeline);
         in_use_pipelines.get().insert({pipeline_uid, 0});
@@ -693,7 +707,11 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
 
     auto registered_pipelines = registered_pipelines_.read();
     for (auto& [id, pipeline] : registered_pipelines.get()) {
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline.value().pipeline);
+        auto paused_count = pipeline->paused_.load(std::memory_order_acquire);
+        if (paused_count > 0) {
+            continue;
+        }
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline_.value().pipeline);
         pipeline->record(cmd);
         frame.get().in_use_pipelines.push_back(id);
     }
@@ -743,7 +761,8 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
                 {
-                    auto in_use_pipelines = in_use_pipelines_.write();
+                    auto in_use_pipelines     = in_use_pipelines_.write();
+                    auto registered_pipelines = registered_pipelines_.write();
                     for (auto& pipeline_id : frame.get().in_use_pipelines) {
                         in_use_pipelines.get().at(pipeline_id) -= 1;
                     }
@@ -794,10 +813,10 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             auto to_delete_pipelines = to_delete_pipelines_.read();
             auto in_use_pipelines    = in_use_pipelines_.write();
             for (auto& to_delete : to_delete_pipelines.get()) {
-                if (in_use_pipelines.get().at(to_delete->id) != 0) {
+                if (in_use_pipelines.get().at(to_delete->id_) != 0) {
                     continue;
                 }
-                in_use_pipelines.get().erase(to_delete->id);
+                in_use_pipelines.get().erase(to_delete->id_);
                 to_delete->destroy(device_, allocator_);
             }
         }
@@ -992,8 +1011,8 @@ auto ENGINE_NS::graphics::RegisteredPipelineReceipt::operator=(RegisteredPipelin
 }
 
 ENGINE_NS::graphics::RegisteredPipeline::RegisteredPipeline(RegisteredPipeline&& other) noexcept :
-    deletion_queue(std::move(other.deletion_queue)), pipeline(std::move(other.pipeline)), id(other.id) {
-    other.moved = true;
+    deletion_queue_(std::move(other.deletion_queue_)), pipeline_(std::move(other.pipeline_)), id_(other.id_) {
+    other.moved_ = true;
 }
 
 ENGINE_NS::graphics::RegisteredPipeline::~RegisteredPipeline() {
@@ -1001,19 +1020,24 @@ ENGINE_NS::graphics::RegisteredPipeline::~RegisteredPipeline() {
 
 auto ENGINE_NS::graphics::RegisteredPipeline::operator=(RegisteredPipeline&& rhs) noexcept -> RegisteredPipeline& {
     if (this != &rhs) {
-        this->deletion_queue = std::move(rhs.deletion_queue);
-        this->pipeline       = std::move(rhs.pipeline);
-        this->id             = rhs.id;
+        this->deletion_queue_ = std::move(rhs.deletion_queue_);
+        this->pipeline_       = std::move(rhs.pipeline_);
+        this->id_             = rhs.id_;
     }
-    rhs.moved = true;
+    rhs.moved_ = true;
     return *this;
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(VulkanDevice& device) -> void {
-    this->pipeline = std::move(this->build_pipeline(this->deletion_queue).finish(device));
-    this->deletion_queue.push(this->pipeline.value());
+    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
+    logger.get().debug("Creating registered pipeline \"{}\"", this->name());
+
+    this->pipeline_ = std::move(this->build_pipeline(this->deletion_queue_).finish(device));
+    this->deletion_queue_.push(this->pipeline_.value());
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaAllocator allocator) -> void {
-    this->deletion_queue.flush(device, allocator);
+    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
+    logger.get().debug("Destroying registered pipeline \"{}\"", this->name());
+    this->deletion_queue_.flush(device, allocator);
 }

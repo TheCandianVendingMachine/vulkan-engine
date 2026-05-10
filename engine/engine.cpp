@@ -15,11 +15,14 @@
 using namespace ::ENGINE_NS;
 
 LogLocator::LogLocator() :
-    loggers_({LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
-              LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
-              LoggerBuilder().with_identifier("VULKAN").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
-              LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
-              LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx)}) {
+    loggers_({
+      LoggerBuilder().with_identifier("ENGINE").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+      LoggerBuilder().with_identifier("GRAPHICS").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+      LoggerBuilder().with_identifier("VULKAN").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+      LoggerBuilder().with_identifier("VULKAN [PERFORMANCE]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+      LoggerBuilder().with_identifier("VULKAN [VALIDATION]").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+      LoggerBuilder().with_identifier("GAMESTATE").with_stream({stdout, logger::Level::DEBUG}).build(m_log_idx),
+    }) {
 }
 
 auto LogLocator::get(LogNamespaces ns) -> RwDataMut<Logger> {
