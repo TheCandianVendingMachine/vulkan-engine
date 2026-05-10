@@ -34,7 +34,10 @@ auto LogLocator::get(LogNamespaces ns) const -> RwData<Logger> {
 }
 
 auto ENGINE_NS::LogLocator::imgui() -> void {
-    if (ImGui::Begin("Logs")) {
+    if (!is_log_open_) {
+        return;
+    }
+    if (ImGui::Begin("Logs", &is_log_open_)) {
         std::vector<const logger::Entry*> entries = {};
         for (auto& logger : loggers_) {
             auto lock         = logger.read();
@@ -132,6 +135,13 @@ auto ENGINE_NS::Engine::main_loop() -> void {
             switch (event.type) {
                 case SDL_EVENT_QUIT:
                     this->quit();
+                    break;
+                case SDL_EVENT_KEY_DOWN:
+                    {
+                        if (event.key.scancode == SDL_SCANCODE_GRAVE) {
+                            this->logger.is_log_open_ = !this->logger.is_log_open_;
+                        }
+                    }
                     break;
                 default:
                     break;

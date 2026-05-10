@@ -29,8 +29,10 @@ namespace ENGINE_NS {
             auto imgui() -> void;
 
         private:
+            friend class Engine;
             uint64_t m_log_idx{};
             std::array<RwLock<Logger>, static_cast<std::uint8_t>(LogNamespaces::COUNT)> loggers_;
+            bool is_log_open_ = false;
     };
 
     class Engine {
