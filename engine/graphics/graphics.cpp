@@ -114,6 +114,19 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     logger.get().info("Cleaning up Vulkan");
     if (device_.device != VK_NULL_HANDLE) {
         vkDeviceWaitIdle(device_.device);
+        {
+            ZoneScopedN(StaticNames::DeleteRegisteredPipelines);
+            auto to_delete_pipelines = to_delete_pipelines_.read();
+            for (auto& to_delete : to_delete_pipelines.get()) {
+                to_delete->destroy(device_, allocator_);
+            }
+
+            auto registered_pipelines = registered_pipelines_.read();
+            for (auto& [_, pipeline] : registered_pipelines.get()) {
+                pipeline->destroy(device_, allocator_);
+            }
+        }
+
         global_descriptor_allocator_.destroy();
         for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
             auto frame = frames_[idx].write();
@@ -174,6 +187,10 @@ auto ENGINE_NS::GraphicsEngine::destroy_buffer(BufferAllocation allocation) -> v
     frame_deletion_queue_.push(allocation);
 }
 
+auto ENGINE_NS::GraphicsEngine::destroy_shader(engine::asset::CompiledShader shader) -> void {
+    frame_deletion_queue_.push(shader);
+}
+
 auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> std::future<GPUMeshBuffers> {
     graphics::MeshUpload upload{};
     upload.indices  = std::vector<std::uint32_t>(indices.begin(), indices.end());
@@ -210,7 +227,7 @@ auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<g
     for (auto& pipeline : pipelines) {
         std::uint64_t pipeline_uid = this->next_pipeline_uid_++;
         pipeline->id_              = pipeline_uid;
-        pipeline->init_pipeline(device_);
+        pipeline->init_pipeline(*this, device_);
         registered_pipelines.get()[pipeline_uid] = std::move(pipeline);
         in_use_pipelines.get().insert({pipeline_uid, 0});
         ids.emplace_back(pipeline_uid);
@@ -996,6 +1013,7 @@ ENGINE_NS::graphics::RegisteredPipelineReceipt::RegisteredPipelineReceipt(Graphi
 
 ENGINE_NS::graphics::RegisteredPipelineReceipt::RegisteredPipelineReceipt(RegisteredPipelineReceipt&& other) noexcept :
     engine_(other.engine_), pipeline_ids_(std::move(other.pipeline_ids_)) {
+    other.moved_ = true;
 }
 
 ENGINE_NS::graphics::RegisteredPipelineReceipt::~RegisteredPipelineReceipt() {
@@ -1031,11 +1049,11 @@ auto ENGINE_NS::graphics::RegisteredPipeline::operator=(RegisteredPipeline&& rhs
     return *this;
 }
 
-auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(VulkanDevice& device) -> void {
+auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engine, VulkanDevice& device) -> void {
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.get().debug("Creating registered pipeline \"{}\"", this->name());
 
-    this->pipeline_ = std::move(this->build_pipeline(this->deletion_queue_).finish(device));
+    this->pipeline_ = std::move(this->build_pipeline(engine, device, this->deletion_queue_).finish(device));
     this->deletion_queue_.push(this->pipeline_.value());
 }
 

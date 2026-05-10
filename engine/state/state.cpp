@@ -41,6 +41,6 @@ auto ENGINE_NS::State::post_update() -> void {
 auto ENGINE_NS::State::update_fixed(double) -> void {
 }
 
-auto ENGINE_NS::State::init_pipelines() -> std::vector<std::unique_ptr<StatePipeline>> {
+auto ENGINE_NS::State::init_pipelines(engine::GraphicsEngine&) -> std::vector<std::unique_ptr<StatePipeline>> {
     return {};
 }

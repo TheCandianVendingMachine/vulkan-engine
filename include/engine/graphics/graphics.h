@@ -69,9 +69,11 @@ namespace ENGINE_NS {
 
                 virtual auto name() const -> std::string                                                                        = 0;
                 virtual auto record(VkCommandBuffer buffer) -> void                                                             = 0;
-                virtual auto build_pipeline(GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
+                virtual auto build_pipeline(engine::GraphicsEngine& engine,
+                                            VulkanDevice& device,
+                                            GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
 
-                auto init_pipeline(VulkanDevice& device) -> void;
+                auto init_pipeline(GraphicsEngine& engine, VulkanDevice& device) -> void;
                 auto destroy(VulkanDevice& device, VmaAllocator allocator) -> void;
 
                 friend class GraphicsEngine;
@@ -122,6 +124,8 @@ namespace ENGINE_NS {
 
             auto allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation;
             auto destroy_buffer(BufferAllocation allocation) -> void;
+
+            auto destroy_shader(engine::asset::CompiledShader shader) -> void;
 
             auto upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> std::future<GPUMeshBuffers>;
 

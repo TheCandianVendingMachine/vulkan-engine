@@ -191,6 +191,7 @@ auto Engine::shutdown() -> void {
     auto my_logger = logger.get(LogNamespaces::CORE);
     my_logger.get().info("Shutdown");
 
+    state_manager.shutdown(graphics_);
     graphics_.cleanup();
 
     linalg::g_VECTOR_LIBRARY->~Library();

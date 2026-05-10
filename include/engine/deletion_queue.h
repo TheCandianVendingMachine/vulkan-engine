@@ -146,13 +146,14 @@ namespace ENGINE_NS {
             auto push(BufferAllocation& allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
             auto push(GPUMeshBuffers& buffers) -> void;
+            auto push(asset::CompiledShader& shader) -> void;
 
         private:
             std::vector<Deletion<ImageAllocation>> images_{};
             std::vector<Deletion<BufferAllocation>> buffers_{};
             std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
             std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
-
+            std::vector<Deletion<asset::CompiledShader>> shaders_{};
 
             std::uint64_t index_ = 0;
     };

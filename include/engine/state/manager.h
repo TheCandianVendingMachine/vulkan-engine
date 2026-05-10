@@ -29,6 +29,8 @@ namespace ENGINE_NS {
             auto update_fixed(double delta_time) -> void;
             auto end_frame() -> void;
 
+            auto shutdown(GraphicsEngine& engine) -> void;
+
         private:
             std::vector<std::unique_ptr<State>> queued_states_ = {};
             std::vector<std::unique_ptr<State>> state_stack_   = {};

@@ -48,7 +48,7 @@ auto ENGINE_NS::StateManager::start_frame(GraphicsEngine& engine) -> void {
             this->state_stack_.emplace_back(std::move(queued_state));
             auto& back_state = this->state_stack_.back();
             back_state->setup();
-            auto pipelines = back_state->init_pipelines();
+            auto pipelines = back_state->init_pipelines(engine);
             for (auto& pipeline : pipelines) {
                 converted_pipelines.emplace_back(std::move(pipeline));
             }
@@ -103,4 +103,16 @@ auto ENGINE_NS::StateManager::end_frame() -> void {
         return;
     }
     this->state_stack_.back()->state_update_mutex_.unlock();
+}
+
+auto ENGINE_NS::StateManager::shutdown(GraphicsEngine& engine) -> void {
+    ZoneScoped;
+    while (!this->state_stack_.empty()) {
+        this->state_stack_.back()->stop();
+        this->state_stack_.back()->teardown();
+        this->state_stack_.pop_back();
+        engine.resume_registered_pipelines();
+    }
+
+    this->queued_states_.clear();
 }

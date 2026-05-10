@@ -16,10 +16,14 @@ auto ENGINE_NS::GraphicsPerFrameDeletionQueue::flush(VulkanDevice& device, VmaAl
     for (auto& mesh_buffer : mesh_buffers_) {
         mesh_buffer.destroy(device.device, allocator);
     }
+    for (auto& shader : shaders_) {
+        shader.destroy(device.device);
+    }
     images_.clear();
     buffers_.clear();
     layouts_.clear();
     mesh_buffers_.clear();
+    shaders_.clear();
     index_ = 0;
 }
 
@@ -69,6 +73,10 @@ auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(GPUMeshBuffers& buffers) -> 
     buffers.index_buffer.will_be_destroyed_  = true;
     buffers.vertex_buffer.will_be_destroyed_ = true;
     mesh_buffers_.push_back(Deletion<GPUMeshBuffers>(buffers, index_++));
+}
+
+auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(asset::CompiledShader& shader) -> void {
+    shaders_.push_back(Deletion<asset::CompiledShader>(shader, 0));
 }
 
 auto ENGINE_NS::GraphicsMainDeletionQueue::push(ImageAllocation& allocation) -> void {
@@ -126,6 +134,14 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& dev
     for (auto& immediate : immediates_) {
         immediate.destroy(device.device);
     }
+
+    layouts_.clear();
+    images_.clear();
+    compute_pipelines_.clear();
+    graphics_pipelines_.clear();
+    mesh_buffers_.clear();
+    immediates_.clear();
+    index_ = 0;
 }
 
 auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(ImageAllocation& allocation) -> void {

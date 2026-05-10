@@ -21,7 +21,9 @@ namespace ENGINE_NS {
             virtual auto record(VkCommandBuffer buffer) -> void override final;
 
             virtual auto name() const -> std::string                                                                        = 0;
-            virtual auto build_pipeline(GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
+            virtual auto build_pipeline(engine::GraphicsEngine& engine,
+                                        VulkanDevice& device,
+                                        GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
 
         protected:
             virtual auto record_(VkCommandBuffer buffer) -> void = 0;
@@ -42,7 +44,7 @@ namespace ENGINE_NS {
             virtual auto post_update() -> void;
             virtual auto update_fixed(double delta_time) -> void;
 
-            virtual auto init_pipelines() -> std::vector<std::unique_ptr<StatePipeline>>;
+            virtual auto init_pipelines(engine::GraphicsEngine& engine) -> std::vector<std::unique_ptr<StatePipeline>>;
 
         private:
             friend class StatePipeline;
