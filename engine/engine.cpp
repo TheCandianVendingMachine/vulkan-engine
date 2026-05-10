@@ -124,13 +124,13 @@ auto ENGINE_NS::Engine::main_loop() -> void {
         auto frame_start = std::chrono::high_resolution_clock::now();
         auto delta       = frame_start - last_update;
         accumulator += delta.count() * 1e-9;
-        last_update     = frame_start;
+        last_update                  = frame_start;
 
-        auto imgui_lock = graphics_.imgui.write();
-        auto& imgui     = imgui_lock.get();
-        // auto& io                     = ImGui::GetIO();
-        // bool should_discard_mouse    = io.WantCaptureMouse;
-        // bool should_discard_keyboard = io.WantCaptureKeyboard;
+        auto imgui_lock              = graphics_.imgui.write();
+        auto& imgui                  = imgui_lock.get();
+        auto& io                     = ImGui::GetIO();
+        bool should_discard_mouse    = io.WantCaptureMouse;
+        bool should_discard_keyboard = io.WantCaptureKeyboard;
         while (SDL_PollEvent(&event) != 0) {
             switch (event.type) {
                 case SDL_EVENT_QUIT:
@@ -138,8 +138,44 @@ auto ENGINE_NS::Engine::main_loop() -> void {
                     break;
                 case SDL_EVENT_KEY_DOWN:
                     {
+                        ZoneScoped;
+                        if (should_discard_keyboard) {
+                            break;
+                        }
                         if (event.key.scancode == SDL_SCANCODE_GRAVE) {
                             this->logger.is_log_open_ = !this->logger.is_log_open_;
+                        }
+                    }
+                    break;
+                case SDL_EVENT_KEY_UP:
+                    {
+                        ZoneScoped;
+                        if (should_discard_keyboard) {
+                            break;
+                        }
+                    }
+                    break;
+                case SDL_EVENT_MOUSE_BUTTON_DOWN:
+                    {
+                        ZoneScoped;
+                        if (should_discard_mouse) {
+                            continue;
+                        }
+                    }
+                    break;
+                case SDL_EVENT_MOUSE_BUTTON_UP:
+                    {
+                        ZoneScoped;
+                        if (should_discard_mouse) {
+                            continue;
+                        }
+                    }
+                    break;
+                case SDL_EVENT_MOUSE_MOTION:
+                    {
+                        ZoneScoped;
+                        if (should_discard_mouse) {
+                            continue;
                         }
                     }
                     break;
