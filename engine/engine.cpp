@@ -125,7 +125,7 @@ auto ENGINE_NS::Engine::main_loop() -> void {
 
         auto imgui_lock = graphics_.imgui.write();
         auto& imgui     = imgui_lock.get();
-        auto& io        = ImGui::GetIO();
+        // auto& io                     = ImGui::GetIO();
         // bool should_discard_mouse    = io.WantCaptureMouse;
         // bool should_discard_keyboard = io.WantCaptureKeyboard;
         while (SDL_PollEvent(&event) != 0) {
