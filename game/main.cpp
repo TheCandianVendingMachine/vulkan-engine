@@ -19,6 +19,7 @@ class TestPipeline : public engine::StatePipeline {
         virtual auto build_pipeline(engine::GraphicsEngine& engine,
                                     engine::VulkanDevice& device,
                                     engine::GraphicsRegisteredPipelineDeletionQueue&) -> engine::GraphicsPipelineBuilder override final {
+            ZoneScoped;
             auto shader_result = engine::asset::BytecodeShader::load_from_file("assets/shaders/engine/static_triangle.spv").compile(device);
             if (!shader_result.has_value()) {
                 engine::crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
@@ -45,6 +46,7 @@ class TestPipeline : public engine::StatePipeline {
 
     protected:
         virtual auto record_(VkCommandBuffer cmd) -> void override final {
+            ZoneScoped;
             vkCmdDraw(cmd, 3, 1, 0, 0);
         }
 };
