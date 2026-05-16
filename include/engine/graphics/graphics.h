@@ -62,6 +62,15 @@ namespace ENGINE_NS {
                 std::vector<Vertex> vertices;
         };
 
+        struct TextureUpload {
+                std::promise<ImageAllocation> promise;
+                VkExtent3D size{};
+                VkFormat format{};
+                VkImageUsageFlags usage{};
+                bool mipmapped     = false;
+                void* texture_data = nullptr;
+        };
+
         class RegisteredPipeline {
             public:
                 RegisteredPipeline() = default;
@@ -121,6 +130,12 @@ namespace ENGINE_NS {
                 bool moved_ = false;
         };
 
+        struct StagingBuffer {
+                BufferAllocation allocation{};
+                void* mapped_data      = nullptr;
+                std::size_t total_size = 0;
+        };
+
         enum class Thread {
             MAIN,
             UPLOAD,
@@ -143,9 +158,14 @@ namespace ENGINE_NS {
             auto allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation;
             auto destroy_buffer(BufferAllocation allocation) -> void;
 
+            auto allocate_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped = false) -> ImageAllocation;
+            auto destroy_image(ImageAllocation allocation) -> void;
+
             auto destroy_shader(engine::asset::CompiledShader shader) -> void;
 
             auto upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> std::future<GPUMeshBuffers>;
+            auto upload_image(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped = false)
+                -> std::future<ImageAllocation>;
 
             template <typename TFunc>
             auto immediate_submit(const TFunc&& func) -> void {
@@ -193,7 +213,8 @@ namespace ENGINE_NS {
             std::chrono::milliseconds update_rate_;
 
             GraphicsUploadDeletionQueue upload_deletion_queue_{};
-            RwLock<std::deque<graphics::MeshUpload>> uploads_{};
+            RwLock<std::deque<graphics::MeshUpload>> mesh_uploads_{};
+            RwLock<std::deque<graphics::TextureUpload>> texture_uploads_{};
             std::thread upload_thread_;
             std::atomic<bool> upload_ready_;
 
@@ -240,6 +261,10 @@ namespace ENGINE_NS {
             auto draw_() -> void;
 
             auto upload_() -> void;
+            auto upload_meshes_(std::vector<graphics::StagingBuffer>& staging_buffers) -> void;
+            auto upload_textures_(std::vector<graphics::StagingBuffer>& staging_buffers) -> void;
+
+
             auto compile_() -> void;
     };
 } // namespace ENGINE_NS

@@ -106,7 +106,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
         registered_pipelines_.unsafe_open_all_locks();
         in_use_pipelines_.unsafe_open_all_locks();
         to_delete_pipelines_.unsafe_open_all_locks();
-        uploads_.unsafe_open_all_locks();
+        mesh_uploads_.unsafe_open_all_locks();
         for (auto& frame : frames_) {
             frame.unsafe_open_all_locks();
         }
@@ -208,6 +208,40 @@ auto ENGINE_NS::GraphicsEngine::destroy_buffer(BufferAllocation allocation) -> v
     frame_deletion_queue_.push(allocation);
 }
 
+auto ENGINE_NS::GraphicsEngine::allocate_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped)
+    -> ImageAllocation {
+    ImageAllocation new_image{};
+    new_image.format             = format;
+    new_image.extent             = size;
+
+    VkImageCreateInfo image_info = image_create_info(format, usage, size);
+    if (mipmapped) {
+        image_info.mipLevels = static_cast<std::uint32_t>(std::floor(std::log2(std::max(size.width, size.height)))) + 1;
+    }
+
+    VmaAllocationCreateInfo allocation_info{};
+    allocation_info.usage         = VMA_MEMORY_USAGE_GPU_ONLY;
+    allocation_info.requiredFlags = VkMemoryPropertyFlags(VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    VK_CHECK(vmaCreateImage(allocator_, &image_info, &allocation_info, &new_image.image, &new_image.allocation, nullptr));
+
+    VkImageAspectFlags aspect_flag = VK_IMAGE_ASPECT_COLOR_BIT;
+    if (format == VK_FORMAT_D32_SFLOAT) {
+        aspect_flag = VK_IMAGE_ASPECT_DEPTH_BIT;
+    }
+
+    VkImageViewCreateInfo view_info       = image_view_create_info(format, new_image.image, aspect_flag);
+    view_info.subresourceRange.levelCount = image_info.mipLevels;
+
+    VK_CHECK(vkCreateImageView(device_.device, &view_info, nullptr, &new_image.view));
+
+    return new_image;
+}
+
+auto ENGINE_NS::GraphicsEngine::destroy_image(ImageAllocation allocation) -> void {
+    frame_deletion_queue_.push(allocation);
+}
+
 auto ENGINE_NS::GraphicsEngine::destroy_shader(engine::asset::CompiledShader shader) -> void {
     frame_deletion_queue_.push(shader);
 }
@@ -217,12 +251,31 @@ auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, st
     upload.indices  = std::vector<std::uint32_t>(indices.begin(), indices.end());
     upload.vertices = std::vector<Vertex>(vertices.begin(), vertices.end());
 
-    auto lock       = uploads_.write();
+    auto lock       = mesh_uploads_.write();
     auto& uploads   = lock.get();
     uploads.push_back(std::move(upload));
     auto future = uploads.back().promise.get_future();
 
     upload_ready_.store(true, std::memory_order_release);
+    return future;
+}
+
+auto ENGINE_NS::GraphicsEngine::upload_image(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped)
+    -> std::future<ImageAllocation> {
+    graphics::TextureUpload upload{};
+    upload.format       = format;
+    upload.mipmapped    = mipmapped;
+    upload.size         = size;
+    upload.texture_data = data;
+    upload.usage        = usage;
+
+    auto lock           = texture_uploads_.write();
+    auto& uploads       = lock.get();
+    uploads.push_back(std::move(upload));
+    auto future = uploads.back().promise.get_future();
+
+    upload_ready_.store(true, std::memory_order_release);
+
     return future;
 }
 
@@ -449,7 +502,7 @@ auto ENGINE_NS::GraphicsEngine::init_descriptors_() -> void {
     for (std::size_t idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
         auto frame_lock = frames_[idx].write();
         frame_lock.get().descriptor_allocator.init(device_, 1'000, sizes);
-        frame_lock.get().deletion_queue.push(frame_lock.get().descriptor_allocator);
+        deletion_queue_.push(frame_lock.get().descriptor_allocator);
     }
 }
 
@@ -737,12 +790,7 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     while (!initialised_) {
     }
 
-    struct StagingBuffer {
-            BufferAllocation allocation{};
-            void* mapped_data      = nullptr;
-            std::size_t total_size = 0;
-    };
-    std::vector<StagingBuffer> staging_buffers;
+    std::vector<graphics::StagingBuffer> staging_buffers;
     constexpr std::size_t MAX_CACHED_STAGING_BUFFER_SIZE = 1ull * 1'024 * 1'024 * 1'024;
 
     while (running_.load(std::memory_order_acquire)) {
@@ -774,80 +822,15 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
             break;
         }
 
-
-        auto lock     = uploads_.write();
-        auto& uploads = lock.get();
-        {
-            auto logger = g_ENGINE->logger.get(LogNamespaces::GRAPHICS);
-            logger.get().debug("Uploading {} meshes", uploads.size());
-        }
-        while (!uploads.empty()) {
-            ZoneScoped;
-            auto& mesh                           = uploads.back();
-
-            const std::size_t vertex_buffer_size = mesh.vertices.size() * sizeof(Vertex);
-            const std::size_t index_buffer_size  = mesh.indices.size() * sizeof(std::uint32_t);
-
-            GPUMeshBuffers new_surface{};
-            new_surface.vertex_buffer = allocate_buffer(
-                vertex_buffer_size,
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                VMA_MEMORY_USAGE_GPU_ONLY);
-
-            VkBufferDeviceAddressInfo device_address_info{};
-            device_address_info.sType         = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-            device_address_info.buffer        = new_surface.vertex_buffer.buffer;
-            new_surface.vertex_buffer_address = vkGetBufferDeviceAddress(device_.device, &device_address_info);
-
-            new_surface.index_buffer          = allocate_buffer(
-                index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-
-            const auto desired_size = vertex_buffer_size + index_buffer_size;
-            StagingBuffer* staging  = nullptr;
-            for (auto& buffer : staging_buffers) {
-                if (buffer.total_size >= desired_size) {
-                    staging = &buffer;
-                    break;
-                }
-            }
-            if (!staging) {
-                auto alloc_size = desired_size + (1'024 - (desired_size % 1'024));
-                staging_buffers.push_back(
-                    {allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY), nullptr, alloc_size});
-                vmaMapMemory(allocator_, staging_buffers.back().allocation.allocation, &staging_buffers.back().mapped_data);
-                staging = &staging_buffers.back();
-            }
-
-            std::memcpy(staging->mapped_data, mesh.vertices.data(), vertex_buffer_size);
-            std::memcpy(static_cast<std::uint8_t*>(staging->mapped_data) + vertex_buffer_size, mesh.indices.data(), index_buffer_size);
-
-            immediate_submit([&](VkCommandBuffer cmd) {
-                VkBufferCopy vertex_copy{0};
-                vertex_copy.dstOffset = 0;
-                vertex_copy.srcOffset = 0;
-                vertex_copy.size      = vertex_buffer_size;
-
-                vkCmdCopyBuffer(cmd, staging->allocation.buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
-
-                VkBufferCopy index_copy{0};
-                index_copy.dstOffset = 0;
-                index_copy.srcOffset = vertex_buffer_size;
-                index_copy.size      = index_buffer_size;
-
-                vkCmdCopyBuffer(cmd, staging->allocation.buffer, new_surface.index_buffer.buffer, 1, &index_copy);
-            });
-
-            mesh.promise.set_value(std::move(new_surface));
-
-            uploads.pop_back();
-        }
-        lock.drop();
+        upload_meshes_(staging_buffers);
+        upload_textures_(staging_buffers);
 
         {
             ZoneScoped;
-            std::sort(staging_buffers.begin(), staging_buffers.end(), [](const StagingBuffer& lhs, const StagingBuffer& rhs) {
-                return lhs.total_size > rhs.total_size;
-            });
+            std::sort(staging_buffers.begin(), staging_buffers.end(),
+                      [](const graphics::StagingBuffer& lhs, const graphics::StagingBuffer& rhs) {
+                          return lhs.total_size > rhs.total_size;
+                      });
 
             std::size_t current_size = 0;
             for (auto& buffer : staging_buffers) {
@@ -868,6 +851,134 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     for (auto& buffer : staging_buffers) {
         upload_deletion_queue_.push(buffer.allocation);
         vmaUnmapMemory(allocator_, buffer.allocation.allocation);
+    }
+}
+
+auto ENGINE_NS::GraphicsEngine::upload_meshes_(std::vector<graphics::StagingBuffer>& staging_buffers) -> void {
+    ZoneScoped;
+    auto lock     = mesh_uploads_.write();
+    auto& uploads = lock.get();
+    {
+        auto logger = g_ENGINE->logger.get(LogNamespaces::GRAPHICS);
+        logger.get().debug("Uploading {} meshes", uploads.size());
+    }
+    while (!uploads.empty()) {
+        ZoneScoped;
+        auto& mesh                           = uploads.back();
+
+        const std::size_t vertex_buffer_size = mesh.vertices.size() * sizeof(Vertex);
+        const std::size_t index_buffer_size  = mesh.indices.size() * sizeof(std::uint32_t);
+
+        GPUMeshBuffers new_surface{};
+        new_surface.vertex_buffer = allocate_buffer(
+            vertex_buffer_size,
+            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+            VMA_MEMORY_USAGE_GPU_ONLY);
+
+        VkBufferDeviceAddressInfo device_address_info{};
+        device_address_info.sType         = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+        device_address_info.buffer        = new_surface.vertex_buffer.buffer;
+        new_surface.vertex_buffer_address = vkGetBufferDeviceAddress(device_.device, &device_address_info);
+
+        new_surface.index_buffer = allocate_buffer(index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                                   VMA_MEMORY_USAGE_GPU_ONLY);
+
+        const auto desired_size  = vertex_buffer_size + index_buffer_size;
+        graphics::StagingBuffer* staging = nullptr;
+        for (auto& buffer : staging_buffers) {
+            if (buffer.total_size >= desired_size) {
+                staging = &buffer;
+                break;
+            }
+        }
+        if (!staging) {
+            auto alloc_size = desired_size + (1'024 - (desired_size % 1'024));
+            staging_buffers.push_back(
+                {allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY), nullptr, alloc_size});
+            vmaMapMemory(allocator_, staging_buffers.back().allocation.allocation, &staging_buffers.back().mapped_data);
+            staging = &staging_buffers.back();
+        }
+
+        std::memcpy(staging->mapped_data, mesh.vertices.data(), vertex_buffer_size);
+        std::memcpy(static_cast<std::uint8_t*>(staging->mapped_data) + vertex_buffer_size, mesh.indices.data(), index_buffer_size);
+
+        immediate_submit([&](VkCommandBuffer cmd) {
+            VkBufferCopy vertex_copy{0};
+            vertex_copy.dstOffset = 0;
+            vertex_copy.srcOffset = 0;
+            vertex_copy.size      = vertex_buffer_size;
+
+            vkCmdCopyBuffer(cmd, staging->allocation.buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
+
+            VkBufferCopy index_copy{0};
+            index_copy.dstOffset = 0;
+            index_copy.srcOffset = vertex_buffer_size;
+            index_copy.size      = index_buffer_size;
+
+            vkCmdCopyBuffer(cmd, staging->allocation.buffer, new_surface.index_buffer.buffer, 1, &index_copy);
+        });
+
+        mesh.promise.set_value(std::move(new_surface));
+
+        uploads.pop_back();
+    }
+}
+
+auto ENGINE_NS::GraphicsEngine::upload_textures_(std::vector<graphics::StagingBuffer>& staging_buffers) -> void {
+    ZoneScoped;
+    auto lock     = texture_uploads_.write();
+    auto& uploads = lock.get();
+    {
+        auto logger = g_ENGINE->logger.get(LogNamespaces::GRAPHICS);
+        logger.get().debug("Uploading {} textures", uploads.size());
+    }
+    while (!uploads.empty()) {
+        ZoneScoped;
+        auto& texture                    = uploads.back();
+
+        std::size_t data_size            = texture.size.width * texture.size.depth * texture.size.height * 4;
+        graphics::StagingBuffer* staging = nullptr;
+        for (auto& buffer : staging_buffers) {
+            if (buffer.total_size >= data_size) {
+                staging = &buffer;
+                break;
+            }
+        }
+        if (!staging) {
+            auto alloc_size = data_size + (1'024 - (data_size % 1'024));
+            staging_buffers.push_back(
+                {allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY), nullptr, alloc_size});
+            vmaMapMemory(allocator_, staging_buffers.back().allocation.allocation, &staging_buffers.back().mapped_data);
+            staging = &staging_buffers.back();
+        }
+
+        std::memcpy(staging->mapped_data, texture.texture_data, data_size);
+
+        ImageAllocation new_image =
+            allocate_image(texture.size, texture.format, texture.usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                           texture.mipmapped);
+
+        immediate_submit([&](VkCommandBuffer cmd) {
+            transition_image(cmd, new_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+            VkBufferImageCopy copy_region{};
+            copy_region.bufferOffset                    = 0;
+            copy_region.bufferRowLength                 = 0;
+            copy_region.bufferImageHeight               = 0;
+
+            copy_region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            copy_region.imageSubresource.mipLevel       = 0;
+            copy_region.imageSubresource.baseArrayLayer = 0;
+            copy_region.imageSubresource.layerCount     = 0;
+            copy_region.imageExtent                     = texture.size;
+
+            vkCmdCopyBufferToImage(cmd, staging->allocation.buffer, new_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+
+            transition_image(cmd, new_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        });
+
+        texture.promise.set_value(std::move(new_image));
+        uploads.pop_back();
     }
 }
 
@@ -1019,7 +1130,6 @@ auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaA
     logger.get().debug("Destroying registered pipeline \"{}\"", this->name());
     this->destroy_(device, allocator);
     this->deletion_queue_.flush(device, allocator);
-    this->pipeline_descriptor_allocator_.destroy();
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::record_graphics(VkCommandBuffer) -> void {

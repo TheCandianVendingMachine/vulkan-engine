@@ -7,7 +7,12 @@
 
 #include <Volk/volk.h>
 #include <cstdint>
+#include <deque>
+#include <engine/graphics/types.h>
+#include <engine/meta_defines.h>
+#include <span>
 #include <type_traits>
+#include <vector>
 #include <vulkan/vulkan_core.h>
 
 auto ENGINE_NS::VulkanDescriptorLayoutBuilder::with_binding(std::uint32_t binding_idx, VkDescriptorType type)
@@ -272,4 +277,55 @@ auto ENGINE_NS::DescriptorAllocatorGrowable::create_pool_(VulkanDevice& device,
     VkDescriptorPool pool;
     vkCreateDescriptorPool(device.device, &pool_info, nullptr, &pool);
     return pool;
+}
+
+auto ENGINE_NS::DescriptorWriter::write_image(Binding binding,
+                                              VkImageView image,
+                                              VkSampler sampler,
+                                              VkImageLayout layout,
+                                              VkDescriptorType type) -> DescriptorWriter& {
+    VkDescriptorImageInfo image_info =
+        image_infos.emplace_back(VkDescriptorImageInfo{.sampler = sampler, .imageView = image, .imageLayout = layout});
+
+    VkWriteDescriptorSet write{.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    write.dstBinding      = static_cast<std::uint32_t>(binding);
+    write.dstSet          = VK_NULL_HANDLE;
+    write.descriptorCount = 1;
+    write.descriptorType  = type;
+    write.pImageInfo      = &image_info;
+
+    writes.push_back(write);
+    return *this;
+}
+
+auto ENGINE_NS::DescriptorWriter::write_buffer(Binding binding,
+                                               VkBuffer buffer,
+                                               std::size_t size,
+                                               std::size_t offset,
+                                               VkDescriptorType type) -> DescriptorWriter& {
+    VkDescriptorBufferInfo& buffer_info =
+        buffer_infos.emplace_back(VkDescriptorBufferInfo{.buffer = buffer, .offset = offset, .range = size});
+
+    VkWriteDescriptorSet write{.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    write.dstBinding      = static_cast<std::uint32_t>(binding);
+    write.dstSet          = VK_NULL_HANDLE;
+    write.descriptorCount = 1;
+    write.descriptorType  = type;
+    write.pBufferInfo     = &buffer_info;
+
+    writes.push_back(write);
+    return *this;
+}
+
+auto ENGINE_NS::DescriptorWriter::clear() -> void {
+    image_infos.clear();
+    writes.clear();
+    buffer_infos.clear();
+}
+
+auto ENGINE_NS::DescriptorWriter::update_set(VulkanDevice& device, VkDescriptorSet set) -> void {
+    for (auto& write : writes) {
+        write.dstSet = set;
+    }
+    vkUpdateDescriptorSets(device.device, static_cast<std::uint32_t>(writes.size()), writes.data(), 0, nullptr);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+#include "engine/newtype.h"
 
 #include <linalg/matrix.h>
 #include <linalg/vector.h>
@@ -77,6 +78,10 @@ namespace ENGINE_NS {
     struct GPUPushConstants {
             void* data       = nullptr;
             std::size_t size = 0;
+    };
+
+    struct Binding : NewType<Binding, std::uint32_t> {
+            using NewType<Binding, std::uint32_t>::NewType;
     };
 
 } // namespace ENGINE_NS

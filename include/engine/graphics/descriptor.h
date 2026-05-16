@@ -1,13 +1,29 @@
 #pragma once
+#include "engine/graphics/types.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 
 #include <cstdint>
+#include <deque>
 #include <span>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
 namespace ENGINE_NS {
+    struct DescriptorWriter {
+            std::deque<VkDescriptorImageInfo> image_infos{};
+            std::deque<VkDescriptorBufferInfo> buffer_infos{};
+            std::vector<VkWriteDescriptorSet> writes{};
+
+            auto write_image(Binding binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type)
+                -> DescriptorWriter&;
+            auto write_buffer(Binding binding, VkBuffer buffer, std::size_t size, std::size_t offset, VkDescriptorType type)
+                -> DescriptorWriter&;
+
+            auto clear() -> void;
+            auto update_set(VulkanDevice& device, VkDescriptorSet set) -> void;
+    };
+
     class DescriptorAllocator {
         public:
             struct PoolSizeRatio {

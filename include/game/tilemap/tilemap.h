@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <engine/graphics/descriptor.h>
+#include <engine/graphics/types.h>
 #include <engine/graphics/vulkan.h>
 #include <engine/reflection/type.h>
 #include <engine/state/state.h>
@@ -100,6 +101,7 @@ class TilemapPreDrawPipeline : public engine::StatePipeline {
         auto create_descriptors_(engine::GraphicsEngine& engine,
                                  engine::VulkanDevice& device,
                                  engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue) -> void;
+
         VkDescriptorSet tilemap_id_image_descriptors_ = VK_NULL_HANDLE;
         engine::VulkanDescriptorSetLayout tilemap_id_image_layout_{};
 };

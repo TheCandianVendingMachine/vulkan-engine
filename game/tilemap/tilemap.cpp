@@ -9,7 +9,9 @@
 #include <engine/graphics/descriptor.h>
 #include <engine/graphics/graphics.h>
 #include <engine/graphics/pipeline.h>
+#include <engine/graphics/types.h>
 #include <engine/graphics/vulkan.h>
+#include <engine/linalg/vector.h>
 #include <engine/meta_defines.h>
 #include <iterator>
 #include <linalg/vector.h>
@@ -171,30 +173,14 @@ auto TilemapPreDrawPipeline::create_descriptors_(engine::GraphicsEngine& engine,
                                                  engine::VulkanDevice& device,
                                                  engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue) -> void {
     ZoneScoped;
-    std::vector<engine::DescriptorAllocator::PoolSizeRatio> sizes = {
-      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}
-    };
-    pipeline_descriptor_allocator_.init(device, 10, sizes);
     tilemap_id_image_layout_      = engine::VulkanDescriptorSetLayout::build()
                                         .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
                                         .build(device, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
 
-    tilemap_id_image_descriptors_ = pipeline_descriptor_allocator_.allocate(tilemap_id_image_layout_.layout);
+    tilemap_id_image_descriptors_ = pipeline_descriptor_allocator_.allocate(device, tilemap_id_image_layout_.layout);
+    engine::DescriptorWriter{}
+        .write_image(engine::Binding(0), draw_image_.view, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+        .update_set(device, tilemap_id_image_descriptors_);
 
-    VkDescriptorImageInfo image_info{};
-    image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    image_info.imageView   = draw_image_.view;
-
-    VkWriteDescriptorSet tilemap_id_image_write{};
-    tilemap_id_image_write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    tilemap_id_image_write.pNext           = nullptr;
-
-    tilemap_id_image_write.dstBinding      = 0;
-    tilemap_id_image_write.dstSet          = tilemap_id_image_descriptors_;
-    tilemap_id_image_write.descriptorCount = 1;
-    tilemap_id_image_write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    tilemap_id_image_write.pImageInfo      = &image_info;
-
-    vkUpdateDescriptorSets(device_.device, 1, &tilemap_id_image_write, 0, nullptr);
     pipeline_deletion_queue.push(tilemap_id_image_layout_);
 }
