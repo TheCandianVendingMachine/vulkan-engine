@@ -24,7 +24,7 @@ class TestState : public engine::State {
 
         virtual auto init_pipelines(engine::GraphicsEngine&) -> std::vector<std::unique_ptr<engine::StatePipeline>> override final {
             auto pipelines = std::vector<std::unique_ptr<engine::StatePipeline>>{};
-            pipelines.emplace_back(std::make_unique<TilemapPipeline>(*this));
+            pipelines.emplace_back(std::make_unique<TilemapPreDrawPipeline>(*this));
             return pipelines;
         }
 };

@@ -23,12 +23,6 @@ namespace ENGINE_NS {
             virtual auto record_graphics(VkCommandBuffer buffer) -> void override final;
             virtual auto record_compute(VkCommandBuffer buffer) -> void override final;
 
-
-            virtual auto name() const -> std::string                                                                        = 0;
-            virtual auto build_pipeline(engine::GraphicsEngine& engine,
-                                        VulkanDevice& device,
-                                        GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
-
         protected:
             virtual auto record_graphics_(VkCommandBuffer buffer) -> void;
             virtual auto record_compute_(VkCommandBuffer buffer) -> void;
