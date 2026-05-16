@@ -136,13 +136,14 @@ auto Tile::id() const -> std::size_t {
     return std::hash<Tile>{}(*this);
 }
 
-auto TilemapPipeline::name() const -> std::string {
-    return "Tilemap";
+auto TilemapPreDrawPipeline::name() const -> std::string {
+    return "Tilemap [pre-draw]";
 }
 
-auto TilemapPipeline::build_pipeline(engine::GraphicsEngine& engine,
-                                     engine::VulkanDevice& device,
-                                     engine::GraphicsRegisteredPipelineDeletionQueue&) -> engine::GraphicsPipelineBuilder {
+auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engine,
+                                                    engine::VulkanDevice& device,
+                                                    engine::GraphicsRegisteredPipelineDeletionQueue&)
+    -> std::optional<engine::ComputePipelineBuilder> {
     ZoneScoped;
     auto shader_result = engine::asset::BytecodeShader::load_from_file("assets/shaders/game/tilemap/tilemap.spv").compile(device);
     if (!shader_result.has_value()) {
@@ -151,57 +152,11 @@ auto TilemapPipeline::build_pipeline(engine::GraphicsEngine& engine,
     }
     auto shader            = shader_result.value();
 
-    auto triangle_pipeline = engine::GraphicsPipeline::build()
-                                 .layout()
-                                 .finish()
-                                 .shaders(shader, shader)
-                                 .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                                 .polygon_mode(VK_POLYGON_MODE_FILL)
-                                 .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
-                                 .set_multisampling_none()
-                                 .disable_blending()
-                                 .disable_depthtest()
-                                 //.color_attachment_format(engine)
-                                 .depth_format(VK_FORMAT_UNDEFINED);
+    auto triangle_pipeline = engine::ComputePipeline::build().layout().finish().shader(shader);
     engine.destroy_shader(shader);
 
     return triangle_pipeline;
 }
 
-auto TilemapPipeline::record_(VkCommandBuffer) -> void {
-}
-
-auto TilemapDebugPipeline::name() const -> std::string {
-    return "Tilemap [Debug]";
-}
-
-auto TilemapDebugPipeline::build_pipeline(engine::GraphicsEngine& engine,
-                                          engine::VulkanDevice& device,
-                                          engine::GraphicsRegisteredPipelineDeletionQueue&) -> engine::GraphicsPipelineBuilder {
-    ZoneScoped;
-    auto shader_result = engine::asset::BytecodeShader::load_from_file("assets/shaders/game/tilemap/tilemap_debug.spv").compile(device);
-    if (!shader_result.has_value()) {
-        engine::crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
-        std::unreachable();
-    }
-    auto shader            = shader_result.value();
-
-    auto triangle_pipeline = engine::GraphicsPipeline::build()
-                                 .layout()
-                                 .finish()
-                                 .shaders(shader, shader)
-                                 .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                                 .polygon_mode(VK_POLYGON_MODE_FILL)
-                                 .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
-                                 .set_multisampling_none()
-                                 .disable_blending()
-                                 .disable_depthtest()
-                                 //.color_attachment_format(engine)
-                                 .depth_format(VK_FORMAT_UNDEFINED);
-    engine.destroy_shader(shader);
-
-    return triangle_pipeline;
-}
-
-auto TilemapDebugPipeline::record_(VkCommandBuffer) -> void {
+auto TilemapPreDrawPipeline::record_compute_(VkCommandBuffer) -> void {
 }

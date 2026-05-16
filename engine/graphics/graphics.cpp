@@ -27,6 +27,7 @@
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_vulkan.h>
 #include <memory>
+#include <robin_set.h>
 #include <span>
 #include <type_traits>
 #include <utility>
@@ -66,11 +67,15 @@ void ENGINE_NS::GraphicsEngine::initialise() {
         upload_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::upload_, this);
     }
 
+    logger.get().info("Initialising pipeline compile thread");
+    {
+        ZoneScoped;
+        pipeline_compile_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::compile_, this);
+    }
+
     init_immediates_();
 
     initialised_ = true;
-
-    init_mesh_data_();
 
     FrameMarkEnd(StaticNames::GraphicsInit);
 }
@@ -120,7 +125,12 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
         ZoneScoped;
         this->upload_thread_.join();
     }
-
+    logger.get().info("Stopping compile thread");
+    {
+        ZoneScoped;
+        this->pipeline_compile_condition_.notify_all();
+        this->pipeline_compile_thread_.join();
+    }
 
     logger.get().info("Cleaning up Vulkan");
     if (device_.device != VK_NULL_HANDLE) {
@@ -233,26 +243,35 @@ auto ENGINE_NS::GraphicsEngine::resume_registered_pipelines() -> void {
 auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<graphics::RegisteredPipeline>>&& pipelines)
     -> graphics::RegisteredPipelineReceipt {
     std::vector<std::uint64_t> ids;
-    auto in_use_pipelines     = in_use_pipelines_.write();
-    auto registered_pipelines = registered_pipelines_.write();
+    auto new_pipelines = new_pipelines_.write();
     for (auto& pipeline : pipelines) {
         std::uint64_t pipeline_uid = this->next_pipeline_uid_++;
         pipeline->id_              = pipeline_uid;
-        pipeline->init_pipeline(*this, device_);
-        registered_pipelines.get()[pipeline_uid] = std::move(pipeline);
-        in_use_pipelines.get().insert({pipeline_uid, 0});
-        ids.emplace_back(pipeline_uid);
+        new_pipelines.get().push_back(std::move(pipeline));
     }
     return graphics::RegisteredPipelineReceipt(*this, std::move(ids));
 }
 
 auto ENGINE_NS::GraphicsEngine::deregister_pipelines(std::vector<std::uint64_t>& ids) -> void {
-    auto to_delete_pipelines  = to_delete_pipelines_.write();
-    auto registered_pipelines = registered_pipelines_.write();
+    {
+        auto ids_set            = tsl::robin_set<std::uint64_t>{ids.begin(), ids.end()};
 
-    for (auto& pipeline : ids) {
-        to_delete_pipelines.get().emplace_back(std::move(registered_pipelines.get().at(pipeline)));
-        registered_pipelines.get().erase(pipeline);
+        auto new_pipelines_lock = new_pipelines_.write();
+        auto& new_pipelines     = new_pipelines_lock.get();
+        new_pipelines.erase(std::remove_if(new_pipelines.begin(), new_pipelines.end(),
+                                           [&ids_set](std::unique_ptr<graphics::RegisteredPipeline>& pipeline) {
+                                               return ids_set.contains(pipeline->id_);
+                                           }),
+                            new_pipelines.end());
+    }
+
+    {
+        auto to_delete_pipelines  = to_delete_pipelines_.write();
+        auto registered_pipelines = registered_pipelines_.write();
+        for (auto& pipeline : ids) {
+            to_delete_pipelines.get().emplace_back(std::move(registered_pipelines.get().at(pipeline)));
+            registered_pipelines.get().erase(pipeline);
+        }
     }
 }
 
@@ -580,14 +599,29 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
         if (paused_count > 0) {
             continue;
         }
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline_.value().pipeline);
 
-        auto push_constants = pipeline->push_constants();
-        if (push_constants.size > 0 && push_constants.data) {
-            vkCmdPushConstants(cmd, pipeline->pipeline_.value().layout, VK_SHADER_STAGE_VERTEX_BIT, 0, push_constants.size,
-                               push_constants.data);
+        if (pipeline->graphics_pipeline_.has_value()) {
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->graphics_pipeline_.value().pipeline);
+
+            auto push_constants = pipeline->push_constants();
+            if (push_constants.size > 0 && push_constants.data) {
+                vkCmdPushConstants(cmd, pipeline->graphics_pipeline_.value().layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                                   static_cast<std::uint32_t>(push_constants.size), push_constants.data);
+            }
+            pipeline->record_graphics(cmd);
         }
-        pipeline->record(cmd);
+
+        if (pipeline->compute_pipeline_.has_value()) {
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->compute_pipeline_.value().pipeline);
+
+            auto push_constants = pipeline->push_constants();
+            if (push_constants.size > 0 && push_constants.data) {
+                vkCmdPushConstants(cmd, pipeline->compute_pipeline_.value().layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                                   static_cast<std::uint32_t>(push_constants.size), push_constants.data);
+            }
+            pipeline->record_compute(cmd);
+        }
+
         frame.get().in_use_pipelines.push_back(id);
     }
 
@@ -847,6 +881,34 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
     }
 }
 
+auto ENGINE_NS::GraphicsEngine::compile_() -> void {
+    while (running_.load(std::memory_order_acquire)) {
+        std::unique_lock lock(pipeline_compile_lock_);
+        pipeline_compile_condition_.wait(lock, [&] {
+            return !running_.load(std::memory_order_acquire) || !new_pipelines_.read().get().empty();
+        });
+        if (!running_.load(std::memory_order_acquire)) {
+            break;
+        }
+
+        {
+            auto new_pipelines        = new_pipelines_.write();
+            auto in_use_pipelines     = in_use_pipelines_.write();
+            auto registered_pipelines = registered_pipelines_.write();
+            while (!new_pipelines.get().empty()) {
+                std::unique_ptr<graphics::RegisteredPipeline> pipeline = std::move(new_pipelines.get().back());
+                new_pipelines.get().pop_back();
+
+                pipeline->init_pipeline(*this, device_);
+                registered_pipelines.get()[pipeline->id_] = std::move(pipeline);
+                in_use_pipelines.get().insert({pipeline->id_, 0});
+            }
+        }
+
+        lock.unlock();
+    }
+}
+
 auto ENGINE_NS::graphics::thread_name(Thread thread) -> std::string {
     switch (thread) {
         case Thread::MAIN:
@@ -888,7 +950,8 @@ auto ENGINE_NS::graphics::RegisteredPipelineReceipt::operator=(RegisteredPipelin
 }
 
 ENGINE_NS::graphics::RegisteredPipeline::RegisteredPipeline(RegisteredPipeline&& other) noexcept :
-    deletion_queue_(std::move(other.deletion_queue_)), pipeline_(std::move(other.pipeline_)), id_(other.id_) {
+    deletion_queue_(std::move(other.deletion_queue_)), graphics_pipeline_(std::move(other.graphics_pipeline_)),
+    compute_pipeline_(std::move(other.compute_pipeline_)), id_(other.id_) {
     other.moved_ = true;
 }
 
@@ -897,20 +960,43 @@ ENGINE_NS::graphics::RegisteredPipeline::~RegisteredPipeline() {
 
 auto ENGINE_NS::graphics::RegisteredPipeline::operator=(RegisteredPipeline&& rhs) noexcept -> RegisteredPipeline& {
     if (this != &rhs) {
-        this->deletion_queue_ = std::move(rhs.deletion_queue_);
-        this->pipeline_       = std::move(rhs.pipeline_);
-        this->id_             = rhs.id_;
+        this->deletion_queue_    = std::move(rhs.deletion_queue_);
+        this->graphics_pipeline_ = std::move(rhs.graphics_pipeline_);
+        this->compute_pipeline_  = std::move(rhs.compute_pipeline_);
+        this->id_                = rhs.id_;
     }
     rhs.moved_ = true;
     return *this;
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::build_graphics_pipeline(ENGINE_NS::GraphicsEngine&,
+                                                                      VulkanDevice&,
+                                                                      GraphicsRegisteredPipelineDeletionQueue&)
+    -> std::optional<GraphicsPipelineBuilder> {
+    return std::nullopt;
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::build_compute_pipeline(ENGINE_NS::GraphicsEngine&,
+                                                                     VulkanDevice&,
+                                                                     GraphicsRegisteredPipelineDeletionQueue&)
+    -> std::optional<ComputePipelineBuilder> {
+    return std::nullopt;
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engine, VulkanDevice& device) -> void {
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.get().debug("Creating registered pipeline \"{}\"", this->name());
 
-    this->pipeline_ = std::move(this->build_pipeline(engine, device, this->deletion_queue_).finish(device));
-    this->deletion_queue_.push(this->pipeline_.value());
+    auto graphics_pipeline = this->build_graphics_pipeline(engine, device, this->deletion_queue_);
+    if (graphics_pipeline.has_value()) {
+        this->graphics_pipeline_ = std::move(graphics_pipeline.value().finish(device));
+        this->deletion_queue_.push(this->graphics_pipeline_.value());
+    }
+    auto compute_pipeline = this->build_compute_pipeline(engine, device, this->deletion_queue_);
+    if (compute_pipeline.has_value()) {
+        this->compute_pipeline_ = std::move(compute_pipeline.value().finish(device));
+        this->deletion_queue_.push(this->compute_pipeline_.value());
+    }
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaAllocator allocator) -> void {
@@ -919,6 +1005,16 @@ auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaA
     this->deletion_queue_.flush(device, allocator);
 }
 
+auto ENGINE_NS::graphics::RegisteredPipeline::record_graphics(VkCommandBuffer) -> void {
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::record_compute(VkCommandBuffer) -> void {
+}
+
 auto ENGINE_NS::graphics::RegisteredPipeline::push_constants() -> GPUPushConstants {
     return GPUPushConstants{};
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::dependencies() -> std::vector<std::string> {
+    return {};
 }

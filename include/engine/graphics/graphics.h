@@ -39,6 +39,8 @@ namespace tracy {
 
 struct SDL_Window;
 namespace ENGINE_NS {
+    class GraphicsEngine;
+
     namespace graphics {
         constexpr std::size_t FRAME_OVERLAP  = 2;
         constexpr const char* IMMEDIATE_NAME = "immediate";
@@ -67,26 +69,34 @@ namespace ENGINE_NS {
 
                 virtual auto operator=(RegisteredPipeline&& rhs) noexcept -> RegisteredPipeline&;
 
-                virtual auto name() const -> std::string                                                                        = 0;
-                virtual auto record(VkCommandBuffer buffer) -> void                                                             = 0;
-                virtual auto build_pipeline(engine::GraphicsEngine& engine,
-                                            VulkanDevice& device,
-                                            GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
+                virtual auto name() const -> std::string = 0;
+                virtual auto build_graphics_pipeline(ENGINE_NS::GraphicsEngine& engine,
+                                                     VulkanDevice& device,
+                                                     GraphicsRegisteredPipelineDeletionQueue& deletion_queue)
+                    -> std::optional<GraphicsPipelineBuilder>;
+                virtual auto build_compute_pipeline(ENGINE_NS::GraphicsEngine& engine,
+                                                    VulkanDevice& device,
+                                                    GraphicsRegisteredPipelineDeletionQueue& deletion_queue)
+                    -> std::optional<ComputePipelineBuilder>;
 
-                auto init_pipeline(GraphicsEngine& engine, VulkanDevice& device) -> void;
+                auto init_pipeline(ENGINE_NS::GraphicsEngine& engine, VulkanDevice& device) -> void;
                 auto destroy(VulkanDevice& device, VmaAllocator allocator) -> void;
 
+                virtual auto record_graphics(VkCommandBuffer buffer) -> void;
+                virtual auto record_compute(VkCommandBuffer buffer) -> void;
                 virtual auto push_constants() -> GPUPushConstants;
+                virtual auto dependencies() -> std::vector<std::string>;
 
                 bool enabled = true;
 
-                friend class GraphicsEngine;
+                friend class ENGINE_NS::GraphicsEngine;
 
             protected:
                 GraphicsRegisteredPipelineDeletionQueue deletion_queue_{};
-                std::optional<GraphicsPipeline> pipeline_ = std::nullopt;
-                std::uint64_t id_                         = std::numeric_limits<std::uint64_t>::max();
-                std::atomic<std::uint64_t> paused_        = 0;
+                std::optional<GraphicsPipeline> graphics_pipeline_ = std::nullopt;
+                std::optional<ComputePipeline> compute_pipeline_   = std::nullopt;
+                std::uint64_t id_                                  = std::numeric_limits<std::uint64_t>::max();
+                std::atomic<std::uint64_t> paused_                 = 0;
 
             private:
                 bool moved_ = false;
@@ -156,6 +166,8 @@ namespace ENGINE_NS {
 
             RwLock<graphics::ImGui> imgui{};
 
+            const ImageAllocation& draw_image = draw_image_;
+
         private:
             bool initialised_ = false;
 
@@ -167,6 +179,7 @@ namespace ENGINE_NS {
             VkDescriptorSet draw_image_descriptors_ = VK_NULL_HANDLE;
             VulkanDescriptorSetLayout draw_image_layout_{};
 
+            RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> new_pipelines_{};
             RwLock<tsl::robin_map<std::uint64_t, std::unique_ptr<graphics::RegisteredPipeline>>> registered_pipelines_{};
             RwLock<tsl::robin_map<std::uint64_t, std::uint64_t>> in_use_pipelines_{};
             RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> to_delete_pipelines_{};
@@ -179,6 +192,10 @@ namespace ENGINE_NS {
             RwLock<std::deque<graphics::MeshUpload>> uploads_{};
             std::thread upload_thread_;
             std::atomic<bool> upload_ready_;
+
+            std::thread pipeline_compile_thread_{};
+            std::mutex pipeline_compile_lock_{};
+            std::condition_variable pipeline_compile_condition_{};
 
             std::atomic<bool> running_;
 
@@ -219,5 +236,6 @@ namespace ENGINE_NS {
             auto draw_() -> void;
 
             auto upload_() -> void;
+            auto compile_() -> void;
     };
 } // namespace ENGINE_NS

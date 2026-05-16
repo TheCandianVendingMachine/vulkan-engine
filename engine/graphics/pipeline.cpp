@@ -11,26 +11,25 @@ auto ENGINE_NS::GraphicsPipeline::build() -> GraphicsPipelineBuilder {
     return GraphicsPipelineBuilder();
 }
 
-ENGINE_NS::GraphicsPipeline::GraphicsPipeline(const GraphicsPipeline& rhs) :
-    layout_(std::move(rhs.layout_)), pipeline_(std::move(rhs.pipeline_)) {
+ENGINE_NS::GraphicsPipeline::GraphicsPipeline(const GraphicsPipeline& rhs) : pipeline_(rhs.pipeline_), layout_(rhs.layout_) {
 }
 
 ENGINE_NS::GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& rhs) noexcept :
-    layout_(std::move(std::move(rhs.layout_))), pipeline_(std::move(std::move(rhs.pipeline_))) {
+    pipeline_(std::move(rhs.pipeline_)), layout_(std::move(rhs.layout_)) {
 }
 
 auto ENGINE_NS::GraphicsPipeline::operator=(const GraphicsPipeline& rhs) -> GraphicsPipeline& {
-    if (&rhs != this) {
-        layout_   = rhs.layout_;
+    if (this != &rhs) {
         pipeline_ = rhs.pipeline_;
+        layout_   = rhs.layout_;
     }
     return *this;
 }
 
 auto ENGINE_NS::GraphicsPipeline::operator=(GraphicsPipeline&& rhs) noexcept -> GraphicsPipeline& {
-    if (&rhs != this) {
-        pipeline_ = std::move(std::move(rhs.pipeline_));
-        layout_   = std::move(std::move(rhs.layout_));
+    if (this != &rhs) {
+        pipeline_ = std::move(rhs.pipeline_);
+        layout_   = std::move(rhs.layout_);
     }
     return *this;
 }
@@ -49,15 +48,20 @@ auto ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::GraphicsPipelineBuilder>::push_
     return *this;
 }
 
-ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::GraphicsPipelineBuilder>::PipelineLayoutBuilder(GraphicsPipelineBuilder& from) : from_(from) {
+auto ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::ComputePipelineBuilder>::finish() -> ComputePipelineBuilder& {
+    VkPipelineLayoutCreateInfo layout_info = pipeline_layout_create_info();
+    layout_info.pSetLayouts;
+    layout_info.setLayoutCount;
+    layout_info.pPushConstantRanges    = push_constants_.data();
+    layout_info.pushConstantRangeCount = static_cast<std::uint32_t>(push_constants_.size());
+    from_.pipeline_layout_             = layout_info;
+    return from_;
 }
 
-ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::GraphicsPipelineBuilder>::PipelineLayoutBuilder(
-    const PipelineLayoutBuilder<GraphicsPipelineBuilder>& rhs) : from_(rhs.from_) {
-}
-
-ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::GraphicsPipelineBuilder>::PipelineLayoutBuilder(
-    PipelineLayoutBuilder<GraphicsPipelineBuilder>&& rhs) noexcept : from_(rhs.from_) {
+auto ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::ComputePipelineBuilder>::push_constant_range(VkPushConstantRange range)
+    -> PipelineLayoutBuilder<ComputePipelineBuilder>& {
+    push_constants_.push_back(range);
+    return *this;
 }
 
 ENGINE_NS::GraphicsPipeline::GraphicsPipeline(VulkanDevice& device,
@@ -180,16 +184,54 @@ auto ENGINE_NS::GraphicsPipelineBuilder::finish(VulkanDevice& device) -> Graphic
     return GraphicsPipeline(device, pipeline_info, pipeline_layout_);
 }
 
-ENGINE_NS::GraphicsPipelineBuilder::GraphicsPipelineBuilder(const GraphicsPipelineBuilder& rhs) :
-    shader_stages_(std::move(rhs.shader_stages_)), input_assembly_(std::move(rhs.input_assembly_)), rasterizer_(std::move(rhs.rasterizer_)),
-    color_blend_attachment_(std::move(rhs.color_blend_attachment_)), multisampling_(std::move(rhs.multisampling_)),
-    pipeline_layout_(std::move(rhs.pipeline_layout_)), depth_stencil_(std::move(rhs.depth_stencil_)),
-    render_info_(std::move(rhs.render_info_)), colour_attachment_format_(std::move(rhs.colour_attachment_format_)) {
+auto ENGINE_NS::ComputePipeline::build() -> ComputePipelineBuilder {
+    return ComputePipelineBuilder();
 }
 
-ENGINE_NS::GraphicsPipelineBuilder::GraphicsPipelineBuilder(GraphicsPipelineBuilder&& rhs) noexcept :
-    shader_stages_(std::move(rhs.shader_stages_)), input_assembly_(std::move(rhs.input_assembly_)), rasterizer_(std::move(rhs.rasterizer_)),
-    color_blend_attachment_(std::move(rhs.color_blend_attachment_)), multisampling_(std::move(rhs.multisampling_)),
-    pipeline_layout_(std::move(rhs.pipeline_layout_)), depth_stencil_(std::move(rhs.depth_stencil_)),
-    render_info_(std::move(rhs.render_info_)), colour_attachment_format_(std::move(rhs.colour_attachment_format_)) {
+ENGINE_NS::ComputePipeline::ComputePipeline(const ComputePipeline& rhs) : pipeline_(rhs.pipeline_), layout_(rhs.layout_) {
+}
+
+ENGINE_NS::ComputePipeline::ComputePipeline(ComputePipeline&& rhs) noexcept :
+    pipeline_(std::move(rhs.pipeline_)), layout_(std::move(rhs.layout_)) {
+}
+
+auto ENGINE_NS::ComputePipeline::operator=(const ComputePipeline& rhs) -> ComputePipeline& {
+    if (this != &rhs) {
+        pipeline_ = rhs.pipeline_;
+        layout_   = rhs.layout_;
+    }
+    return *this;
+}
+
+auto ENGINE_NS::ComputePipeline::operator=(ComputePipeline&& rhs) noexcept -> ComputePipeline& {
+    if (this != &rhs) {
+        pipeline_ = std::move(rhs.pipeline_);
+        layout_   = std::move(rhs.layout_);
+    }
+    return *this;
+}
+
+ENGINE_NS::ComputePipeline::ComputePipeline(VulkanDevice& device,
+                                            VkComputePipelineCreateInfo pipeline_info,
+                                            VkPipelineLayoutCreateInfo layout_info) {
+    VK_CHECK(vkCreatePipelineLayout(device.device, &layout_info, nullptr, &layout_));
+    pipeline_info.layout = layout_;
+
+    VK_CHECK(vkCreateComputePipelines(device.device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline_));
+}
+
+auto ENGINE_NS::ComputePipelineBuilder::shader(asset::CompiledShader compute_shader) -> ComputePipelineBuilder& {
+    shader_stage_ = pipeline_shader_stage_create_info(VK_SHADER_STAGE_COMPUTE_BIT, compute_shader.shader, "computeMain");
+    return *this;
+}
+
+auto ENGINE_NS::ComputePipelineBuilder::layout() -> PipelineLayoutBuilder<ComputePipelineBuilder> {
+    return PipelineLayoutBuilder<ComputePipelineBuilder>(*this);
+}
+
+auto ENGINE_NS::ComputePipelineBuilder::finish(VulkanDevice& device) -> ComputePipeline {
+    VkComputePipelineCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    create_info.stage = shader_stage_;
+    return ComputePipeline(device, create_info, pipeline_layout_);
 }

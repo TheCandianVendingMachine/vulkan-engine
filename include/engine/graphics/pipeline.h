@@ -6,34 +6,98 @@
 #include <vulkan/vulkan_core.h>
 
 namespace ENGINE_NS {
-    template <typename TFrom>
-    class PipelineLayoutBuilder {};
-
-    struct ComputePipeline {
-            VkPipeline pipeline              = VK_NULL_HANDLE;
-            VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
-    };
-
     class GraphicsPipelineBuilder;
+    class ComputePipelineBuilder;
+
+    template <typename TFrom>
+    class PipelineLayoutBuilder {
+        public:
+            PipelineLayoutBuilder() = delete;
+
+            using Contained         = TFrom;
+            auto finish() -> Contained&;
+
+            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>&;
+
+            PipelineLayoutBuilder<Contained>(const PipelineLayoutBuilder<Contained>& rhs) = default;
+            PipelineLayoutBuilder<Contained>(PipelineLayoutBuilder<Contained>&& rhs)      = default;
+    };
     template <>
     class PipelineLayoutBuilder<GraphicsPipelineBuilder> {
         public:
-            auto finish() -> GraphicsPipelineBuilder&;
+            using Contained = GraphicsPipelineBuilder;
+            auto finish() -> Contained&;
 
-            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<GraphicsPipelineBuilder>&;
-
-            PipelineLayoutBuilder<GraphicsPipelineBuilder>(const PipelineLayoutBuilder<GraphicsPipelineBuilder>& rhs);
-            PipelineLayoutBuilder<GraphicsPipelineBuilder>(PipelineLayoutBuilder<GraphicsPipelineBuilder>&& rhs) noexcept;
+            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>&;
 
         private:
             std::vector<VkPushConstantRange> push_constants_{};
-            GraphicsPipelineBuilder& from_;
+            Contained& from_;
 
-            friend GraphicsPipelineBuilder;
-            PipelineLayoutBuilder(GraphicsPipelineBuilder& from);
+            friend Contained;
+            PipelineLayoutBuilder(Contained& from);
+    };
+
+    template <>
+    class PipelineLayoutBuilder<ComputePipelineBuilder> {
+        public:
+            using Contained = ComputePipelineBuilder;
+            auto finish() -> Contained&;
+
+            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>&;
+
+        private:
+            std::vector<VkPushConstantRange> push_constants_{};
+            Contained& from_;
+
+            friend Contained;
+            PipelineLayoutBuilder(Contained& from);
     };
 
     class VulkanDevice;
+
+    class ComputePipeline;
+    class ComputePipelineBuilder {
+        public:
+            auto shader(asset::CompiledShader compute_shader) -> ComputePipelineBuilder&;
+            auto layout() -> PipelineLayoutBuilder<ComputePipelineBuilder>;
+            auto finish(VulkanDevice& device) -> ComputePipeline;
+
+            ComputePipelineBuilder(const ComputePipelineBuilder& rhs)     = default;
+            ComputePipelineBuilder(ComputePipelineBuilder&& rhs) noexcept = default;
+
+        private:
+            VkPipelineShaderStageCreateInfo shader_stage_{};
+            VkPipelineLayoutCreateInfo pipeline_layout_{};
+
+            ComputePipelineBuilder() = default;
+            friend class ComputePipeline;
+            friend class PipelineLayoutBuilder<ComputePipelineBuilder>;
+    };
+
+    class ComputePipeline {
+        public:
+            ComputePipeline() = default;
+            static auto build() -> ComputePipelineBuilder;
+
+            ComputePipeline(const ComputePipeline& rhs);
+            ComputePipeline(ComputePipeline&& rhs) noexcept;
+
+
+            auto operator=(const ComputePipeline& rhs) -> ComputePipeline&;
+            auto operator=(ComputePipeline&& rhs) noexcept -> ComputePipeline&;
+
+            const VkPipeline& pipeline     = pipeline_;
+            const VkPipelineLayout& layout = layout_;
+
+        private:
+            VkPipeline pipeline_     = VK_NULL_HANDLE;
+            VkPipelineLayout layout_ = VK_NULL_HANDLE;
+
+            ComputePipeline(VulkanDevice& device, VkComputePipelineCreateInfo pipeline_info, VkPipelineLayoutCreateInfo layout_info);
+            friend class ComputePipelineBuilder;
+    };
+
     class GraphicsPipeline;
     class GraphicsPipelineBuilder {
         public:
@@ -50,8 +114,8 @@ namespace ENGINE_NS {
 
             auto finish(VulkanDevice& device) -> GraphicsPipeline;
 
-            GraphicsPipelineBuilder(const GraphicsPipelineBuilder& rhs);
-            GraphicsPipelineBuilder(GraphicsPipelineBuilder&& rhs) noexcept;
+            GraphicsPipelineBuilder(const GraphicsPipelineBuilder& rhs)     = default;
+            GraphicsPipelineBuilder(GraphicsPipelineBuilder&& rhs) noexcept = default;
 
         private:
             std::vector<VkPipelineShaderStageCreateInfo> shader_stages_{};
@@ -77,7 +141,6 @@ namespace ENGINE_NS {
             GraphicsPipeline(const GraphicsPipeline& rhs);
             GraphicsPipeline(GraphicsPipeline&& rhs) noexcept;
 
-
             auto operator=(const GraphicsPipeline& rhs) -> GraphicsPipeline&;
             auto operator=(GraphicsPipeline&& rhs) noexcept -> GraphicsPipeline&;
 
@@ -92,32 +155,4 @@ namespace ENGINE_NS {
             friend class GraphicsPipelineBuilder;
     };
 
-    struct UserPipelineInfo {
-            enum class Kind {
-                COMPUTE
-            };
-            enum class Lifetime {
-                PROGRAM
-            };
-
-            union Pipeline {
-                    GraphicsPipelineBuilder graphics;
-                    ~Pipeline() {
-                    }
-            } pipeline;
-            Kind pipeline_type{};
-            Lifetime lifetime{};
-    };
-
-    // pipelines will hold scenes and render
-    // notably, scenes are not GAME scenes, they are purely for rendering
-    // Likewise, each pipeline will return a "RenderContext" object which will then be injected into the scene
-    // Scenes will be inherited from a base scene that pipelines can use at will, or something. idk
-    class GraphicsEngine;
-    class IPipeline {
-        public:
-            virtual auto build() -> UserPipelineInfo         = 0;
-            virtual auto record(VkCommandBuffer cmd) -> void = 0;
-            virtual auto dirty() -> bool                     = 0;
-    };
 } // namespace ENGINE_NS

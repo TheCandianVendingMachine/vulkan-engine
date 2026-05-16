@@ -80,28 +80,17 @@ class TileMap {
 };
 
 
-class TilemapPipeline : public engine::StatePipeline {
+class TilemapPreDrawPipeline : public engine::StatePipeline {
     public:
         using engine::StatePipeline::StatePipeline;
 
         virtual auto name() const -> std::string override final;
-        virtual auto build_pipeline(engine::GraphicsEngine& engine,
-                                    engine::VulkanDevice& device,
-                                    engine::GraphicsRegisteredPipelineDeletionQueue&) -> engine::GraphicsPipelineBuilder override final;
+        virtual auto build_compute_pipeline(engine::GraphicsEngine& engine,
+                                            engine::VulkanDevice& device,
+                                            engine::GraphicsRegisteredPipelineDeletionQueue&)
+            -> std::optional<engine::ComputePipelineBuilder> override final;
 
     protected:
-        virtual auto record_(VkCommandBuffer cmd) -> void override final;
-};
-class TilemapDebugPipeline : public engine::StatePipeline {
-    public:
-        using engine::StatePipeline::StatePipeline;
-
-        virtual auto name() const -> std::string override final;
-        virtual auto build_pipeline(engine::GraphicsEngine& engine,
-                                    engine::VulkanDevice& device,
-                                    engine::GraphicsRegisteredPipelineDeletionQueue&) -> engine::GraphicsPipelineBuilder override final;
-
-    protected:
-        virtual auto record_(VkCommandBuffer cmd) -> void override final;
+        virtual auto record_compute_(VkCommandBuffer cmd) -> void override final;
 };
 

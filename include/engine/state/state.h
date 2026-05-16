@@ -18,7 +18,11 @@ namespace ENGINE_NS {
             StatePipeline(State& state);
             virtual ~StatePipeline();
 
-            virtual auto record(VkCommandBuffer buffer) -> void override final;
+            virtual auto should_lock() const -> bool;
+
+            virtual auto record_graphics(VkCommandBuffer buffer) -> void override final;
+            virtual auto record_compute(VkCommandBuffer buffer) -> void override final;
+
 
             virtual auto name() const -> std::string                                                                        = 0;
             virtual auto build_pipeline(engine::GraphicsEngine& engine,
@@ -26,7 +30,8 @@ namespace ENGINE_NS {
                                         GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> GraphicsPipelineBuilder = 0;
 
         protected:
-            virtual auto record_(VkCommandBuffer buffer) -> void = 0;
+            virtual auto record_graphics_(VkCommandBuffer buffer) -> void;
+            virtual auto record_compute_(VkCommandBuffer buffer) -> void;
 
             State& owner_;
     };
