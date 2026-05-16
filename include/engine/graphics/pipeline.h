@@ -16,12 +16,19 @@ namespace ENGINE_NS {
                 VkPipelineLayoutCreateInfo layout_info = pipeline_layout_create_info();
                 layout_info.pPushConstantRanges        = push_constants_.data();
                 layout_info.pushConstantRangeCount     = static_cast<std::uint32_t>(push_constants_.size());
+                layout_info.pSetLayouts                = descriptor_set_layouts_.data();
+                layout_info.setLayoutCount             = static_cast<std::uint32_t>(descriptor_set_layouts_.size());
                 from_.pipeline_layout_                 = layout_info;
                 return from_;
             }
 
             auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>& {
                 push_constants_.push_back(range);
+                return *this;
+            }
+
+            auto add_set_layout(VulkanDescriptorSetLayout& layout) -> PipelineLayoutBuilder<Contained>& {
+                descriptor_set_layouts_.push_back(layout.layout);
                 return *this;
             }
 
@@ -33,6 +40,7 @@ namespace ENGINE_NS {
 
         private:
             std::vector<VkPushConstantRange> push_constants_{};
+            std::vector<VkDescriptorSetLayout> descriptor_set_layouts_{};
             Contained& from_;
 
             friend Contained;
@@ -53,8 +61,8 @@ namespace ENGINE_NS {
             ComputePipelineBuilder(ComputePipelineBuilder&& rhs) noexcept = default;
 
         private:
-            VkPipelineShaderStageCreateInfo shader_stage_{};
-            VkPipelineLayoutCreateInfo pipeline_layout_{};
+            VkPipelineShaderStageCreateInfo shader_stage_{.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
+            VkPipelineLayoutCreateInfo pipeline_layout_{.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 
             ComputePipelineBuilder() = default;
             friend class ComputePipeline;

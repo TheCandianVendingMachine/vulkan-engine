@@ -148,7 +148,6 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
             }
         }
 
-        global_descriptor_allocator_.destroy();
         for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
             auto frame = frames_[idx].write();
             vkDestroySemaphore(device_.device, frame.get().swapchain_semaphore_, nullptr);
@@ -160,6 +159,7 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
             vkDestroyCommandPool(device_.device, frame.get().command_pool, nullptr);
 
             frame.get().deletion_queue.flush(device_, allocator_);
+            frame.get().descriptor_allocator.clear_pools(device_);
         }
     }
     frame_deletion_queue_.flush(device_, allocator_);
@@ -249,6 +249,7 @@ auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<g
         pipeline->id_              = pipeline_uid;
         new_pipelines.get().push_back(std::move(pipeline));
     }
+    pipeline_compile_condition_.notify_one();
     return graphics::RegisteredPipelineReceipt(*this, std::move(ids));
 }
 
@@ -436,32 +437,20 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::init_descriptors_() -> void {
-    std::vector<DescriptorAllocator::PoolSizeRatio> sizes = {
-      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}
+    std::vector<DescriptorAllocatorGrowable::PoolSizeRatio> sizes = {
+      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          3},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         3},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         3},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
     };
-    global_descriptor_allocator_.init(device_, 10, sizes);
-    draw_image_layout_      = VulkanDescriptorSetLayout::build()
-                                  .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
-                                  .build(device_, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
+    global_descriptor_allocator_.init(device_, 100, sizes);
+    deletion_queue_.push(global_descriptor_allocator_);
 
-    draw_image_descriptors_ = global_descriptor_allocator_.allocate(draw_image_layout_.layout);
-
-    VkDescriptorImageInfo image_info{};
-    image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-    image_info.imageView   = draw_image_.view;
-
-    VkWriteDescriptorSet draw_image_write{};
-    draw_image_write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-    draw_image_write.pNext           = nullptr;
-
-    draw_image_write.dstBinding      = 0;
-    draw_image_write.dstSet          = draw_image_descriptors_;
-    draw_image_write.descriptorCount = 1;
-    draw_image_write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-    draw_image_write.pImageInfo      = &image_info;
-
-    vkUpdateDescriptorSets(device_.device, 1, &draw_image_write, 0, nullptr);
-    deletion_queue_.push(draw_image_layout_);
+    for (std::size_t idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+        auto frame_lock = frames_[idx].write();
+        frame_lock.get().descriptor_allocator.init(device_, 1'000, sizes);
+        frame_lock.get().deletion_queue.push(frame_lock.get().descriptor_allocator);
+    }
 }
 
 auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
@@ -648,6 +637,7 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             auto frame = current_frame().write();
             VK_CHECK(vkResetFences(device_.device, 1, &frame.get().render_fence_));
             frame.get().deletion_queue.flush(device_, allocator_);
+            frame.get().descriptor_allocator.clear_pools(device_);
 
             std::uint32_t swapchain_image_index = 0;
             VK_CHECK(vkAcquireNextImageKHR(device_.device, swapchain_.swapchain, TIMEOUT, frame.get().swapchain_semaphore_, VK_NULL_HANDLE,
@@ -903,10 +893,13 @@ auto ENGINE_NS::GraphicsEngine::compile_() -> void {
             auto new_pipelines        = new_pipelines_.write();
             auto in_use_pipelines     = in_use_pipelines_.write();
             auto registered_pipelines = registered_pipelines_.write();
+            logger.get().debug("Compiling {} pipeline(s)", new_pipelines.get().size());
             while (!new_pipelines.get().empty()) {
                 ZoneScoped;
                 std::unique_ptr<graphics::RegisteredPipeline> pipeline = std::move(new_pipelines.get().back());
                 new_pipelines.get().pop_back();
+
+                logger.get().debug("Compiling pipeline \"{}\" with id \"{}\"", pipeline->name(), pipeline->id_);
 
                 auto pipeline_id = pipeline->id_;
                 pipeline->init_pipeline(*this, device_);
@@ -999,6 +992,16 @@ auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engi
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.get().debug("Creating registered pipeline \"{}\"", this->name());
 
+    std::vector<DescriptorAllocatorGrowable::PoolSizeRatio> frame_sizes = {
+      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          3},
+      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         3},
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         3},
+      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+    };
+
+    pipeline_descriptor_allocator_.init(device, 1'000, frame_sizes);
+    this->deletion_queue_.push(pipeline_descriptor_allocator_);
+
     auto graphics_pipeline = this->build_graphics_pipeline(engine, device, this->deletion_queue_);
     if (graphics_pipeline.has_value()) {
         this->graphics_pipeline_ = std::move(graphics_pipeline.value().finish(device));
@@ -1014,7 +1017,9 @@ auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engi
 auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaAllocator allocator) -> void {
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.get().debug("Destroying registered pipeline \"{}\"", this->name());
+    this->destroy_(device, allocator);
     this->deletion_queue_.flush(device, allocator);
+    this->pipeline_descriptor_allocator_.destroy();
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::record_graphics(VkCommandBuffer) -> void {
@@ -1029,4 +1034,7 @@ auto ENGINE_NS::graphics::RegisteredPipeline::push_constants() -> GPUPushConstan
 
 auto ENGINE_NS::graphics::RegisteredPipeline::dependencies() -> std::vector<std::string> {
     return {};
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::destroy_(VulkanDevice& device, VmaAllocator allocator) -> void {
 }

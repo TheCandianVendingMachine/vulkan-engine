@@ -3,7 +3,7 @@ RWTexture2D<float4> image;
 
 [shader("compute")]
 [numthreads(16, 16, 1)]
-void main(uint3 thread_id: SV_DispatchThreadID, uint3 local_id: SV_GroupThreadID) {
+void computeMain(uint3 thread_id: SV_DispatchThreadID, uint3 local_id: SV_GroupThreadID) {
     vector<int, 2> texel_coord = thread_id.xy;
     vector<int, 2> size;
     image.GetDimensions(size.x, size.y);

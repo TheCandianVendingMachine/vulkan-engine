@@ -191,7 +191,7 @@ ENGINE_NS::ComputePipeline::ComputePipeline(VulkanDevice& device,
 }
 
 auto ENGINE_NS::ComputePipelineBuilder::shader(asset::CompiledShader compute_shader) -> ComputePipelineBuilder& {
-    shader_stage_ = pipeline_shader_stage_create_info(VK_SHADER_STAGE_COMPUTE_BIT, compute_shader.shader, "computeMain");
+    shader_stage_ = pipeline_shader_stage_create_info(VK_SHADER_STAGE_COMPUTE_BIT, compute_shader.shader, "main");
     return *this;
 }
 

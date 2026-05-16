@@ -60,3 +60,7 @@ auto ENGINE_NS::Deletion<ENGINE_NS::graphics::Immediate>::destroy(VkDevice devic
     }
     vkDestroyCommandPool(device, object.command_pool, nullptr);
 }
+
+auto ENGINE_NS::Deletion<ENGINE_NS::DescriptorAllocatorGrowable>::destroy(VkDevice device) -> void {
+    object.destroy_pools(device);
+}

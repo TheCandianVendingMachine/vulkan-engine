@@ -48,6 +48,7 @@ namespace ENGINE_NS {
                 // Allocations that are created in the process of rendering. Should never be pushed to outside the render thread
                 GraphicsPerFrameDeletionQueue deletion_queue{};
                 std::vector<std::uint64_t> in_use_pipelines{};
+                DescriptorAllocatorGrowable descriptor_allocator{};
                 VkCommandPool command_pool          = VK_NULL_HANDLE;
                 VkCommandBuffer main_command_buffer = VK_NULL_HANDLE;
                 VkSemaphore swapchain_semaphore_    = VK_NULL_HANDLE;
@@ -92,11 +93,13 @@ namespace ENGINE_NS {
                 friend class ENGINE_NS::GraphicsEngine;
 
             protected:
+                DescriptorAllocatorGrowable pipeline_descriptor_allocator_{};
                 GraphicsRegisteredPipelineDeletionQueue deletion_queue_{};
                 std::optional<GraphicsPipeline> graphics_pipeline_ = std::nullopt;
                 std::optional<ComputePipeline> compute_pipeline_   = std::nullopt;
                 std::uint64_t id_                                  = std::numeric_limits<std::uint64_t>::max();
                 std::atomic<std::uint64_t> paused_                 = 0;
+                virtual auto destroy_(VulkanDevice& device, VmaAllocator allocator) -> void;
 
             private:
                 bool moved_ = false;
@@ -176,7 +179,7 @@ namespace ENGINE_NS {
             GraphicsPerFrameDeletionQueue frame_deletion_queue_{};
             VmaAllocator allocator_{};
 
-            DescriptorAllocator global_descriptor_allocator_{};
+            DescriptorAllocatorGrowable global_descriptor_allocator_{};
             VkDescriptorSet draw_image_descriptors_ = VK_NULL_HANDLE;
             VulkanDescriptorSetLayout draw_image_layout_{};
 

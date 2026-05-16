@@ -1,13 +1,15 @@
 #pragma once
 
 #include <cstdint>
+#include <engine/graphics/descriptor.h>
+#include <engine/graphics/vulkan.h>
 #include <engine/reflection/type.h>
 #include <engine/state/state.h>
-#include <engine/utilities/transform.h>
 #include <linalg/vector.h>
 #include <robin_map.h>
 #include <string>
 #include <vector>
+#include <vk_mem_alloc.h>
 
 struct Tile {
         std::string tile_name{};
@@ -87,10 +89,18 @@ class TilemapPreDrawPipeline : public engine::StatePipeline {
         virtual auto name() const -> std::string override final;
         virtual auto build_compute_pipeline(engine::GraphicsEngine& engine,
                                             engine::VulkanDevice& device,
-                                            engine::GraphicsRegisteredPipelineDeletionQueue&)
+                                            engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue)
             -> std::optional<engine::ComputePipelineBuilder> override final;
 
     protected:
         virtual auto record_compute_(VkCommandBuffer cmd) -> void override final;
+
+
+    private:
+        auto create_descriptors_(engine::GraphicsEngine& engine,
+                                 engine::VulkanDevice& device,
+                                 engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue) -> void;
+        VkDescriptorSet tilemap_id_image_descriptors_ = VK_NULL_HANDLE;
+        engine::VulkanDescriptorSetLayout tilemap_id_image_layout_{};
 };
 

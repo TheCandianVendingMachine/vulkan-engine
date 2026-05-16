@@ -10,6 +10,9 @@ auto ENGINE_NS::GraphicsPerFrameDeletionQueue::flush(VulkanDevice& device, VmaAl
     for (auto& buffer : buffers_) {
         buffer.destroy(device.device, allocator);
     }
+    for (auto& descriptor_allocator : descriptor_allocators_) {
+        descriptor_allocator.destroy(device.device);
+    }
     for (auto& layout : layouts_) {
         layout.destroy(device.device);
     }
@@ -35,6 +38,9 @@ auto ENGINE_NS::GraphicsMainDeletionQueue::flush(VulkanDevice& device, VmaAlloca
     for (auto& pipeline : compute_pipelines_) {
         pipeline.destroy(device.device);
     }
+    for (auto& descriptor_allocator : descriptor_allocators_) {
+        descriptor_allocator.destroy(device.device);
+    }
     for (auto& pipeline : graphics_pipelines_) {
         pipeline.destroy(device.device);
     }
@@ -53,6 +59,10 @@ auto ENGINE_NS::GraphicsUploadDeletionQueue::flush(VulkanDevice& device, VmaAllo
     }
     buffers_.clear();
     index_ = 0;
+}
+
+auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(DescriptorAllocatorGrowable& descriptor_allocator) -> void {
+    descriptor_allocators_.push_back(Deletion<DescriptorAllocatorGrowable>(descriptor_allocator, 0));
 }
 
 auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(ImageAllocation& allocation) -> void {
@@ -77,6 +87,10 @@ auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(GPUMeshBuffers& buffers) -> 
 
 auto ENGINE_NS::GraphicsPerFrameDeletionQueue::push(asset::CompiledShader& shader) -> void {
     shaders_.push_back(Deletion<asset::CompiledShader>(shader, 0));
+}
+
+auto ENGINE_NS::GraphicsMainDeletionQueue::push(DescriptorAllocatorGrowable& descriptor_allocator) -> void {
+    descriptor_allocators_.push_back(Deletion<DescriptorAllocatorGrowable>(descriptor_allocator, 0));
 }
 
 auto ENGINE_NS::GraphicsMainDeletionQueue::push(ImageAllocation& allocation) -> void {
@@ -122,6 +136,9 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& dev
     for (auto& image : images_) {
         image.destroy(device.device, allocator);
     }
+    for (auto& descriptor_allocator : descriptor_allocators_) {
+        descriptor_allocator.destroy(device.device);
+    }
     for (auto& pipeline : compute_pipelines_) {
         pipeline.destroy(device.device);
     }
@@ -141,7 +158,12 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& dev
     graphics_pipelines_.clear();
     mesh_buffers_.clear();
     immediates_.clear();
+    descriptor_allocators_.clear();
     index_ = 0;
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(DescriptorAllocatorGrowable& descriptor_allocator) -> void {
+    descriptor_allocators_.push_back(Deletion<DescriptorAllocatorGrowable>(descriptor_allocator, 0));
 }
 
 auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(ImageAllocation& allocation) -> void {

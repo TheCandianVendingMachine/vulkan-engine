@@ -6,6 +6,7 @@
 #include <engine/assets/library.h>
 #include <engine/deletion_queue.h>
 #include <engine/engine_utils.h>
+#include <engine/graphics/descriptor.h>
 #include <engine/graphics/graphics.h>
 #include <engine/graphics/pipeline.h>
 #include <engine/graphics/vulkan.h>
@@ -19,6 +20,9 @@
 #include <tracy/Tracy.hpp>
 #include <utility>
 #include <vector>
+// clang-format off
+#include <volk/volk.h>
+// clang-format on
 
 TileMap::TileMap(std::uint64_t size_x, std::uint64_t size_y, std::uint64_t tile_size, Tile null_tile) :
     size_x(size_x), size_y(size_y), tile_size(tile_size), logic_(LogicMap(size_x, size_y, tile_size, null_tile)) {
@@ -142,9 +146,11 @@ auto TilemapPreDrawPipeline::name() const -> std::string {
 
 auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engine,
                                                     engine::VulkanDevice& device,
-                                                    engine::GraphicsRegisteredPipelineDeletionQueue&)
+                                                    engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue)
     -> std::optional<engine::ComputePipelineBuilder> {
     ZoneScoped;
+    create_descriptors_(engine, device, pipeline_deletion_queue);
+
     auto shader_result = engine::asset::BytecodeShader::load_from_file("assets/shaders/game/tilemap/tilemap.spv").compile(device);
     if (!shader_result.has_value()) {
         engine::crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
@@ -152,11 +158,43 @@ auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engi
     }
     auto shader            = shader_result.value();
 
-    auto triangle_pipeline = engine::ComputePipeline::build().layout().finish().shader(shader);
+    auto triangle_pipeline = engine::ComputePipeline::build().layout().add_set_layout(tilemap_id_image_layout_).finish().shader(shader);
     engine.destroy_shader(shader);
 
     return triangle_pipeline;
 }
 
 auto TilemapPreDrawPipeline::record_compute_(VkCommandBuffer) -> void {
+}
+
+auto TilemapPreDrawPipeline::create_descriptors_(engine::GraphicsEngine& engine,
+                                                 engine::VulkanDevice& device,
+                                                 engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue) -> void {
+    ZoneScoped;
+    std::vector<engine::DescriptorAllocator::PoolSizeRatio> sizes = {
+      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1}
+    };
+    pipeline_descriptor_allocator_.init(device, 10, sizes);
+    tilemap_id_image_layout_      = engine::VulkanDescriptorSetLayout::build()
+                                        .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                        .build(device, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
+
+    tilemap_id_image_descriptors_ = pipeline_descriptor_allocator_.allocate(tilemap_id_image_layout_.layout);
+
+    VkDescriptorImageInfo image_info{};
+    image_info.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    image_info.imageView   = draw_image_.view;
+
+    VkWriteDescriptorSet tilemap_id_image_write{};
+    tilemap_id_image_write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    tilemap_id_image_write.pNext           = nullptr;
+
+    tilemap_id_image_write.dstBinding      = 0;
+    tilemap_id_image_write.dstSet          = tilemap_id_image_descriptors_;
+    tilemap_id_image_write.descriptorCount = 1;
+    tilemap_id_image_write.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    tilemap_id_image_write.pImageInfo      = &image_info;
+
+    vkUpdateDescriptorSets(device_.device, 1, &tilemap_id_image_write, 0, nullptr);
+    pipeline_deletion_queue.push(tilemap_id_image_layout_);
 }

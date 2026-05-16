@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/assets/library.h"
+#include "engine/graphics/descriptor.h"
 #include "engine/graphics/pipeline.h"
 #include "engine/graphics/types.h"
 #include "engine/graphics/util.h"
@@ -115,11 +116,18 @@ namespace ENGINE_NS {
             using DeletionInterface<graphics::Immediate>::operator=;
             auto destroy(VkDevice device) -> void;
     };
+    template <>
+    struct Deletion<DescriptorAllocatorGrowable> : public DeletionInterface<DescriptorAllocatorGrowable> {
+            using DeletionInterface<DescriptorAllocatorGrowable>::DeletionInterface;
+            using DeletionInterface<DescriptorAllocatorGrowable>::operator=;
+            auto destroy(VkDevice device) -> void;
+    };
 
     class GraphicsMainDeletionQueue {
         public:
             auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
 
+            auto push(DescriptorAllocatorGrowable& descriptor_allocator) -> void;
             auto push(ImageAllocation& allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
             auto push(ComputePipeline pipeline) -> void;
@@ -130,6 +138,7 @@ namespace ENGINE_NS {
 
 
         private:
+            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_{};
             Deletion<ImageAllocation> draw_image_{};
             Deletion<graphics::ImGui> imgui_{};
             std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
@@ -142,6 +151,7 @@ namespace ENGINE_NS {
         public:
             auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
 
+            auto push(DescriptorAllocatorGrowable& descriptor_allocator) -> void;
             auto push(ImageAllocation& allocation) -> void;
             auto push(BufferAllocation& allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
@@ -149,6 +159,7 @@ namespace ENGINE_NS {
             auto push(asset::CompiledShader& shader) -> void;
 
         private:
+            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_{};
             std::vector<Deletion<ImageAllocation>> images_{};
             std::vector<Deletion<BufferAllocation>> buffers_{};
             std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
@@ -171,6 +182,7 @@ namespace ENGINE_NS {
         public:
             auto flush(VulkanDevice& device, VmaAllocator allocator) -> void;
 
+            auto push(DescriptorAllocatorGrowable& descriptor_allocator) -> void;
             auto push(ImageAllocation& allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
             auto push(ComputePipeline pipeline) -> void;
@@ -179,6 +191,7 @@ namespace ENGINE_NS {
             auto push(graphics::Immediate immediate) -> void;
 
         private:
+            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_{};
             std::vector<Deletion<ImageAllocation>> images_{};
             std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
             std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_{};
