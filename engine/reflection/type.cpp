@@ -1,5 +1,9 @@
 #include "engine/reflection/type.h"
 
+#include <cstdint>
+#include <string>
+#include <vector>
+
 namespace ENGINE_NS {
     namespace reflection {
         template <>
@@ -52,6 +56,11 @@ namespace ENGINE_NS {
         template <>
         auto RuntimeType::instance<double>() -> std::shared_ptr<RuntimeType> {
             static auto instance = std::make_shared<RuntimeTypeFloat64>();
+            return instance;
+        }
+        template <>
+        auto RuntimeType::instance<std::string>() -> std::shared_ptr<RuntimeType> {
+            static auto instance = std::make_shared<RuntimeTypeString>();
             return instance;
         }
 

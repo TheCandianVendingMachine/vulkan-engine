@@ -48,6 +48,8 @@ namespace ENGINE_NS {
             StateManager state_manager{};
             LogLocator logger{};
 
+            const bool& crashed = crashed_;
+
         private:
             auto main_loop() -> void;
 
@@ -58,6 +60,7 @@ namespace ENGINE_NS {
             auto fixed_update(double update_rate) -> void;
 
         private:
+            bool crashed_              = false;
             bool running_              = false;
             std::uint64_t frame_count_ = 0;
 

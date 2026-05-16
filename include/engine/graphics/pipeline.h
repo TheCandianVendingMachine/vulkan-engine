@@ -1,7 +1,6 @@
 #pragma once
 #include "engine/assets/library.h"
 #include "engine/engine_utils.h"
-#include "engine/graphics/scene/draw_context.h"
 
 #include <vector>
 #include <vulkan/vulkan_core.h>

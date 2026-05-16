@@ -14,6 +14,7 @@ add_executable(game
 
 )
 add_subdirectory(level)
+add_subdirectory(tilemap)
 target_include_directories(game PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_HEADER_DIR}/Tracy

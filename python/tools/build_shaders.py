@@ -65,7 +65,20 @@ def main():
             
         for shader in target:
             shader_output = output_path / f'{shader.stem}.spv'
+
+            start = 0
+            for idx, part in enumerate(output_path.parts):
+                if part == shader.parts[0]:
+                    start = idx
+                    break
+            for idx, _ in enumerate(shader.parts):
+                output_idx = start + idx
+                if output_idx >= len(output_path.parts) or output_path.parts[output_idx] != shader.parts[idx]:
+                    shader_output = output_path / '/'.join(shader.parts[idx:])
+                    break
+            shader_output = shader_output.with_suffix('.spv')
             print(f'Compiling `{shader}` -> {os.path.relpath(shader_output, BASE_DIRECTORY)}')
+            shader_output.parent.mkdir(exist_ok=True)
             subprocess.run(['slangc', BASE_DIRECTORY / shader, '-target', 'spirv', '-o', shader_output] + additional_arguments)
             print(shader)
 

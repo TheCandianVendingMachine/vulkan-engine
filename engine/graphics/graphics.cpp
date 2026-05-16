@@ -95,6 +95,17 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
     FrameMarkStart(StaticNames::GraphicsDeinit);
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.get().info("Cleaning up graphics engine");
+    if (g_ENGINE->crashed) {
+        logger.get().warning("Opening all locked resources by force");
+        imgui.unsafe_open_all_locks();
+        registered_pipelines_.unsafe_open_all_locks();
+        in_use_pipelines_.unsafe_open_all_locks();
+        to_delete_pipelines_.unsafe_open_all_locks();
+        uploads_.unsafe_open_all_locks();
+        for (auto& frame : frames_) {
+            frame.unsafe_open_all_locks();
+        }
+    }
 
     logger.get().info("Stopping render thread");
     {
@@ -505,120 +516,6 @@ auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
-    init_background_pipelines_();
-    init_triangle_pipeline_();
-    init_mesh_pipeline_();
-}
-
-auto ENGINE_NS::GraphicsEngine::init_background_pipelines_() -> void {
-    VkPipelineLayoutCreateInfo compute_layout = pipeline_layout_create_info();
-    compute_layout.pSetLayouts                = &draw_image_layout_.layout;
-    compute_layout.setLayoutCount             = 1;
-
-    VK_CHECK(vkCreatePipelineLayout(device_.device, &compute_layout, nullptr, &gradient_pipeline_.pipeline_layout));
-
-    auto shader_result = asset::BytecodeShader::load_from_file("assets/shaders/engine/gradient.spv").compile(device_);
-    if (!shader_result.has_value()) {
-        crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
-        std::unreachable();
-    }
-    auto shader                                = shader_result.value();
-
-    VkPipelineShaderStageCreateInfo stage_info = pipeline_shader_stage_create_info(VK_SHADER_STAGE_COMPUTE_BIT, shader.shader, "main");
-    VkComputePipelineCreateInfo compute_create_info{};
-    compute_create_info.sType  = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-    compute_create_info.layout = gradient_pipeline_.pipeline_layout;
-    compute_create_info.stage  = stage_info;
-
-    VK_CHECK(vkCreateComputePipelines(device_.device, VK_NULL_HANDLE, 1, &compute_create_info, nullptr, &gradient_pipeline_.pipeline));
-
-    vkDestroyShaderModule(device_.device, shader.shader, nullptr);
-
-    deletion_queue_.push(gradient_pipeline_);
-}
-
-auto ENGINE_NS::GraphicsEngine::init_triangle_pipeline_() -> void {
-    auto shader_result = asset::BytecodeShader::load_from_file("assets/shaders/engine/static_triangle.spv").compile(device_);
-    if (!shader_result.has_value()) {
-        crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
-        std::unreachable();
-    }
-    auto shader        = shader_result.value();
-
-    triangle_pipeline_ = GraphicsPipeline::build()
-                             .layout()
-                             .finish()
-                             .shaders(shader, shader)
-                             .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                             .polygon_mode(VK_POLYGON_MODE_FILL)
-                             .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
-                             .set_multisampling_none()
-                             .disable_blending()
-                             .disable_depthtest()
-                             .color_attachment_format(draw_image_.format)
-                             .depth_format(VK_FORMAT_UNDEFINED)
-                             .finish(device_);
-    vkDestroyShaderModule(device_.device, shader.shader, nullptr);
-
-    deletion_queue_.push(triangle_pipeline_);
-}
-
-auto ENGINE_NS::GraphicsEngine::init_mesh_pipeline_() -> void {
-    auto shader_result = asset::BytecodeShader::load_from_file("assets/shaders/engine/mesh_triangle.spv").compile(device_);
-    if (!shader_result.has_value()) {
-        crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
-        std::unreachable();
-    }
-    auto& shader = shader_result.value();
-
-    VkPushConstantRange buffer_range{};
-    buffer_range.offset     = 0;
-    buffer_range.size       = sizeof(GPUDrawPushConstants);
-    buffer_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-
-    mesh_pipeline_          = GraphicsPipeline::build()
-                                  .layout()
-                                  .push_constant_range(buffer_range)
-                                  .finish()
-                                  .shaders(shader, shader)
-                                  .input_topology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
-                                  .polygon_mode(VK_POLYGON_MODE_FILL)
-                                  .cull_mode(VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE)
-                                  .set_multisampling_none()
-                                  .disable_blending()
-                                  .disable_depthtest()
-                                  .color_attachment_format(draw_image_.format)
-                                  .depth_format(VK_FORMAT_UNDEFINED)
-                                  .finish(device_);
-    vkDestroyShaderModule(device_.device, shader.shader, nullptr);
-
-    deletion_queue_.push(mesh_pipeline_);
-}
-
-auto ENGINE_NS::GraphicsEngine::init_mesh_data_() -> void {
-    std::array<Vertex, 4> rect_vertices{};
-    rect_vertices[0].position = {0.5, -0.5, 0};
-    rect_vertices[1].position = {0.5, 0.5, 0};
-    rect_vertices[2].position = {-0.5, -0.5, 0};
-    rect_vertices[3].position = {-0.5, 0.5, 0};
-
-    rect_vertices[0].colour   = {0, 0, 0, 1};
-    rect_vertices[1].colour   = {0.5, 0.5, 0.5, 1};
-    rect_vertices[2].colour   = {1, 0, 0, 1};
-    rect_vertices[3].colour   = {0, 1, 0, 1};
-
-    std::array<std::uint32_t, 6> rect_indices{};
-
-    rect_indices[0] = 0;
-    rect_indices[1] = 1;
-    rect_indices[2] = 2;
-
-    rect_indices[3] = 2;
-    rect_indices[4] = 1;
-    rect_indices[5] = 3;
-
-    rectangle_      = upload_mesh(rect_indices, rect_vertices).get();
-    deletion_queue_.push(rectangle_);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void {
@@ -644,56 +541,6 @@ auto ENGINE_NS::GraphicsEngine::draw_background_(VkCommandBuffer cmd) -> void {
 
     VkImageSubresourceRange clear_range = image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
     vkCmdClearColorImage(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, &clear_value, 1, &clear_range);
-
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, gradient_pipeline_.pipeline);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, gradient_pipeline_.pipeline_layout, 0, 1, &draw_image_descriptors_, 0,
-                            nullptr);
-    vkCmdDispatch(cmd, (std::uint32_t)std::ceil(window_extent_.x / 16.0), (std::uint32_t)std::ceil(window_extent_.y / 16.0), 1);
-}
-
-auto ENGINE_NS::GraphicsEngine::draw_geometry_(VkCommandBuffer cmd) -> void {
-    VkRenderingAttachmentInfo colour_attachment = attachment_info(draw_image_.view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-    VkRenderingInfo render_info                 = rendering_info(
-        VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
-        &colour_attachment, nullptr);
-
-    vkCmdBeginRendering(cmd, &render_info);
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, triangle_pipeline_.pipeline);
-
-    VkViewport viewport = {};
-    viewport.x          = 0;
-    viewport.y          = 0;
-    viewport.width      = static_cast<float>(window_extent_.x);
-    viewport.height     = static_cast<float>(window_extent_.y);
-    viewport.minDepth   = 0.f;
-    viewport.maxDepth   = 1.f;
-
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-    VkRect2D scissor      = {};
-    scissor.offset.x      = 0;
-    scissor.offset.y      = 0;
-    scissor.extent.width  = window_extent_.x;
-    scissor.extent.height = window_extent_.y;
-
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-    vkCmdDraw(cmd, 3, 1, 0, 0);
-
-    if (rectangle_.index_buffer.buffer != VK_NULL_HANDLE) {
-        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, mesh_pipeline_.pipeline);
-
-        GPUDrawPushConstants push_constants{};
-        push_constants.world_matrix  = ::linalg::Matrix4<float>::identity();
-        push_constants.vertex_buffer = rectangle_.vertex_buffer_address;
-
-        vkCmdPushConstants(cmd, mesh_pipeline_.layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &push_constants);
-        vkCmdBindIndexBuffer(cmd, rectangle_.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-        vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
-    }
-
-    vkCmdEndRendering(cmd);
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>& frame, VkCommandBuffer cmd) -> void {
@@ -726,11 +573,20 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
     auto registered_pipelines = registered_pipelines_.read();
     for (auto& [id, pipeline] : registered_pipelines.get()) {
         ZoneScoped;
+        if (!pipeline->enabled) {
+            continue;
+        }
         auto paused_count = pipeline->paused_.load(std::memory_order_acquire);
         if (paused_count > 0) {
             continue;
         }
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->pipeline_.value().pipeline);
+
+        auto push_constants = pipeline->push_constants();
+        if (push_constants.size > 0 && push_constants.data) {
+            vkCmdPushConstants(cmd, pipeline->pipeline_.value().layout, VK_SHADER_STAGE_VERTEX_BIT, 0, push_constants.size,
+                               push_constants.data);
+        }
         pipeline->record(cmd);
         frame.get().in_use_pipelines.push_back(id);
     }
@@ -1061,4 +917,8 @@ auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaA
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.get().debug("Destroying registered pipeline \"{}\"", this->name());
     this->deletion_queue_.flush(device, allocator);
+}
+
+auto ENGINE_NS::graphics::RegisteredPipeline::push_constants() -> GPUPushConstants {
+    return GPUPushConstants{};
 }

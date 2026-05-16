@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <type_traits>
+#include <vector>
 
 namespace ENGINE_NS {
     namespace reflection {
@@ -76,6 +78,8 @@ namespace ENGINE_NS {
 #include "engine/reflection/type_int32.h"
 #include "engine/reflection/type_int64.h"
 #include "engine/reflection/type_int8.h"
+#include "engine/reflection/type_string.h"
+#include "engine/reflection/type_vector.h"
 
 namespace ENGINE_NS {
     namespace reflection {
@@ -267,6 +271,26 @@ namespace ENGINE_NS {
         class RuntimeTypeFloat64 : public RuntimeType {
             public:
                 using TypeVar = Type<double>;
+                virtual auto to_string(const void* data) const -> std::string override final {
+                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
+                }
+                virtual auto to_human_string(const void* data) const -> std::string override final {
+                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
+                }
+                virtual auto size() const -> size_t override final {
+                    return TypeVar::size();
+                }
+                virtual auto alignment() const -> size_t override final {
+                    return TypeVar::alignment();
+                }
+                virtual auto name() const -> const char* override final {
+                    return TypeVar::name();
+                }
+        };
+
+        class RuntimeTypeString : public RuntimeType {
+            public:
+                using TypeVar = Type<std::string>;
                 virtual auto to_string(const void* data) const -> std::string override final {
                     return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
                 }

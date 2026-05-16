@@ -76,6 +76,10 @@ namespace ENGINE_NS {
                 auto init_pipeline(GraphicsEngine& engine, VulkanDevice& device) -> void;
                 auto destroy(VulkanDevice& device, VmaAllocator allocator) -> void;
 
+                virtual auto push_constants() -> GPUPushConstants;
+
+                bool enabled = true;
+
                 friend class GraphicsEngine;
 
             protected:
@@ -163,12 +167,6 @@ namespace ENGINE_NS {
             VkDescriptorSet draw_image_descriptors_ = VK_NULL_HANDLE;
             VulkanDescriptorSetLayout draw_image_layout_{};
 
-            ComputePipeline gradient_pipeline_{};
-            GraphicsPipeline triangle_pipeline_{};
-
-            GPUMeshBuffers rectangle_{};
-            GraphicsPipeline mesh_pipeline_{};
-
             RwLock<tsl::robin_map<std::uint64_t, std::unique_ptr<graphics::RegisteredPipeline>>> registered_pipelines_{};
             RwLock<tsl::robin_map<std::uint64_t, std::uint64_t>> in_use_pipelines_{};
             RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> to_delete_pipelines_{};
@@ -214,14 +212,9 @@ namespace ENGINE_NS {
             auto init_immediates_() -> void;
 
             auto init_pipelines_() -> void;
-            auto init_background_pipelines_() -> void;
-            auto init_triangle_pipeline_() -> void;
-            auto init_mesh_pipeline_() -> void;
-            auto init_mesh_data_() -> void;
 
             auto draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void;
             auto draw_background_(VkCommandBuffer cmd) -> void;
-            auto draw_geometry_(VkCommandBuffer cmd) -> void;
             auto draw_registered_(RwDataMut<graphics::FrameData>& frame, VkCommandBuffer cmd) -> void;
             auto draw_() -> void;
 

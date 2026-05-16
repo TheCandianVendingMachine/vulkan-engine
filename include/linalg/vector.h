@@ -31,13 +31,16 @@ namespace linalg {
                 std::memcpy(elements, rhs.elements, sizeof(elements));
                 return *this;
             }
-            auto operator=(Vector2&& rhs) -> Vector2& {
+            auto operator=(Vector2&& rhs) noexcept -> Vector2& {
                 if (&rhs == this) {
                     return *this;
                 }
                 x = std::move(rhs.x);
                 y = std::move(rhs.y);
                 return *this;
+            }
+            friend auto operator==(const Vector2& lhs, const Vector2& rhs) -> bool {
+                return 0 == std::memcmp(lhs.elements, rhs.elements, sizeof(lhs.elements));
             }
     };
 
@@ -63,7 +66,7 @@ namespace linalg {
             Vector3(const Vector3& other) {
                 *this = other;
             }
-            Vector3(Vector3&& other) : x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)) {
+            Vector3(Vector3&& other) noexcept : x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)) {
             }
             auto operator=(const Vector3& rhs) -> Vector3& {
                 if (&rhs == this) {
@@ -72,7 +75,7 @@ namespace linalg {
                 std::memcpy(elements, rhs.elements, sizeof(elements));
                 return *this;
             }
-            auto operator=(Vector3&& rhs) -> Vector3& {
+            auto operator=(Vector3&& rhs) noexcept -> Vector3& {
                 if (&rhs == this) {
                     return *this;
                 }
@@ -80,6 +83,9 @@ namespace linalg {
                 y = std::move(rhs.y);
                 z = std::move(rhs.z);
                 return *this;
+            }
+            friend auto operator==(const Vector3& lhs, const Vector3& rhs) -> bool {
+                return 0 == std::memcmp(lhs.elements, rhs.elements, sizeof(lhs.elements));
             }
     };
 
@@ -106,7 +112,7 @@ namespace linalg {
             Vector4(const Vector4& other) {
                 *this = other;
             }
-            Vector4(Vector4&& other) : x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)), w(std::move(other.w)) {
+            Vector4(Vector4&& other) noexcept : x(std::move(other.x)), y(std::move(other.y)), z(std::move(other.z)), w(std::move(other.w)) {
             }
             auto operator=(const Vector4& rhs) -> Vector4& {
                 if (&rhs == this) {
@@ -115,7 +121,7 @@ namespace linalg {
                 std::memcpy(elements, rhs.elements, sizeof(elements));
                 return *this;
             }
-            auto operator=(Vector4&& rhs) -> Vector4& {
+            auto operator=(Vector4&& rhs) noexcept -> Vector4& {
                 if (&rhs == this) {
                     return *this;
                 }
@@ -124,6 +130,9 @@ namespace linalg {
                 z = std::move(rhs.z);
                 w = std::move(rhs.w);
                 return *this;
+            }
+            friend auto operator==(const Vector4& lhs, const Vector4& rhs) -> bool {
+                return 0 == std::memcmp(lhs.elements, rhs.elements, sizeof(lhs.elements));
             }
     };
 } // namespace linalg

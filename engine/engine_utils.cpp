@@ -147,6 +147,7 @@ void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const ch
         if (additional_message[0] != '\0') {
             logger.get().error("Message: {}", additional_message);
         }
+        g_ENGINE->crashed_ = true;
         g_ENGINE->shutdown();
     }
     std::exit(static_cast<int>(reason));

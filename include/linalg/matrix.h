@@ -50,7 +50,7 @@ namespace linalg {
             Matrix2(const Matrix2& other) {
                 *this = other;
             }
-            Matrix2(Matrix2&& other) {
+            Matrix2(Matrix2&& other) noexcept {
                 *this = std::move(other);
             }
             Matrix2(T r1c1, T r1c2, T r2c1, T r2c2) : r1c1(r1c1), r1c2(r1c2), r2c1(r2c1), r2c2(r2c2) {
@@ -62,7 +62,7 @@ namespace linalg {
                 std::memcpy(elements, rhs.elements, sizeof(elements));
                 return *this;
             }
-            auto operator=(Matrix2&& rhs) -> Matrix2& {
+            auto operator=(Matrix2&& rhs) noexcept -> Matrix2& {
                 if (&rhs == this) {
                     return *this;
                 }
@@ -71,6 +71,9 @@ namespace linalg {
                 r1c2 = std::move(rhs.r1c2);
                 r2c2 = std::move(rhs.r2c2);
                 return *this;
+            }
+            friend auto operator==(const Matrix2& lhs, const Matrix2& rhs) -> bool {
+                return 0 == std::memcmp(lhs.elements, rhs.elements, sizeof(lhs.elements));
             }
     };
 
@@ -140,7 +143,7 @@ namespace linalg {
             Matrix3(const Matrix3& other) {
                 *this = other;
             }
-            Matrix3(Matrix3&& other) {
+            Matrix3(Matrix3&& other) noexcept {
                 *this = std::move(other);
             }
             Matrix3(T r1c1, T r1c2, T r1c3, T r2c1, T r2c2, T r2c3, T r3c1, T r3c2, T r3c3) :
@@ -153,7 +156,7 @@ namespace linalg {
                 std::memcpy(elements, rhs.elements, sizeof(elements));
                 return *this;
             }
-            auto operator=(Matrix3&& rhs) -> Matrix3& {
+            auto operator=(Matrix3&& rhs) noexcept -> Matrix3& {
                 if (&rhs == this) {
                     return *this;
                 }
@@ -169,6 +172,9 @@ namespace linalg {
                 r3c2 = std::move(rhs.r3c2);
                 r3c3 = std::move(rhs.r3c3);
                 return *this;
+            }
+            friend auto operator==(const Matrix3& lhs, const Matrix3& rhs) -> bool {
+                return 0 == std::memcmp(lhs.elements, rhs.elements, sizeof(lhs.elements));
             }
     };
 
@@ -267,7 +273,7 @@ namespace linalg {
             Matrix4(const Matrix4& other) {
                 *this = other;
             }
-            Matrix4(Matrix4&& other) {
+            Matrix4(Matrix4&& other) noexcept {
                 *this = std::move(other);
             }
             Matrix4(T r1c1,
@@ -296,7 +302,7 @@ namespace linalg {
                 std::memcpy(elements, rhs.elements, sizeof(elements));
                 return *this;
             }
-            auto operator=(Matrix4&& rhs) -> Matrix4& {
+            auto operator=(Matrix4&& rhs) noexcept -> Matrix4& {
                 if (&rhs == this) {
                     return *this;
                 }
@@ -320,6 +326,9 @@ namespace linalg {
                 r4c3 = std::move(rhs.r4c3);
                 r4c4 = std::move(rhs.r4c4);
                 return *this;
+            }
+            friend auto operator==(const Matrix4& lhs, const Matrix4& rhs) -> bool {
+                return 0 == std::memcmp(lhs.elements, rhs.elements, sizeof(lhs.elements));
             }
     };
 }; // namespace linalg

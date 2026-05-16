@@ -74,4 +74,9 @@ namespace ENGINE_NS {
             VkDeviceAddress vertex_buffer{};
     };
 
+    struct GPUPushConstants {
+            void* data       = nullptr;
+            std::size_t size = 0;
+    };
+
 } // namespace ENGINE_NS

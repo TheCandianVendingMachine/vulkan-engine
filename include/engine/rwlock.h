@@ -201,6 +201,11 @@ namespace ENGINE_NS {
                 swap(a.moved_, b.moved_);
             }
 
+            auto unsafe_open_all_locks() {
+                currently_reading_.store(0, std::memory_order_release);
+                currently_writing_.store(false, std::memory_order_release);
+            }
+
         private:
             T wrapped_;
             std::atomic<std::uint64_t> currently_reading_{};
