@@ -34,36 +34,6 @@ auto ENGINE_NS::GraphicsPipeline::operator=(GraphicsPipeline&& rhs) noexcept -> 
     return *this;
 }
 
-auto ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::GraphicsPipelineBuilder>::finish() -> GraphicsPipelineBuilder& {
-    VkPipelineLayoutCreateInfo layout_info = pipeline_layout_create_info();
-    layout_info.pPushConstantRanges        = push_constants_.data();
-    layout_info.pushConstantRangeCount     = static_cast<std::uint32_t>(push_constants_.size());
-    from_.pipeline_layout_                 = layout_info;
-    return from_;
-}
-
-auto ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::GraphicsPipelineBuilder>::push_constant_range(VkPushConstantRange range)
-    -> PipelineLayoutBuilder<GraphicsPipelineBuilder>& {
-    push_constants_.push_back(range);
-    return *this;
-}
-
-auto ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::ComputePipelineBuilder>::finish() -> ComputePipelineBuilder& {
-    VkPipelineLayoutCreateInfo layout_info = pipeline_layout_create_info();
-    layout_info.pSetLayouts;
-    layout_info.setLayoutCount;
-    layout_info.pPushConstantRanges    = push_constants_.data();
-    layout_info.pushConstantRangeCount = static_cast<std::uint32_t>(push_constants_.size());
-    from_.pipeline_layout_             = layout_info;
-    return from_;
-}
-
-auto ENGINE_NS::PipelineLayoutBuilder<ENGINE_NS::ComputePipelineBuilder>::push_constant_range(VkPushConstantRange range)
-    -> PipelineLayoutBuilder<ComputePipelineBuilder>& {
-    push_constants_.push_back(range);
-    return *this;
-}
-
 ENGINE_NS::GraphicsPipeline::GraphicsPipeline(VulkanDevice& device,
                                               VkGraphicsPipelineCreateInfo pipeline_info,
                                               VkPipelineLayoutCreateInfo layout_info) {

@@ -121,7 +121,8 @@ namespace ENGINE_NS {
         enum class Thread {
             MAIN,
             UPLOAD,
-            DRAW
+            DRAW,
+            COMPILE
         };
         auto thread_name(Thread thread) -> std::string;
         auto thread_immediate_name(Thread thread) -> std::string;

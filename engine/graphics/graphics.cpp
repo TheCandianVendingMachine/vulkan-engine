@@ -882,6 +882,13 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::compile_() -> void {
+    tracy::SetThreadName(StaticNames::CompileThreadName);
+    init_thread_(graphics::Thread::COMPILE);
+
+    while (!initialised_) {
+    }
+
+    auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     while (running_.load(std::memory_order_acquire)) {
         std::unique_lock lock(pipeline_compile_lock_);
         pipeline_compile_condition_.wait(lock, [&] {
@@ -890,18 +897,21 @@ auto ENGINE_NS::GraphicsEngine::compile_() -> void {
         if (!running_.load(std::memory_order_acquire)) {
             break;
         }
+        ZoneScopedN(StaticNames::CompileRun);
 
         {
             auto new_pipelines        = new_pipelines_.write();
             auto in_use_pipelines     = in_use_pipelines_.write();
             auto registered_pipelines = registered_pipelines_.write();
             while (!new_pipelines.get().empty()) {
+                ZoneScoped;
                 std::unique_ptr<graphics::RegisteredPipeline> pipeline = std::move(new_pipelines.get().back());
                 new_pipelines.get().pop_back();
 
+                auto pipeline_id = pipeline->id_;
                 pipeline->init_pipeline(*this, device_);
-                registered_pipelines.get()[pipeline->id_] = std::move(pipeline);
-                in_use_pipelines.get().insert({pipeline->id_, 0});
+                registered_pipelines.get()[pipeline_id] = std::move(pipeline);
+                in_use_pipelines.get().insert({pipeline_id, 0});
             }
         }
 
@@ -917,6 +927,8 @@ auto ENGINE_NS::graphics::thread_name(Thread thread) -> std::string {
             return "draw";
         case Thread::UPLOAD:
             return "upload";
+        case Thread::COMPILE:
+            return "compile";
     }
     std::unreachable();
 }

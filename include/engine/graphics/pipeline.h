@@ -1,57 +1,43 @@
 #pragma once
 #include "engine/assets/library.h"
 #include "engine/engine_utils.h"
+#include "engine/graphics/vulkan.h"
 
+#include <cstdint>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
 namespace ENGINE_NS {
-    class GraphicsPipelineBuilder;
-    class ComputePipelineBuilder;
-
-    template <typename TFrom>
+    template <class TFrom>
     class PipelineLayoutBuilder {
         public:
-            PipelineLayoutBuilder() = delete;
+            using Contained = TFrom;
+            auto finish() -> Contained& {
+                VkPipelineLayoutCreateInfo layout_info = pipeline_layout_create_info();
+                layout_info.pPushConstantRanges        = push_constants_.data();
+                layout_info.pushConstantRangeCount     = static_cast<std::uint32_t>(push_constants_.size());
+                from_.pipeline_layout_                 = layout_info;
+                return from_;
+            }
 
-            using Contained         = TFrom;
-            auto finish() -> Contained&;
+            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>& {
+                push_constants_.push_back(range);
+                return *this;
+            }
 
-            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>&;
+            PipelineLayoutBuilder(const PipelineLayoutBuilder& other) : from_(other.from_), push_constants_(other.push_constants_) {
+            }
+            PipelineLayoutBuilder(PipelineLayoutBuilder&& other) : from_(other.from_), push_constants_(std::move(other.push_constants_)) {
+            }
 
-            PipelineLayoutBuilder<Contained>(const PipelineLayoutBuilder<Contained>& rhs) = default;
-            PipelineLayoutBuilder<Contained>(PipelineLayoutBuilder<Contained>&& rhs)      = default;
-    };
-    template <>
-    class PipelineLayoutBuilder<GraphicsPipelineBuilder> {
-        public:
-            using Contained = GraphicsPipelineBuilder;
-            auto finish() -> Contained&;
-
-            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>&;
-
-        private:
-            std::vector<VkPushConstantRange> push_constants_{};
-            Contained& from_;
-
-            friend Contained;
-            PipelineLayoutBuilder(Contained& from);
-    };
-
-    template <>
-    class PipelineLayoutBuilder<ComputePipelineBuilder> {
-        public:
-            using Contained = ComputePipelineBuilder;
-            auto finish() -> Contained&;
-
-            auto push_constant_range(VkPushConstantRange range) -> PipelineLayoutBuilder<Contained>&;
 
         private:
             std::vector<VkPushConstantRange> push_constants_{};
             Contained& from_;
 
             friend Contained;
-            PipelineLayoutBuilder(Contained& from);
+            PipelineLayoutBuilder(Contained& from) : from_(from) {
+            }
     };
 
     class VulkanDevice;
