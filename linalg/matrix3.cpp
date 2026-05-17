@@ -49,7 +49,8 @@ namespace linalg {
 namespace linalg {
     namespace blas2 {
         auto matrix_vector_product(const Matrix3<float>& A, const Vector3<float> x) -> Vector3<float> {
-            return Vector3<float>{A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z, A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z,
+            return Vector3<float>{A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z,
+                                  A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z,
                                   A.r3c1 * x.x + A.r3c2 * x.y + A.r3c3 * x.z};
         }
 
@@ -78,7 +79,8 @@ namespace linalg {
 namespace linalg {
     namespace blas2 {
         auto matrix_vector_product(const Matrix3<double>& A, const Vector3<double> x) -> Vector3<double> {
-            return Vector3<double>{A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z, A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z,
+            return Vector3<double>{A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z,
+                                   A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z,
                                    A.r3c1 * x.x + A.r3c2 * x.y + A.r3c3 * x.z};
         }
 

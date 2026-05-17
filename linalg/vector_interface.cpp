@@ -17,7 +17,8 @@ extern "C"
         return out;
     }
     __declspec(dllexport) float* sscale2(float* out, const float a, const float* x) {
-        std::memcpy(out, linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector2<float>*>(x)).elements,
+        std::memcpy(out,
+                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector2<float>*>(x)).elements,
                     sizeof(linalg::Vector2<float>::elements));
         return out;
     }
@@ -42,14 +43,16 @@ extern "C"
 
     __declspec(dllexport) double* daxpy2(double* out, const double a, const double* x, const double* y) {
         std::memcpy(out,
-                    linalg::blas1::axpy(a, *reinterpret_cast<const linalg::Vector2<double>*>(x),
+                    linalg::blas1::axpy(a,
+                                        *reinterpret_cast<const linalg::Vector2<double>*>(x),
                                         *reinterpret_cast<const linalg::Vector2<double>*>(y))
                         .elements,
                     sizeof(linalg::Vector2<double>::elements));
         return out;
     }
     __declspec(dllexport) double* dscale2(double* out, const double a, const double* x) {
-        std::memcpy(out, linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector2<double>*>(x)).elements,
+        std::memcpy(out,
+                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector2<double>*>(x)).elements,
                     sizeof(linalg::Vector2<double>::elements));
         return out;
     }
@@ -85,7 +88,8 @@ extern "C"
         return out;
     }
     __declspec(dllexport) float* sscale3(float* out, const float a, const float* x) {
-        std::memcpy(out, linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector3<float>*>(x)).elements,
+        std::memcpy(out,
+                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector3<float>*>(x)).elements,
                     sizeof(linalg::Vector3<float>::elements));
         return out;
     }
@@ -110,14 +114,16 @@ extern "C"
 
     __declspec(dllexport) double* daxpy3(double* out, const double a, const double* x, const double* y) {
         std::memcpy(out,
-                    linalg::blas1::axpy(a, *reinterpret_cast<const linalg::Vector3<double>*>(x),
+                    linalg::blas1::axpy(a,
+                                        *reinterpret_cast<const linalg::Vector3<double>*>(x),
                                         *reinterpret_cast<const linalg::Vector3<double>*>(y))
                         .elements,
                     sizeof(linalg::Vector3<double>::elements));
         return out;
     }
     __declspec(dllexport) double* dscale3(double* out, const double a, const double* x) {
-        std::memcpy(out, linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector3<double>*>(x)).elements,
+        std::memcpy(out,
+                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector3<double>*>(x)).elements,
                     sizeof(linalg::Vector3<double>::elements));
         return out;
     }
@@ -152,7 +158,8 @@ extern "C"
         return out;
     }
     __declspec(dllexport) float* sscale4(float* out, const float a, const float* x) {
-        std::memcpy(out, linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector4<float>*>(x)).elements,
+        std::memcpy(out,
+                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector4<float>*>(x)).elements,
                     sizeof(linalg::Vector4<float>::elements));
         return out;
     }
@@ -177,14 +184,16 @@ extern "C"
 
     __declspec(dllexport) double* daxpy4(double* out, const double a, const double* x, const double* y) {
         std::memcpy(out,
-                    linalg::blas1::axpy(a, *reinterpret_cast<const linalg::Vector4<double>*>(x),
+                    linalg::blas1::axpy(a,
+                                        *reinterpret_cast<const linalg::Vector4<double>*>(x),
                                         *reinterpret_cast<const linalg::Vector4<double>*>(y))
                         .elements,
                     sizeof(linalg::Vector4<double>::elements));
         return out;
     }
     __declspec(dllexport) double* dscale4(double* out, const double a, const double* x) {
-        std::memcpy(out, linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector4<double>*>(x)).elements,
+        std::memcpy(out,
+                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector4<double>*>(x)).elements,
                     sizeof(linalg::Vector4<double>::elements));
         return out;
     }

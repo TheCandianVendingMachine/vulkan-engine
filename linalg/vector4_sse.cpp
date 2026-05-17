@@ -24,20 +24,20 @@ constexpr auto double_abs_bits() -> __m128d {
 namespace linalg {
     namespace blas1 {
         auto axpy(const float a, const Vector4<float> x, const Vector4<float> y) -> Vector4<float> {
-            auto v_a1    = (__m128*)(&a);
-            auto v_a     = _mm_shuffle_ps(*v_a1, *v_a1, 0b0000'0000);
-            auto v_xl    = _mm_loadl_pi(__m128(), (__m64*)(x.elements + 0));
-            auto v_yl    = _mm_loadl_pi(__m128(), (__m64*)(y.elements + 0));
-            auto v_axl   = _mm_mul_ps(v_a, v_xl);
+            auto v_a1  = (__m128*)(&a);
+            auto v_a   = _mm_shuffle_ps(*v_a1, *v_a1, 0b0000'0000);
+            auto v_xl  = _mm_loadl_pi(__m128(), (__m64*)(x.elements + 0));
+            auto v_yl  = _mm_loadl_pi(__m128(), (__m64*)(y.elements + 0));
+            auto v_axl = _mm_mul_ps(v_a, v_xl);
 
-            auto v_xh    = _mm_loadh_pi(__m128(), (__m64*)(x.elements + 2));
-            auto v_yh    = _mm_loadh_pi(__m128(), (__m64*)(y.elements + 2));
-            auto v_axh   = _mm_mul_ps(v_a, v_xh);
+            auto v_xh  = _mm_loadh_pi(__m128(), (__m64*)(x.elements + 2));
+            auto v_yh  = _mm_loadh_pi(__m128(), (__m64*)(y.elements + 2));
+            auto v_axh = _mm_mul_ps(v_a, v_xh);
 
             auto v_axpyl = _mm_add_ps(v_axl, v_yl);
             auto v_axpyh = _mm_add_ps(v_axh, v_yh);
 
-            auto v_axpy  = _mm_add_ps(v_axpyh, v_axpyl);
+            auto v_axpy = _mm_add_ps(v_axpyh, v_axpyl);
 
             float result[4];
             _mm_store_ps(result, v_axpy);
@@ -52,7 +52,7 @@ namespace linalg {
             auto v_xh  = _mm_loadh_pi(__m128(), (__m64*)(x.elements + 2));
             auto v_axh = _mm_mul_ps(v_a, v_xh);
 
-            auto v_ax  = _mm_add_ps(v_axh, v_axl);
+            auto v_ax = _mm_add_ps(v_axh, v_axl);
 
             float result[4];
             _mm_store_ps(result, v_ax);
@@ -67,9 +67,9 @@ namespace linalg {
             auto v_x = _mm_loadu_ps(a.elements);
             auto v_y = _mm_loadu_ps(b.elements);
 
-            v_x      = _mm_xor_ps(v_y, v_x);
-            v_y      = _mm_xor_ps(v_x, v_y);
-            v_x      = _mm_xor_ps(v_y, v_x);
+            v_x = _mm_xor_ps(v_y, v_x);
+            v_y = _mm_xor_ps(v_x, v_y);
+            v_x = _mm_xor_ps(v_y, v_x);
 
             float result_a[4];
             float result_b[4];
@@ -81,13 +81,13 @@ namespace linalg {
         }
 
         auto dot(const Vector4<float> a, const Vector4<float> b) -> float {
-            auto v_al   = _mm_loadl_pi(__m128(), (__m64*)(a.elements + 0));
-            auto v_bl   = _mm_loadl_pi(__m128(), (__m64*)(b.elements + 0));
-            auto v_abl  = _mm_mul_ps(v_al, v_bl);
+            auto v_al  = _mm_loadl_pi(__m128(), (__m64*)(a.elements + 0));
+            auto v_bl  = _mm_loadl_pi(__m128(), (__m64*)(b.elements + 0));
+            auto v_abl = _mm_mul_ps(v_al, v_bl);
 
-            auto v_ah   = _mm_loadl_pi(__m128(), (__m64*)(a.elements + 2));
-            auto v_bh   = _mm_loadl_pi(__m128(), (__m64*)(b.elements + 2));
-            auto v_abh  = _mm_mul_ps(v_ah, v_bh);
+            auto v_ah  = _mm_loadl_pi(__m128(), (__m64*)(a.elements + 2));
+            auto v_bh  = _mm_loadl_pi(__m128(), (__m64*)(b.elements + 2));
+            auto v_abh = _mm_mul_ps(v_ah, v_bh);
 
             auto v_bal  = _mm_shuffle_ps(v_abl, v_abl, 0b0001'0001);
             auto v_dotl = _mm_add_ps(v_abl, v_bal);
@@ -116,16 +116,16 @@ namespace linalg {
 namespace linalg {
     namespace blas1 {
         auto axpy(const double a, const Vector4<double> x, const Vector4<double> y) -> Vector4<double> {
-            auto v_a1    = (__m128d*)(&a);
-            auto v_a     = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
+            auto v_a1 = (__m128d*)(&a);
+            auto v_a  = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
 
-            auto v_xl    = _mm_loadu_pd(x.elements + 0);
-            auto v_yl    = _mm_loadu_pd(y.elements + 0);
-            auto v_axl   = _mm_mul_pd(v_a, v_xl);
+            auto v_xl  = _mm_loadu_pd(x.elements + 0);
+            auto v_yl  = _mm_loadu_pd(y.elements + 0);
+            auto v_axl = _mm_mul_pd(v_a, v_xl);
 
-            auto v_xh    = _mm_loadu_pd(x.elements + 2);
-            auto v_yh    = _mm_loadu_pd(y.elements + 2);
-            auto v_axh   = _mm_mul_pd(v_a, v_xh);
+            auto v_xh  = _mm_loadu_pd(x.elements + 2);
+            auto v_yh  = _mm_loadu_pd(y.elements + 2);
+            auto v_axh = _mm_mul_pd(v_a, v_xh);
 
             auto v_axpyl = _mm_add_pd(v_axl, v_yl);
             auto v_axpyh = _mm_add_pd(v_axh, v_yh);
@@ -163,13 +163,13 @@ namespace linalg {
             auto v_xh = _mm_loadu_pd(a.elements + 2);
             auto v_yh = _mm_loadu_pd(b.elements + 2);
 
-            v_xl      = _mm_xor_pd(v_yl, v_xl);
-            v_yl      = _mm_xor_pd(v_xl, v_yl);
-            v_xl      = _mm_xor_pd(v_yl, v_xl);
+            v_xl = _mm_xor_pd(v_yl, v_xl);
+            v_yl = _mm_xor_pd(v_xl, v_yl);
+            v_xl = _mm_xor_pd(v_yl, v_xl);
 
-            v_xh      = _mm_xor_pd(v_yh, v_xh);
-            v_yh      = _mm_xor_pd(v_xh, v_yh);
-            v_xh      = _mm_xor_pd(v_yh, v_xh);
+            v_xh = _mm_xor_pd(v_yh, v_xh);
+            v_yh = _mm_xor_pd(v_xh, v_yh);
+            v_xh = _mm_xor_pd(v_yh, v_xh);
 
             double result_a_l[2];
             double result_b_l[2];
@@ -189,10 +189,10 @@ namespace linalg {
         }
 
         auto dot(const Vector4<double> a, const Vector4<double> b) -> double {
-            auto v_al   = _mm_loadu_pd(a.elements + 0);
-            auto v_bl   = _mm_loadu_pd(b.elements + 0);
-            auto v_ah   = _mm_loadu_pd(a.elements + 2);
-            auto v_bh   = _mm_loadu_pd(b.elements + 2);
+            auto v_al = _mm_loadu_pd(a.elements + 0);
+            auto v_bl = _mm_loadu_pd(b.elements + 0);
+            auto v_ah = _mm_loadu_pd(a.elements + 2);
+            auto v_bh = _mm_loadu_pd(b.elements + 2);
 
             auto v_abl  = _mm_mul_pd(v_al, v_bl);
             auto v_bal  = _mm_shuffle_pd(v_abl, v_abl, 0b0001'0001);
