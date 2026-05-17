@@ -69,7 +69,7 @@ source_group(
 )
 
 target_sources(engine PRIVATE
-    ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
+    ${EXTERNAL_DIR}/Tracy/public/TracyClient.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui_demo.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui_draw.cpp

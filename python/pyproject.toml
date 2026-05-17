@@ -11,3 +11,7 @@ dependencies = [
 [project.scripts]
 download-dependencies = "tools.download_dependencies:main"
 build-shaders = "tools.build_shaders:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -57,6 +57,12 @@
             "configuration": "RelWithDebInfo"
         },
         {
+            "name": "msvc-clean",
+            "displayName": "MSVC — Clean",
+            "configurePreset": "msvc",
+            "targets": ["clean"]
+        },
+        {
             "name": "clang-debug",
             "displayName": "Clang — Debug",
             "configurePreset": "clang",
@@ -73,6 +79,12 @@
             "displayName": "Clang — Release with Debug Info",
             "configurePreset": "clang",
             "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "clang-clean",
+            "displayName": "Clang — Clean",
+            "configurePreset": "clang",
+            "targets": ["clean"]
         }
     ],
     "testPresets": [
