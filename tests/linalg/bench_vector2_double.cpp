@@ -1,14 +1,15 @@
-#include <catch2/benchmark/catch_benchmark.hpp>
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/random.h>
-
 #include <linalg/vector.h>
 #include <linalg/vector_ops.h>
 
+#include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
+
 #define DESIRED_PRECISION (1e-10)
 
-constexpr auto range() -> Range<double> { return Range<double>{-250000.f, 250000.f}; }
+constexpr auto range() -> Range<double> {
+    return Range<double>{-250000.f, 250000.f};
+}
 
 TEST_CASE("blas1 - bench [Vector2<double>]", "[blas1][Vector2][bench]") {
     auto rng = Random();

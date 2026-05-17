@@ -1,45 +1,46 @@
-#include <catch2/benchmark/catch_benchmark.hpp>
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/random.h>
-
 #include <linalg/matrix.h>
 #include <linalg/matrix_ops.h>
 #include <linalg/vector.h>
 
-constexpr auto range() -> Range<float> { return Range<float>{-250000.f, 250000.f}; }
+#include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
+
+constexpr auto range() -> Range<float> {
+    return Range<float>{-250000.f, 250000.f};
+}
 
 auto random_vector(Random& rng) -> linalg::Vector2<float> {
     return linalg::Vector2<float>{
-        rng.range(range()),
-        rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
     };
 }
 
 auto random_matrix(Random& rng) -> linalg::Matrix2<float> {
     return linalg::Matrix2<float>{
-        rng.range(range()),
-        rng.range(range()),
-        rng.range(range()),
-        rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
     };
 }
 
 auto random_matrix_lower_triangular(Random& rng) -> linalg::Matrix2<float> {
     return linalg::Matrix2<float>{
-        rng.range(range()),
-        0.f,
-        rng.range(range()),
-        rng.range(range()),
+      rng.range(range()),
+      0.f,
+      rng.range(range()),
+      rng.range(range()),
     };
 }
 
 auto random_matrix_upper_triangular(Random& rng) -> linalg::Matrix2<float> {
     return linalg::Matrix2<float>{
-        rng.range(range()),
-        rng.range(range()),
-        0.f,
-        rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
+      0.f,
+      rng.range(range()),
     };
 }
 

@@ -1,3 +1,8 @@
+#include <engine/random.h>
+#include <linalg/matrix.h>
+#include <linalg/matrix_ops.h>
+#include <linalg/vector.h>
+
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -5,12 +10,6 @@
 #include <catch2/generators/catch_generators_random.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <vector>
-
-#include <engine/random.h>
-
-#include <linalg/matrix.h>
-#include <linalg/matrix_ops.h>
-#include <linalg/vector.h>
 
 #define DESIRED_PRECISION (1e-10)
 
@@ -27,8 +26,15 @@ namespace test_matrix {
 
     auto random_matrix(Random& rng) -> linalg::Matrix3<double> {
         return linalg::Matrix3<double>{
-          rng.range(range()), rng.range(range()), rng.range(range()), rng.range(range()), rng.range(range()),
-          rng.range(range()), rng.range(range()), rng.range(range()), rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
+          rng.range(range()),
         };
     }
 
@@ -148,12 +154,15 @@ namespace test_matrix {
 
             for (size_t idx = 0; idx < A.size(); ++idx) {
                 auto result = linalg::blas2::matrix_vector_product(A[idx], b[idx]);
-                REQUIRE_THAT(result.x, Catch::Matchers::WithinAbs(A[idx].r1c1 * b[idx].x + A[idx].r1c2 * b[idx].y + A[idx].r1c3 * b[idx].z,
-                                                                  DESIRED_PRECISION));
-                REQUIRE_THAT(result.y, Catch::Matchers::WithinAbs(A[idx].r2c1 * b[idx].x + A[idx].r2c2 * b[idx].y + A[idx].r2c3 * b[idx].z,
-                                                                  DESIRED_PRECISION));
-                REQUIRE_THAT(result.z, Catch::Matchers::WithinAbs(A[idx].r3c1 * b[idx].x + A[idx].r3c2 * b[idx].y + A[idx].r3c3 * b[idx].z,
-                                                                  DESIRED_PRECISION));
+                REQUIRE_THAT(result.x,
+                             Catch::Matchers::WithinAbs(A[idx].r1c1 * b[idx].x + A[idx].r1c2 * b[idx].y + A[idx].r1c3 * b[idx].z,
+                                                        DESIRED_PRECISION));
+                REQUIRE_THAT(result.y,
+                             Catch::Matchers::WithinAbs(A[idx].r2c1 * b[idx].x + A[idx].r2c2 * b[idx].y + A[idx].r2c3 * b[idx].z,
+                                                        DESIRED_PRECISION));
+                REQUIRE_THAT(result.z,
+                             Catch::Matchers::WithinAbs(A[idx].r3c1 * b[idx].x + A[idx].r3c2 * b[idx].y + A[idx].r3c3 * b[idx].z,
+                                                        DESIRED_PRECISION));
             }
         }
     }

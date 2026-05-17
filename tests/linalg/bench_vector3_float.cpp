@@ -1,14 +1,15 @@
-#include <catch2/benchmark/catch_benchmark.hpp>
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/random.h>
-
 #include <linalg/vector.h>
 #include <linalg/vector_ops.h>
 
+#include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
+
 #define DESIRED_PRECISION (1e-10f)
 
-constexpr auto range() -> Range<float> { return Range<float>{-250000.f, 250000.f}; }
+constexpr auto range() -> Range<float> {
+    return Range<float>{-250000.f, 250000.f};
+}
 
 auto random_vector(Random& rng) -> linalg::Vector3<float> {
     return linalg::Vector3<float>{rng.range(range()), rng.range(range()), rng.range(range())};

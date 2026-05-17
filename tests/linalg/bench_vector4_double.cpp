@@ -1,21 +1,22 @@
-#include <catch2/benchmark/catch_benchmark.hpp>
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/random.h>
-
 #include <linalg/vector.h>
 #include <linalg/vector_ops.h>
 
+#include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
+
 #define DESIRED_PRECISION (1e-20)
 
-constexpr auto range() -> Range<double> { return Range<double>{-250000.0, 250000.f}; }
+constexpr auto range() -> Range<double> {
+    return Range<double>{-250000.0, 250000.f};
+}
 
 auto random_vector(Random& rng) -> linalg::Vector4<double> {
     return linalg::Vector4<double>{
-        rng.range(range()),
-        rng.range(range()),
-        rng.range(range()),
-        rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
+      rng.range(range()),
     };
 }
 

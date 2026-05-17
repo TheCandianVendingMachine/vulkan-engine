@@ -1,3 +1,7 @@
+#include <engine/random.h>
+#include <linalg/vector.h>
+#include <linalg/vector_ops.h>
+
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -5,11 +9,6 @@
 #include <catch2/generators/catch_generators_random.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <vector>
-
-#include <engine/random.h>
-
-#include <linalg/vector.h>
-#include <linalg/vector_ops.h>
 
 #define DESIRED_PRECISION (1e-10f)
 
@@ -23,7 +22,7 @@ TEST_CASE("blas1::axpy [Vector2<float>]", "[blas1][Vector2]") {
     SECTION("Single") {
         linalg::Vector2<float> x(1.0f, 2.0f);
         linalg::Vector2<float> y(3.0f, 4.0f);
-        float a                       = 2.0f;
+        float a = 2.0f;
 
         linalg::Vector2<float> result = linalg::blas1::axpy(a, x, y);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(5.0f, DESIRED_PRECISION));
@@ -52,7 +51,7 @@ TEST_CASE("blas1::axpy [Vector2<float>]", "[blas1][Vector2]") {
 TEST_CASE("blas1::scale [Vector2<float>]", "[blas1][Vector2]") {
     SECTION("Single") {
         linalg::Vector2<float> x(1.0f, 2.0f);
-        float a                       = 2.0f;
+        float a = 2.0f;
 
         linalg::Vector2<float> result = linalg::blas1::scale(a, x);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(2.0f, DESIRED_PRECISION));

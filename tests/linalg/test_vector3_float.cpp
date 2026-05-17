@@ -1,3 +1,7 @@
+#include <engine/random.h>
+#include <linalg/vector.h>
+#include <linalg/vector_ops.h>
+
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -5,11 +9,6 @@
 #include <catch2/generators/catch_generators_random.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <vector>
-
-#include <engine/random.h>
-
-#include <linalg/vector.h>
-#include <linalg/vector_ops.h>
 
 #define DESIRED_PRECISION (1e-10f)
 
@@ -27,7 +26,7 @@ TEST_CASE("blas1::axpy [Vector3<float>]", "[blas1][Vector3]") {
     SECTION("Single") {
         linalg::Vector3<float> x(1.0f, 2.0f, 6.0f);
         linalg::Vector3<float> y(3.0f, 4.0f, 5.0f);
-        float a                       = 2.0f;
+        float a = 2.0f;
 
         linalg::Vector3<float> result = linalg::blas1::axpy(a, x, y);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(5.0f, DESIRED_PRECISION));
@@ -58,7 +57,7 @@ TEST_CASE("blas1::axpy [Vector3<float>]", "[blas1][Vector3]") {
 TEST_CASE("blas1::scale [Vector3<float>]", "[blas1][Vector3]") {
     SECTION("Single") {
         linalg::Vector3<float> x(1.0f, 2.0f, 6.0f);
-        float a                       = 2.0f;
+        float a = 2.0f;
 
         linalg::Vector3<float> result = linalg::blas1::scale(a, x);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(2.0f, DESIRED_PRECISION));
@@ -230,8 +229,9 @@ TEST_CASE("blas1::magnitude [Vector3<float>]", "[blas1][Vector3]") {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             float result = linalg::blas1::magnitude(x[idx]);
-            REQUIRE_THAT(result, Catch::Matchers::WithinAbs(std::sqrt(x[idx].x * x[idx].x + x[idx].y * x[idx].y + x[idx].z * x[idx].z),
-                                                            DESIRED_PRECISION));
+            REQUIRE_THAT(
+                result,
+                Catch::Matchers::WithinAbs(std::sqrt(x[idx].x * x[idx].x + x[idx].y * x[idx].y + x[idx].z * x[idx].z), DESIRED_PRECISION));
         }
     }
 }

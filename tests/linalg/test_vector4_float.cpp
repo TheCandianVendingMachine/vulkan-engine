@@ -1,3 +1,7 @@
+#include <engine/random.h>
+#include <linalg/vector.h>
+#include <linalg/vector_ops.h>
+
 #include <catch2/benchmark/catch_benchmark.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/generators/catch_generators.hpp>
@@ -5,11 +9,6 @@
 #include <catch2/generators/catch_generators_random.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 #include <vector>
-
-#include <engine/random.h>
-
-#include <linalg/vector.h>
-#include <linalg/vector_ops.h>
 
 #define DESIRED_PRECISION (1e-10f)
 
@@ -32,7 +31,7 @@ TEST_CASE("blas1::axpy [Vector4<float>]", "[blas1][Vector4]") {
     SECTION("Single") {
         linalg::Vector4<float> x(1.0f, 2.0f, 6.0f, 8.0f);
         linalg::Vector4<float> y(3.0f, 4.0f, 5.0f, 7.0f);
-        float a                       = 2.0f;
+        float a = 2.0f;
 
         linalg::Vector4<float> result = linalg::blas1::axpy(a, x, y);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(5.0f, DESIRED_PRECISION));
@@ -65,7 +64,7 @@ TEST_CASE("blas1::axpy [Vector4<float>]", "[blas1][Vector4]") {
 TEST_CASE("blas1::scale [Vector4<float>]", "[blas1][Vector4]") {
     SECTION("Single") {
         linalg::Vector4<float> x(1.0f, 2.0f, 6.0f, 8.0f);
-        float a                       = 2.0f;
+        float a = 2.0f;
 
         linalg::Vector4<float> result = linalg::blas1::scale(a, x);
         CHECK_THAT(result.x, Catch::Matchers::WithinAbs(2.0f, DESIRED_PRECISION));
@@ -218,8 +217,9 @@ TEST_CASE("blas1::component_sum [Vector4<float>]", "[blas1][Vector4]") {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             float result = linalg::blas1::component_sum(x[idx]);
-            REQUIRE_THAT(result, Catch::Matchers::WithinAbs(
-                                     std::abs(x[idx].x) + std::abs(x[idx].y) + std::abs(x[idx].z) + std::abs(x[idx].w), DESIRED_PRECISION));
+            REQUIRE_THAT(result,
+                         Catch::Matchers::WithinAbs(std::abs(x[idx].x) + std::abs(x[idx].y) + std::abs(x[idx].z) + std::abs(x[idx].w),
+                                                    DESIRED_PRECISION));
         }
     }
 }
@@ -248,9 +248,10 @@ TEST_CASE("blas1::magnitude [Vector4<float>]", "[blas1][Vector4]") {
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
             float result = linalg::blas1::magnitude(x[idx]);
-            REQUIRE_THAT(result, Catch::Matchers::WithinAbs(
-                                     std::sqrt(x[idx].x * x[idx].x + x[idx].y * x[idx].y + x[idx].z * x[idx].z + x[idx].w * x[idx].w),
-                                     DESIRED_PRECISION));
+            REQUIRE_THAT(
+                result,
+                Catch::Matchers::WithinAbs(std::sqrt(x[idx].x * x[idx].x + x[idx].y * x[idx].y + x[idx].z * x[idx].z + x[idx].w * x[idx].w),
+                                           DESIRED_PRECISION));
         }
     }
 }
@@ -278,7 +279,7 @@ TEST_CASE("blas1::component_max [Vector4<float>]", "[blas1][Vector4]") {
         }
 
         for (size_t idx = 0; idx < x.size(); ++idx) {
-            float result   = linalg::blas1::component_max(x[idx]);
+            float result = linalg::blas1::component_max(x[idx]);
 
             float largest1 = std::max(std::abs(x[idx].x), std::abs(x[idx].y));
             float largest2 = std::max(std::abs(x[idx].y), std::abs(x[idx].z));
