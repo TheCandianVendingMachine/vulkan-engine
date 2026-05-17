@@ -24,15 +24,15 @@ namespace linalg {
         auto v_A3t = _mm_shuffle_ps(temp1, temp3, 0b1101'1101);
         auto v_A4t = _mm_shuffle_ps(temp2, temp4, 0b1101'1101);
 
-        auto v_c0  = _mm_undefined_ps();
-        auto v_c1  = _mm_undefined_ps();
-        auto v_c2  = _mm_undefined_ps();
-        auto v_c3  = _mm_undefined_ps();
+        auto v_c0 = _mm_undefined_ps();
+        auto v_c1 = _mm_undefined_ps();
+        auto v_c2 = _mm_undefined_ps();
+        auto v_c3 = _mm_undefined_ps();
 
-        auto v_r0  = _mm_undefined_ps();
-        auto v_r1  = _mm_undefined_ps();
-        auto v_r2  = _mm_undefined_ps();
-        auto v_r3  = _mm_undefined_ps();
+        auto v_r0 = _mm_undefined_ps();
+        auto v_r1 = _mm_undefined_ps();
+        auto v_r2 = _mm_undefined_ps();
+        auto v_r3 = _mm_undefined_ps();
 
         /*
         // Crout matrix decomposition without pivoting
@@ -351,7 +351,7 @@ namespace linalg {
 namespace linalg {
     namespace blas2 {
         auto matrix_vector_product(const Matrix4<float>& A, const Vector4<float> x) -> Vector4<float> {
-            auto v_x             = _mm_loadu_ps(x.elements);
+            auto v_x = _mm_loadu_ps(x.elements);
 
             auto V_A1            = _mm_loadu_ps(&A.elements[0]);
             auto v_product1      = _mm_mul_ps(V_A1, v_x);
@@ -373,7 +373,9 @@ namespace linalg {
             auto v_product4_sum1 = _mm_add_ps(v_product4, _mm_shuffle_ps(v_product4, v_product4, 0b1011'0001));
             auto v_product4_sum2 = _mm_add_ps(v_product4_sum1, _mm_shuffle_ps(v_product4_sum1, v_product4_sum1, 0b1011'0010));
 
-            return Vector4<float>{_mm_cvtss_f32(v_product1_sum2), _mm_cvtss_f32(v_product2_sum2), _mm_cvtss_f32(v_product3_sum2),
+            return Vector4<float>{_mm_cvtss_f32(v_product1_sum2),
+                                  _mm_cvtss_f32(v_product2_sum2),
+                                  _mm_cvtss_f32(v_product3_sum2),
                                   _mm_cvtss_f32(v_product4_sum2)};
         }
 
@@ -400,9 +402,10 @@ namespace linalg {
         }
 
         auto matrix_vector_product(const Matrix4<double>& A, const Vector4<double> x) -> Vector4<double> {
-            return Vector4<double>{
-              A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z + A.r1c4 * x.w, A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z + A.r2c4 * x.w,
-              A.r3c1 * x.x + A.r3c2 * x.y + A.r3c3 * x.z + A.r3c4 * x.w, A.r4c1 * x.x + A.r4c2 * x.y + A.r4c3 * x.z + A.r4c4 * x.w};
+            return Vector4<double>{A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z + A.r1c4 * x.w,
+                                   A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z + A.r2c4 * x.w,
+                                   A.r3c1 * x.x + A.r3c2 * x.y + A.r3c3 * x.z + A.r3c4 * x.w,
+                                   A.r4c1 * x.x + A.r4c2 * x.y + A.r4c3 * x.z + A.r4c4 * x.w};
         }
 
         auto solve_lower_triangular(const Matrix4<double>& L, const Vector4<double> b) -> Vector4<double> {
