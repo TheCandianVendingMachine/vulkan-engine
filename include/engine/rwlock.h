@@ -4,6 +4,7 @@
 #include <Tracy/Tracy.hpp>
 #include <atomic>
 #include <cstdint>
+#include <type_traits>
 #include <utility>
 
 namespace ENGINE_NS {
@@ -33,15 +34,15 @@ namespace ENGINE_NS {
             }
 
             RwDataMut(RwDataMut<T>&& rhs) noexcept :
-                lock_(rhs.lock_), wrapped_(std::move(rhs.wrapped_)), dropped_(rhs.dropped_) {
+                lock_(std::move(rhs.lock_)), wrapped_(std::move(rhs.wrapped_)), dropped_(std::move(rhs.dropped_)) {
                 rhs.moved_ = true;
             }
 
             auto operator=(RwDataMut<T>&& rhs) noexcept -> RwDataMut<T>& {
                 if (&rhs != this) {
-                    lock_      = rhs.lock_;
+                    lock_      = std::move(rhs.lock_);
                     wrapped_   = std::move(rhs.wrapped_);
-                    dropped_   = rhs.dropped_;
+                    dropped_   = std::move(rhs.dropped_);
                     rhs.moved_ = true;
                 }
                 return *this;
@@ -87,8 +88,8 @@ namespace ENGINE_NS {
                 }
             }
             RwData(RwData<T>&& rhs) noexcept :
-                currently_reading_(rhs.currently_reading_), wrapped_(std::move(rhs.wrapped_)),
-                dropped_(rhs.dropped_) {
+                currently_reading_(std::move(rhs.currently_reading_)), wrapped_(std::move(rhs.wrapped_)),
+                dropped_(std::move(rhs.dropped_)) {
                 rhs.moved_ = true;
             }
 
@@ -130,38 +131,52 @@ namespace ENGINE_NS {
     template <typename T>
     class RwLock {
         public:
-            RwLock() requires std::is_default_constructible_v<T> : wrapped_(T{}) {
+            RwLock()
+                requires std::is_default_constructible_v<T>
+                : wrapped_(T{}) {
             }
 
             template <typename... TArgs>
             RwLock(TArgs&&... args) : wrapped_(std::forward<TArgs>(args)...) {
             }
 
-            
-            RwLock(const T& contained) requires std::is_copy_constructible_v<T> : wrapped_(contained) {
+
+            RwLock(const T& contained)
+                requires std::is_copy_constructible_v<T>
+                : wrapped_(contained) {
             }
-            
-            RwLock(const RwLock<T>& rhs) requires std::is_copy_constructible_v<T> : wrapped_(rhs.wrapped_) {
+
+            RwLock(const RwLock<T>& rhs)
+                requires std::is_copy_constructible_v<T>
+                : wrapped_(rhs.wrapped_) {
             }
-            
-            RwLock(T&& contained) requires (std::is_move_constructible_v<T>) : wrapped_(std::move(contained)) {
+
+            RwLock(T&& contained)
+                requires(std::is_move_constructible_v<T>)
+                : wrapped_(std::move(contained)) {
             }
-            
-            RwLock(RwLock<T>&& rhs) noexcept requires std::is_move_constructible_v<T> : wrapped_(std::move(rhs.wrapped_)) {
+
+            RwLock(RwLock<T>&& rhs) noexcept
+                requires std::is_move_constructible_v<T>
+                : wrapped_(std::move(rhs.wrapped_)) {
                 currently_reading_.store(rhs.currently_reading_.load(std::memory_order::acquire), std::memory_order::release);
                 currently_writing_.store(rhs.currently_writing_.load(std::memory_order::acquire), std::memory_order::release);
                 rhs.moved_ = true;
             }
 
-            
-            auto operator=(const RwLock<T>& rhs) -> RwLock<T>& requires std::is_copy_assignable_v<T> {
+
+            auto operator=(const RwLock<T>& rhs) -> RwLock<T>&
+                requires std::is_copy_assignable_v<T>
+            {
                 if (&rhs != this) {
                     wrapped_ = rhs.wrapped_;
                 }
                 return *this;
             }
-            
-            auto operator=(RwLock<T>&& rhs) noexcept -> RwLock<T>& requires std::is_move_assignable_v<T> {
+
+            auto operator=(RwLock<T>&& rhs) noexcept -> RwLock<T>&
+                requires std::is_move_assignable_v<T>
+            {
                 if (&rhs != this) {
                     wrapped_ = std::move(rhs.wrapped_);
                     currently_reading_.store(rhs.currently_reading_.load(std::memory_order::acquire), std::memory_order::release);
@@ -187,8 +202,10 @@ namespace ENGINE_NS {
                 return RwDataMut<T>(currently_writing_, wrapped_);
             }
 
-            
-            friend auto swap(RwLock& a, RwLock& b) noexcept -> void requires std::is_nothrow_swappable_v<T> {
+
+            friend auto swap(RwLock& a, RwLock& b) noexcept -> void
+                requires std::is_nothrow_swappable_v<T>
+            {
                 using std::swap;
                 swap(a.wrapped_, b.wrapped_);
 
