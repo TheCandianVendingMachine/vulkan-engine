@@ -189,6 +189,7 @@ namespace ENGINE_NS {
             auto push(GraphicsPipeline pipeline) -> void;
             auto push(GPUMeshBuffers& buffers) -> void;
             auto push(graphics::Immediate immediate) -> void;
+            auto push(asset::CompiledShader& shader) -> void;
 
         private:
             std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_{};
@@ -198,6 +199,7 @@ namespace ENGINE_NS {
             std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
             std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
             std::vector<Deletion<graphics::Immediate>> immediates_{};
+            std::vector<Deletion<asset::CompiledShader>> shaders_{};
 
             std::uint64_t index_ = 0;
     };

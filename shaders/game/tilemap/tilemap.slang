@@ -1,4 +1,4 @@
-[format("rgba16f")]
+[format("rgba8")]
 RWTexture2D<float4> image;
 
 [shader("compute")]

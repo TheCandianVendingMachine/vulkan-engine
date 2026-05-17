@@ -151,6 +151,9 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& dev
     for (auto& immediate : immediates_) {
         immediate.destroy(device.device);
     }
+    for (auto& shader : shaders_) {
+        shader.destroy(device.device);
+    }
 
     layouts_.clear();
     images_.clear();
@@ -159,6 +162,7 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& dev
     mesh_buffers_.clear();
     immediates_.clear();
     descriptor_allocators_.clear();
+    shaders_.clear();
     index_ = 0;
 }
 
@@ -191,4 +195,8 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(GPUMeshBuffers& bu
 
 auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(graphics::Immediate immediate) -> void {
     immediates_.push_back(Deletion<graphics::Immediate>(immediate, 0));
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(asset::CompiledShader& shader) -> void {
+    shaders_.push_back(Deletion<asset::CompiledShader>(shader, 0));
 }
