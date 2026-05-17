@@ -11,7 +11,7 @@ auto ENGINE_NS::fileio::File::open(const std::filesystem::path& path, OpenMode o
     -> std::expected<File, error::Error> {
     char mode[] = "\0\0\0";
 
-    auto end    = 1;
+    auto end = 1;
     if ((io_mode & IoMode::APPEND) == IoMode::APPEND) {
         mode[0] = 'a';
     } else {

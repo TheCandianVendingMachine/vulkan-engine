@@ -4,8 +4,10 @@
 #include "engine/graphics/vulkan.h"
 
 #include <Volk/volk.h>
-#include <type_traits>
 #include <vulkan/vulkan_core.h>
+
+#include <type_traits>
+
 
 auto ENGINE_NS::GraphicsPipeline::build() -> GraphicsPipelineBuilder {
     return GraphicsPipelineBuilder();
@@ -116,40 +118,40 @@ auto ENGINE_NS::GraphicsPipelineBuilder::layout() -> PipelineLayoutBuilder<Graph
 }
 
 auto ENGINE_NS::GraphicsPipelineBuilder::finish(VulkanDevice& device) -> GraphicsPipeline {
-    VkPipelineViewportStateCreateInfo viewport_state       = {};
-    viewport_state.sType                                   = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    viewport_state.viewportCount                           = 1;
-    viewport_state.scissorCount                            = 1;
+    VkPipelineViewportStateCreateInfo viewport_state = {};
+    viewport_state.sType                             = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state.viewportCount                     = 1;
+    viewport_state.scissorCount                      = 1;
 
-    VkPipelineColorBlendStateCreateInfo colour_blending    = {};
-    colour_blending.sType                                  = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    colour_blending.logicOpEnable                          = VK_FALSE;
-    colour_blending.logicOp                                = VK_LOGIC_OP_COPY;
-    colour_blending.attachmentCount                        = 1;
-    colour_blending.pAttachments                           = &color_blend_attachment_;
+    VkPipelineColorBlendStateCreateInfo colour_blending = {};
+    colour_blending.sType                               = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    colour_blending.logicOpEnable                       = VK_FALSE;
+    colour_blending.logicOp                             = VK_LOGIC_OP_COPY;
+    colour_blending.attachmentCount                     = 1;
+    colour_blending.pAttachments                        = &color_blend_attachment_;
 
     VkPipelineVertexInputStateCreateInfo vertex_input_info = {};
     vertex_input_info.sType                                = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
-    VkDynamicState state[]                                 = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-    VkPipelineDynamicStateCreateInfo dynamic_info          = {};
-    dynamic_info.sType                                     = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    dynamic_info.pDynamicStates                            = state;
-    dynamic_info.dynamicStateCount                         = sizeof(state) / sizeof(state[0]);
+    VkDynamicState state[]                        = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamic_info = {};
+    dynamic_info.sType                            = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_info.pDynamicStates                   = state;
+    dynamic_info.dynamicStateCount                = sizeof(state) / sizeof(state[0]);
 
-    VkGraphicsPipelineCreateInfo pipeline_info             = {};
-    pipeline_info.sType                                    = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    pipeline_info.pNext                                    = &render_info_;
-    pipeline_info.stageCount                               = static_cast<std::uint32_t>(shader_stages_.size());
-    pipeline_info.pStages                                  = shader_stages_.data();
-    pipeline_info.pVertexInputState                        = &vertex_input_info;
-    pipeline_info.pInputAssemblyState                      = &input_assembly_;
-    pipeline_info.pViewportState                           = &viewport_state;
-    pipeline_info.pRasterizationState                      = &rasterizer_;
-    pipeline_info.pMultisampleState                        = &multisampling_;
-    pipeline_info.pColorBlendState                         = &colour_blending;
-    pipeline_info.pDepthStencilState                       = &depth_stencil_;
-    pipeline_info.pDynamicState                            = &dynamic_info;
+    VkGraphicsPipelineCreateInfo pipeline_info = {};
+    pipeline_info.sType                        = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_info.pNext                        = &render_info_;
+    pipeline_info.stageCount                   = static_cast<std::uint32_t>(shader_stages_.size());
+    pipeline_info.pStages                      = shader_stages_.data();
+    pipeline_info.pVertexInputState            = &vertex_input_info;
+    pipeline_info.pInputAssemblyState          = &input_assembly_;
+    pipeline_info.pViewportState               = &viewport_state;
+    pipeline_info.pRasterizationState          = &rasterizer_;
+    pipeline_info.pMultisampleState            = &multisampling_;
+    pipeline_info.pColorBlendState             = &colour_blending;
+    pipeline_info.pDepthStencilState           = &depth_stencil_;
+    pipeline_info.pDynamicState                = &dynamic_info;
 
     return GraphicsPipeline(device, pipeline_info, pipeline_layout_);
 }

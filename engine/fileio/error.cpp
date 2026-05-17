@@ -1,8 +1,9 @@
 #include "engine/fileio/error.h"
 
+#include <stdlib.h>
+
 #include <cstdint>
 #include <cstring>
-#include <stdlib.h>
 #include <type_traits>
 #include <utility>
 
@@ -16,7 +17,7 @@ ENGINE_NS::fileio::error::types::Base::Base(const char* message, int error_code)
         MESSAGE,
         ERROR,
         END
-    } state   = State::MESSAGE;
+    } state = State::MESSAGE;
 
     auto base = 0;
     for (std::uint64_t idx = 0; idx < error::MESSAGE_LENGTH && state != State::END; idx++) {

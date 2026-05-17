@@ -4,8 +4,9 @@
 #include "engine/logger.h"
 #include "engine/meta_defines.h"
 
-#include <cstring>
 #include <fmt/format.h>
+
+#include <cstring>
 
 
 void ENGINE_NS::vulkan_crash(VkResult error, int line, const char* function, const char* file) {
@@ -120,7 +121,7 @@ void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const ch
 
 void ENGINE_NS::crash(ErrorCode reason, int line, const char* function, const char* file, const char* additional_message) {
     if (g_ENGINE) {
-        auto logger                = g_ENGINE->logger.get(LogNamespaces::CORE);
+        auto logger = g_ENGINE->logger.get(LogNamespaces::CORE);
 
         const char* sanitized_file = file;
         char buffer[256]           = {};

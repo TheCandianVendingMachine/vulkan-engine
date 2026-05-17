@@ -6,15 +6,17 @@
 #include "engine/logger.h"
 
 #include <Volk/volk.h>
-#include <cstdint>
-#include <deque>
 #include <engine/graphics/types.h>
 #include <engine/meta_defines.h>
+#include <vulkan/vulkan_core.h>
+
+#include <cstdint>
+#include <deque>
 #include <span>
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <vulkan/vulkan_core.h>
+
 
 auto ENGINE_NS::VulkanDescriptorLayoutBuilder::with_binding(std::uint32_t binding_idx, VkDescriptorType type)
     -> VulkanDescriptorLayoutBuilder& {
@@ -73,7 +75,7 @@ auto ENGINE_NS::VulkanDescriptorSetLayout::operator=(VulkanDescriptorSetLayout&&
         set_         = std::move(rhs.set_);
         initialised_ = std::move(rhs.initialised_);
 
-        rhs.moved_   = true;
+        rhs.moved_ = true;
     }
     return *this;
 }
@@ -134,7 +136,7 @@ auto ENGINE_NS::DescriptorAllocator::allocate(VkDescriptorSetLayout layout) -> V
     alloc_info.descriptorSetCount = 1;
     alloc_info.pSetLayouts        = &layout;
 
-    VkDescriptorSet ds            = VK_NULL_HANDLE;
+    VkDescriptorSet ds = VK_NULL_HANDLE;
     VK_CHECK(vkAllocateDescriptorSets(device_->device, &alloc_info, &ds));
     return ds;
 }

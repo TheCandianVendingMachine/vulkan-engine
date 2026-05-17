@@ -82,7 +82,7 @@ auto ENGINE_NS::Transform::matrix() const -> ::linalg::Matrix4<double> {
     if (!dirty) {
         return matrix_;
     }
-    auto our_rotation              = rotation_.as_rotation_matrix();
+    auto our_rotation = rotation_.as_rotation_matrix();
 
     ::linalg::Vector3<double> row0 = *reinterpret_cast<::linalg::Vector3<double>*>(&our_rotation.elements[0]);
     ::linalg::Vector3<double> row1 = *reinterpret_cast<::linalg::Vector3<double>*>(&our_rotation.elements[3]);

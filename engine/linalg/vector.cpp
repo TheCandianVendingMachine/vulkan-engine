@@ -4,9 +4,10 @@
 #include "engine/engine_utils.h"
 #include "engine/meta_defines.h"
 
-#include <Tracy/Tracy.hpp>
 #include <Windows.h>
 #include <libloaderapi.h>
+
+#include <Tracy/Tracy.hpp>
 
 #define VERIFY(function)                                                                                                                   \
     if (!function) {                                                                                                                       \

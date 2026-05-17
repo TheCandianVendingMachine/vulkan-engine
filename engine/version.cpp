@@ -1,6 +1,7 @@
 #include "engine/version.h"
 
 #include <fmt/format.h>
+
 #include <type_traits>
 
 ENGINE_NS::Version::Version(unsigned int major, unsigned int minor, unsigned int patch) : major_(major), minor_(minor), patch_(patch) {

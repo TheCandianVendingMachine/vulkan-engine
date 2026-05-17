@@ -18,23 +18,23 @@ auto ENGINE_NS::VulkanPhysicalDevice::choose(SDL_Window* window) -> VulkanPhysic
 
 auto ENGINE_NS::VulkanPhysicalDevice::operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice& {
     if (this != &rhs && !rhs.moved_) {
-        extensions_        = std::move(rhs.extensions_);
+        extensions_ = std::move(rhs.extensions_);
 
-        device_            = std::move(rhs.device_);
+        device_ = std::move(rhs.device_);
 
-        features_          = std::move(rhs.features_);
-        features_10_       = std::move(rhs.features_10_);
-        features_11_       = std::move(rhs.features_11_);
-        features_12_       = std::move(rhs.features_12_);
-        features_13_       = std::move(rhs.features_13_);
-        features_14_       = std::move(rhs.features_14_);
+        features_    = std::move(rhs.features_);
+        features_10_ = std::move(rhs.features_10_);
+        features_11_ = std::move(rhs.features_11_);
+        features_12_ = std::move(rhs.features_12_);
+        features_13_ = std::move(rhs.features_13_);
+        features_14_ = std::move(rhs.features_14_);
 
         features_.pNext    = &features_11_;
         features_11_.pNext = &features_12_;
         features_12_.pNext = &features_13_;
         features_13_.pNext = &features_14_;
 
-        rhs.moved_         = true;
+        rhs.moved_ = true;
     }
     return *this;
 }
@@ -61,7 +61,7 @@ ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device,
 auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -> VulkanPhysicalDevice {
     ZoneScoped;
 
-    auto logger               = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
+    auto logger = g_ENGINE->logger.get(engine::LogNamespaces::VULKAN);
 
     std::uint32_t device_count = 0;
     vkEnumeratePhysicalDevices(instance.instance, &device_count, nullptr);
@@ -224,9 +224,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
         available_devices.push_back(std::make_pair(device, score));
     }
 
-    std::sort(available_devices.begin(), available_devices.end(), [](auto& lhs, auto& rhs) {
-        return lhs.second > rhs.second;
-    });
+    std::sort(available_devices.begin(), available_devices.end(), [](auto& lhs, auto& rhs) { return lhs.second > rhs.second; });
 
     if (available_devices.empty()) {
         ::ENGINE_NS::crash(ErrorCode::VULKAN_ERROR, __LINE__, __func__, __FILE__);
@@ -236,7 +234,12 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::finish(VulkanInstance& instance) -
     vkGetPhysicalDeviceProperties(available_devices[0].first, &properties);
     logger.get().info("Using {}", properties.deviceName);
 
-    return VulkanPhysicalDevice(available_devices[0].first, features_10_, features_11_, features_12_, features_13_, features_14_,
+    return VulkanPhysicalDevice(available_devices[0].first,
+                                features_10_,
+                                features_11_,
+                                features_12_,
+                                features_13_,
+                                features_14_,
                                 std::move(extensions_));
 }
 

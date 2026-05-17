@@ -13,6 +13,14 @@
 // clang-format on
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
+#include <fmt/format.h>
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_vulkan.h>
+#include <robin_set.h>
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan_core.h>
+
 #include <Tracy/Tracy.hpp>
 #include <Tracy/TracyVulkan.hpp>
 #include <Tracy/common/TracySystem.hpp>
@@ -22,18 +30,11 @@
 #include <chrono>
 #include <cstdint>
 #include <cstring>
-#include <fmt/format.h>
-#include <imgui.h>
-#include <imgui_impl_sdl3.h>
-#include <imgui_impl_vulkan.h>
 #include <memory>
-#include <robin_set.h>
 #include <span>
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <vk_mem_alloc.h>
-#include <vulkan/vulkan_core.h>
 
 void ENGINE_NS::GraphicsEngine::initialise() {
     FrameMarkStart(StaticNames::GraphicsInit);
@@ -46,7 +47,7 @@ void ENGINE_NS::GraphicsEngine::initialise() {
         ZoneScoped;
         SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_VULKAN);
 
-        window_                      = SDL_CreateWindow("Vulkan Engine", window_extent_.x, window_extent_.y, window_flags);
+        window_ = SDL_CreateWindow("Vulkan Engine", window_extent_.x, window_extent_.y, window_flags);
     }
 
     logger.get().info("Initialising Vulkan");
@@ -211,8 +212,8 @@ auto ENGINE_NS::GraphicsEngine::destroy_buffer(BufferAllocation allocation) -> v
 auto ENGINE_NS::GraphicsEngine::allocate_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped)
     -> ImageAllocation {
     ImageAllocation new_image{};
-    new_image.format             = format;
-    new_image.extent             = size;
+    new_image.format = format;
+    new_image.extent = size;
 
     VkImageCreateInfo image_info = image_create_info(format, usage, size);
     if (mipmapped) {
@@ -251,8 +252,8 @@ auto ENGINE_NS::GraphicsEngine::upload_mesh(std::span<std::uint32_t> indices, st
     upload.indices  = std::vector<std::uint32_t>(indices.begin(), indices.end());
     upload.vertices = std::vector<Vertex>(vertices.begin(), vertices.end());
 
-    auto lock       = mesh_uploads_.write();
-    auto& uploads   = lock.get();
+    auto lock     = mesh_uploads_.write();
+    auto& uploads = lock.get();
     uploads.push_back(std::move(upload));
     auto future = uploads.back().promise.get_future();
 
@@ -269,8 +270,8 @@ auto ENGINE_NS::GraphicsEngine::upload_image(void* data, VkExtent3D size, VkForm
     upload.texture_data = data;
     upload.usage        = usage;
 
-    auto lock           = texture_uploads_.write();
-    auto& uploads       = lock.get();
+    auto lock     = texture_uploads_.write();
+    auto& uploads = lock.get();
     uploads.push_back(std::move(upload));
     auto future = uploads.back().promise.get_future();
 
@@ -308,15 +309,15 @@ auto ENGINE_NS::GraphicsEngine::register_pipelines(std::vector<std::unique_ptr<g
 
 auto ENGINE_NS::GraphicsEngine::deregister_pipelines(std::vector<std::uint64_t>& ids) -> void {
     {
-        auto ids_set            = tsl::robin_set<std::uint64_t>{ids.begin(), ids.end()};
+        auto ids_set = tsl::robin_set<std::uint64_t>{ids.begin(), ids.end()};
 
         auto new_pipelines_lock = new_pipelines_.write();
         auto& new_pipelines     = new_pipelines_lock.get();
-        new_pipelines.erase(std::remove_if(new_pipelines.begin(), new_pipelines.end(),
-                                           [&ids_set](std::unique_ptr<graphics::RegisteredPipeline>& pipeline) {
-                                               return ids_set.contains(pipeline->id_);
-                                           }),
-                            new_pipelines.end());
+        new_pipelines.erase(
+            std::remove_if(new_pipelines.begin(),
+                           new_pipelines.end(),
+                           [&ids_set](std::unique_ptr<graphics::RegisteredPipeline>& pipeline) { return ids_set.contains(pipeline->id_); }),
+            new_pipelines.end());
     }
 
     {
@@ -417,8 +418,8 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     logger.get().debug("Initialising swapchain");
     create_swapchain_();
 
-    graphics_queue_           = device_.queues.at("graphics").get();
-    transfer_queue_           = device_.queues.at("transfer").get();
+    graphics_queue_ = device_.queues.at("graphics").get();
+    transfer_queue_ = device_.queues.at("transfer").get();
 
     imgui.write().get().queue = device_.queues.at("imgui").get();
 
@@ -474,7 +475,7 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
     draw_image_usages |= VK_IMAGE_USAGE_STORAGE_BIT;
     draw_image_usages |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    VkImageCreateInfo draw_img_info             = image_create_info(draw_image_.format, draw_image_usages, draw_extent);
+    VkImageCreateInfo draw_img_info = image_create_info(draw_image_.format, draw_image_usages, draw_extent);
 
     VmaAllocationCreateInfo draw_img_allocation = {};
     draw_img_allocation.usage                   = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -555,13 +556,13 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
 
 auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
     for (auto& thread : {graphics::Thread::MAIN, graphics::Thread::DRAW, graphics::Thread::UPLOAD}) {
-        auto& immediate              = immediates_.insert({thread, {}}).first.value();
+        auto& immediate = immediates_.insert({thread, {}}).first.value();
 
         VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
         VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
 
-        auto& queue                       = device_.queues.at(graphics::thread_immediate_name(thread));
-        immediate.queue                   = queue.get();
+        auto& queue     = device_.queues.at(graphics::thread_immediate_name(thread));
+        immediate.queue = queue.get();
 
         VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
@@ -580,12 +581,13 @@ auto ENGINE_NS::GraphicsEngine::init_pipelines_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView image) -> void {
-    auto lock                                   = imgui.read();
+    auto lock = imgui.read();
 
     VkRenderingAttachmentInfo colour_attachment = attachment_info(image, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     VkRenderingInfo render_info                 = rendering_info(
         VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
-        &colour_attachment, nullptr);
+        &colour_attachment,
+        nullptr);
 
     if (lock.get().latest_draw) {
         vkCmdBeginRendering(cmd, &render_info);
@@ -609,7 +611,8 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
     VkRenderingAttachmentInfo colour_attachment = attachment_info(draw_image_.view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     VkRenderingInfo render_info                 = rendering_info(
         VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
-        &colour_attachment, nullptr);
+        &colour_attachment,
+        nullptr);
 
     vkCmdBeginRendering(cmd, &render_info);
 
@@ -647,8 +650,12 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
 
             auto push_constants = pipeline->push_constants();
             if (push_constants.size > 0 && push_constants.data) {
-                vkCmdPushConstants(cmd, pipeline->graphics_pipeline_.value().layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                                   static_cast<std::uint32_t>(push_constants.size), push_constants.data);
+                vkCmdPushConstants(cmd,
+                                   pipeline->graphics_pipeline_.value().layout,
+                                   VK_SHADER_STAGE_VERTEX_BIT,
+                                   0,
+                                   static_cast<std::uint32_t>(push_constants.size),
+                                   push_constants.data);
             }
             pipeline->record_graphics(cmd);
         }
@@ -658,8 +665,12 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
 
             auto push_constants = pipeline->push_constants();
             if (push_constants.size > 0 && push_constants.data) {
-                vkCmdPushConstants(cmd, pipeline->compute_pipeline_.value().layout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                                   static_cast<std::uint32_t>(push_constants.size), push_constants.data);
+                vkCmdPushConstants(cmd,
+                                   pipeline->compute_pipeline_.value().layout,
+                                   VK_SHADER_STAGE_VERTEX_BIT,
+                                   0,
+                                   static_cast<std::uint32_t>(push_constants.size),
+                                   push_constants.data);
             }
             pipeline->record_compute(cmd);
         }
@@ -693,14 +704,18 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             frame.get().descriptor_allocator.clear_pools(device_);
 
             std::uint32_t swapchain_image_index = 0;
-            VK_CHECK(vkAcquireNextImageKHR(device_.device, swapchain_.swapchain, TIMEOUT, frame.get().swapchain_semaphore_, VK_NULL_HANDLE,
+            VK_CHECK(vkAcquireNextImageKHR(device_.device,
+                                           swapchain_.swapchain,
+                                           TIMEOUT,
+                                           frame.get().swapchain_semaphore_,
+                                           VK_NULL_HANDLE,
                                            &swapchain_image_index));
 
             VkCommandBuffer cmd = frame.get().main_command_buffer;
             VK_CHECK(vkResetCommandBuffer(cmd, 0));
             VkCommandBufferBeginInfo cmd_begin_info = command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-            VkExtent2D draw_extent                  = {draw_image_.extent.width, draw_image_.extent.height};
+            VkExtent2D draw_extent = {draw_image_.extent.width, draw_image_.extent.height};
 
             VK_CHECK(vkBeginCommandBuffer(cmd, &cmd_begin_info));
             TracyVkCollect(frame.get().tracy_context_, cmd);
@@ -727,14 +742,18 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
                 }
 
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-                transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_UNDEFINED,
+                transition_image(cmd,
+                                 swapchain_.images[swapchain_image_index],
+                                 VK_IMAGE_LAYOUT_UNDEFINED,
                                  VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 
                 blit_image(cmd, draw_image_.image, swapchain_.images[swapchain_image_index], draw_extent, swapchain_.extent);
                 draw_imgui_(cmd, swapchain_.views[swapchain_image_index]);
 
-                transition_image(cmd, swapchain_.images[swapchain_image_index], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                transition_image(cmd,
+                                 swapchain_.images[swapchain_image_index],
+                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                                  VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
             }
             VK_CHECK(vkEndCommandBuffer(cmd));
@@ -827,10 +846,10 @@ auto ENGINE_NS::GraphicsEngine::upload_() -> void {
 
         {
             ZoneScoped;
-            std::sort(staging_buffers.begin(), staging_buffers.end(),
-                      [](const graphics::StagingBuffer& lhs, const graphics::StagingBuffer& rhs) {
-                          return lhs.total_size > rhs.total_size;
-                      });
+            std::sort(
+                staging_buffers.begin(),
+                staging_buffers.end(),
+                [](const graphics::StagingBuffer& lhs, const graphics::StagingBuffer& rhs) { return lhs.total_size > rhs.total_size; });
 
             std::size_t current_size = 0;
             for (auto& buffer : staging_buffers) {
@@ -864,7 +883,7 @@ auto ENGINE_NS::GraphicsEngine::upload_meshes_(std::vector<graphics::StagingBuff
     }
     while (!uploads.empty()) {
         ZoneScoped;
-        auto& mesh                           = uploads.back();
+        auto& mesh = uploads.back();
 
         const std::size_t vertex_buffer_size = mesh.vertices.size() * sizeof(Vertex);
         const std::size_t index_buffer_size  = mesh.indices.size() * sizeof(std::uint32_t);
@@ -880,10 +899,11 @@ auto ENGINE_NS::GraphicsEngine::upload_meshes_(std::vector<graphics::StagingBuff
         device_address_info.buffer        = new_surface.vertex_buffer.buffer;
         new_surface.vertex_buffer_address = vkGetBufferDeviceAddress(device_.device, &device_address_info);
 
-        new_surface.index_buffer = allocate_buffer(index_buffer_size, VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        new_surface.index_buffer = allocate_buffer(index_buffer_size,
+                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                                                    VMA_MEMORY_USAGE_GPU_ONLY);
 
-        const auto desired_size  = vertex_buffer_size + index_buffer_size;
+        const auto desired_size          = vertex_buffer_size + index_buffer_size;
         graphics::StagingBuffer* staging = nullptr;
         for (auto& buffer : staging_buffers) {
             if (buffer.total_size >= desired_size) {
@@ -934,7 +954,7 @@ auto ENGINE_NS::GraphicsEngine::upload_textures_(std::vector<graphics::StagingBu
     }
     while (!uploads.empty()) {
         ZoneScoped;
-        auto& texture                    = uploads.back();
+        auto& texture = uploads.back();
 
         std::size_t data_size            = texture.size.width * texture.size.depth * texture.size.height * 4;
         graphics::StagingBuffer* staging = nullptr;
@@ -954,17 +974,18 @@ auto ENGINE_NS::GraphicsEngine::upload_textures_(std::vector<graphics::StagingBu
 
         std::memcpy(staging->mapped_data, texture.texture_data, data_size);
 
-        ImageAllocation new_image =
-            allocate_image(texture.size, texture.format, texture.usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-                           texture.mipmapped);
+        ImageAllocation new_image = allocate_image(texture.size,
+                                                   texture.format,
+                                                   texture.usage | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+                                                   texture.mipmapped);
 
         immediate_submit([&](VkCommandBuffer cmd) {
             transition_image(cmd, new_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
             VkBufferImageCopy copy_region{};
-            copy_region.bufferOffset                    = 0;
-            copy_region.bufferRowLength                 = 0;
-            copy_region.bufferImageHeight               = 0;
+            copy_region.bufferOffset      = 0;
+            copy_region.bufferRowLength   = 0;
+            copy_region.bufferImageHeight = 0;
 
             copy_region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
             copy_region.imageSubresource.mipLevel       = 0;
@@ -992,9 +1013,8 @@ auto ENGINE_NS::GraphicsEngine::compile_() -> void {
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     while (running_.load(std::memory_order_acquire)) {
         std::unique_lock lock(pipeline_compile_lock_);
-        pipeline_compile_condition_.wait(lock, [&] {
-            return !running_.load(std::memory_order_acquire) || !new_pipelines_.read().get().empty();
-        });
+        pipeline_compile_condition_.wait(lock,
+                                         [&] { return !running_.load(std::memory_order_acquire) || !new_pipelines_.read().get().empty(); });
         if (!running_.load(std::memory_order_acquire)) {
             break;
         }

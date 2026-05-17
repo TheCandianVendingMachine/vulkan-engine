@@ -7,6 +7,7 @@
 #include <Volk/volk.h>
 // clang-format enable
 #include <SDL3/SDL_vulkan.h>
+
 #include <Tracy/Tracy.hpp>
 #include <cstdint>
 #include <type_traits>
@@ -91,9 +92,9 @@ ENGINE_NS::VulkanInstance::VulkanInstance(VkInstanceCreateInfo create_info) {
         debug_create.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
                                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        debug_create.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                                   VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+        debug_create.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
         debug_create.pfnUserCallback = validation_callback;
 
         if (!vkCreateDebugUtilsMessengerEXT) {
@@ -145,8 +146,8 @@ auto ENGINE_NS::VulkanInstanceBuilder::finish() -> VulkanInstance {
     instance_info.sType            = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     instance_info.pApplicationInfo = &app_info;
 
-    unsigned int count             = 0;
-    auto instance_extensions       = SDL_Vulkan_GetInstanceExtensions(&count);
+    unsigned int count       = 0;
+    auto instance_extensions = SDL_Vulkan_GetInstanceExtensions(&count);
 
     std::vector<const char*> extensions(count);
     std::copy(instance_extensions, instance_extensions + count, extensions.begin());
@@ -176,8 +177,8 @@ auto ENGINE_NS::VulkanInstanceBuilder::finish() -> VulkanInstance {
             }
         }
     }
-    instance_info.enabledLayerCount       = static_cast<std::uint32_t>(validation_layers.size());
-    instance_info.ppEnabledLayerNames     = validation_layers.data();
+    instance_info.enabledLayerCount   = static_cast<std::uint32_t>(validation_layers.size());
+    instance_info.ppEnabledLayerNames = validation_layers.data();
 
     instance_info.enabledExtensionCount   = static_cast<std::uint32_t>(extensions.size());
     instance_info.ppEnabledExtensionNames = extensions.data();

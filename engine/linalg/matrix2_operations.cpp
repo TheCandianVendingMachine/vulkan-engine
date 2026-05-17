@@ -162,7 +162,8 @@ template <>
 auto linalg::operator/ <float>(const Matrix2<float>& A, const Vector2<float>& x) -> Vector2<float> {
     ZoneScoped;
     auto out = Vector2<float>::zero();
-    ENGINE_NS::linalg::blas2::matrix2::float32::solve(const_cast<float*>(out.elements), const_cast<float*>(A.elements),
+    ENGINE_NS::linalg::blas2::matrix2::float32::solve(const_cast<float*>(out.elements),
+                                                      const_cast<float*>(A.elements),
                                                       const_cast<float*>(x.elements));
     return out;
 }
@@ -170,7 +171,8 @@ template <>
 auto linalg::operator/ <double>(const Matrix2<double>& A, const Vector2<double>& x) -> Vector2<double> {
     ZoneScoped;
     auto out = Vector2<double>::zero();
-    ENGINE_NS::linalg::blas2::matrix2::float64::solve(const_cast<double*>(out.elements), const_cast<double*>(A.elements),
+    ENGINE_NS::linalg::blas2::matrix2::float64::solve(const_cast<double*>(out.elements),
+                                                      const_cast<double*>(A.elements),
                                                       const_cast<double*>(x.elements));
     return out;
 }

@@ -6,6 +6,7 @@
 #include <Volk/volk.h>
 // clang-format enable
 #include <SDL3/SDL_vulkan.h>
+
 #include <type_traits>
 
 ENGINE_NS::VulkanSurface::VulkanSurface(SDL_Window* window, VulkanInstance& instance) : window_(window), instance_(&instance) {

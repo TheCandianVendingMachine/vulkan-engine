@@ -5,12 +5,14 @@
 #include "engine/linalg/vector.h"
 
 #include <SDL3/SDL.h>
+#include <imgui.h>
+
 #include <Tracy/Tracy.hpp>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
-#include <imgui.h>
 #include <thread>
+
 
 using namespace ::ENGINE_NS;
 
@@ -113,9 +115,9 @@ auto ENGINE_NS::Engine::main_loop() -> void {
     const auto tick_rate   = std::chrono::milliseconds(2);
     const auto update_rate = 1.0 / 40.0;
 
-    double accumulator     = 0.0;
-    auto last_update       = std::chrono::high_resolution_clock::now();
-    auto last_frame        = std::chrono::high_resolution_clock::now();
+    double accumulator = 0.0;
+    auto last_update   = std::chrono::high_resolution_clock::now();
+    auto last_frame    = std::chrono::high_resolution_clock::now();
 
     while (running_) {
         ++frame_count_;
@@ -124,7 +126,7 @@ auto ENGINE_NS::Engine::main_loop() -> void {
         auto frame_start = std::chrono::high_resolution_clock::now();
         auto delta       = frame_start - last_update;
         accumulator += delta.count() * 1e-9;
-        last_update                  = frame_start;
+        last_update = frame_start;
 
         auto imgui_lock              = graphics_.imgui.write();
         auto& imgui                  = imgui_lock.get();

@@ -3,9 +3,10 @@
 #include "engine/engine.h"
 #include "engine/engine_utils.h"
 
-#include <Tracy/tracy.hpp>
 #include <Windows.h>
 #include <libloaderapi.h>
+
+#include <Tracy/tracy.hpp>
 #include <memory>
 
 #ifdef _WIN32
@@ -33,7 +34,7 @@ void ENGINE_NS::linalg::load_library() {
     bool has_avx = (info[2] & (1 << 28)) != 0;
     bool has_sse = (info[2] & (1 << 20)) != 0;
 
-    auto arch    = Arch::SCALAR;
+    auto arch = Arch::SCALAR;
     if (has_sse) {
         logger.get().info("Detected SSE4.2");
         arch = Arch::SSE;

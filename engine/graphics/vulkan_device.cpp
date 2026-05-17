@@ -5,10 +5,11 @@
 // clang-format disable
 #include <Volk/volk.h>
 // clang-format enable
-#include <Tracy/Tracy.hpp>
-#include <cstdint>
 #include <robin_map.h>
 #include <robin_set.h>
+
+#include <Tracy/Tracy.hpp>
+#include <cstdint>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -115,8 +116,11 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
         queue_family_allocations[best_queue_family].count++;
         queue_family_allocations[best_queue_family].priorities.push_back(1.f / static_cast<float>(queues_with_same_type));
 
-        queues.insert({name, VulkanQueue(best_queue_family, std::min(idx, properties[best_queue_family].queueCount - 1),
-                                         properties[best_queue_family].queueCount, requested)});
+        queues.insert({name,
+                       VulkanQueue(best_queue_family,
+                                   std::min(idx, properties[best_queue_family].queueCount - 1),
+                                   properties[best_queue_family].queueCount,
+                                   requested)});
         allocated_queues.insert(name);
 
         if (allocated_queues.size() == queues_.size()) {
@@ -146,11 +150,11 @@ auto ENGINE_NS::VulkanDeviceBuilder::finish(VulkanPhysicalDevice& physical_devic
     }
 
     VkDeviceCreateInfo create_info{};
-    create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    create_info.pNext                   = &physical_device.features;
+    create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    create_info.pNext = &physical_device.features;
 
-    create_info.queueCreateInfoCount    = static_cast<std::uint32_t>(queue_create_info.size());
-    create_info.pQueueCreateInfos       = queue_create_info.data();
+    create_info.queueCreateInfoCount = static_cast<std::uint32_t>(queue_create_info.size());
+    create_info.pQueueCreateInfos    = queue_create_info.data();
 
     create_info.enabledExtensionCount   = static_cast<std::uint32_t>(extensions.size());
     create_info.ppEnabledExtensionNames = extensions.data();

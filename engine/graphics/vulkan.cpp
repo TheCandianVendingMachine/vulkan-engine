@@ -80,26 +80,26 @@ auto ENGINE_NS::command_buffer_submit_info(VkCommandBuffer command_buffer) -> Vk
 auto ENGINE_NS::submit_info(VkCommandBufferSubmitInfo* cmd,
                             VkSemaphoreSubmitInfo* signal_semaphore_info,
                             VkSemaphoreSubmitInfo* wait_semaphore_info) -> VkSubmitInfo2 {
-    VkSubmitInfo2 info            = {};
-    info.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
-    info.pNext                    = nullptr;
+    VkSubmitInfo2 info = {};
+    info.sType         = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+    info.pNext         = nullptr;
 
-    info.waitSemaphoreInfoCount   = wait_semaphore_info == nullptr ? 0 : 1;
-    info.pWaitSemaphoreInfos      = wait_semaphore_info;
+    info.waitSemaphoreInfoCount = wait_semaphore_info == nullptr ? 0 : 1;
+    info.pWaitSemaphoreInfos    = wait_semaphore_info;
 
     info.signalSemaphoreInfoCount = signal_semaphore_info == nullptr ? 0 : 1;
     info.pSignalSemaphoreInfos    = signal_semaphore_info;
 
-    info.commandBufferInfoCount   = 1;
-    info.pCommandBufferInfos      = cmd;
+    info.commandBufferInfoCount = 1;
+    info.pCommandBufferInfos    = cmd;
 
     return info;
 }
 
 auto ENGINE_NS::attachment_info(VkImageView view, VkClearValue* clear, VkImageLayout layout) -> VkRenderingAttachmentInfo {
     VkRenderingAttachmentInfo colour_attachment{};
-    colour_attachment.sType       = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
-    colour_attachment.pNext       = nullptr;
+    colour_attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+    colour_attachment.pNext = nullptr;
 
     colour_attachment.imageView   = view;
     colour_attachment.imageLayout = layout;
@@ -135,8 +135,8 @@ auto ENGINE_NS::pipeline_layout_create_info() -> VkPipelineLayoutCreateInfo {
 auto ENGINE_NS::pipeline_shader_stage_create_info(VkShaderStageFlagBits stage, VkShaderModule shader, const char* entry)
     -> VkPipelineShaderStageCreateInfo {
     VkPipelineShaderStageCreateInfo info{};
-    info.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    info.pNext  = nullptr;
+    info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    info.pNext = nullptr;
 
     info.stage  = stage;
     info.module = shader;

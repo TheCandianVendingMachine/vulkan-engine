@@ -49,8 +49,15 @@ auto entry_to_context(fmt::format_context& ctx, const logger::Entry& entry) -> f
     auto minutes      = static_cast<std::uint64_t>(std::floor(entry.log_time_.count() / 60));
     auto seconds      = static_cast<std::uint64_t>(std::floor(entry.log_time_.count()));
     auto milliseconds = static_cast<std::uint64_t>(10'000.0 * (entry.log_time_.count() - std::floor(entry.log_time_.count())));
-    return fmt::format_to(ctx.out(), "{:0>2}:{:0>2}:{:0>2}.{:0>4} [{}] ({}) {}", hours, minutes, seconds, milliseconds,
-                          logger::level_to_string(entry.level), entry.owner, entry.message);
+    return fmt::format_to(ctx.out(),
+                          "{:0>2}:{:0>2}:{:0>2}.{:0>4} [{}] ({}) {}",
+                          hours,
+                          minutes,
+                          seconds,
+                          milliseconds,
+                          logger::level_to_string(entry.level),
+                          entry.owner,
+                          entry.message);
 }
 
 auto fmt::formatter<logger::Entry>::format(logger::Entry entry, fmt::format_context& ctx) const -> fmt::format_context::iterator {
@@ -129,7 +136,11 @@ auto Logger::last_entries_of(uint64_t count, logger::Level filter) const -> std:
 
 void Logger::append(logger::Level level, std::string&& message) {
     logger::Entry entry{
-      m_log_idx, level, m_identifier, std::move(message), logger::Clock::now() - start_time_,
+      m_log_idx,
+      level,
+      m_identifier,
+      std::move(message),
+      logger::Clock::now() - start_time_,
     };
     for (auto stream : m_streams) {
         if (stream.level >= level) {

@@ -65,15 +65,15 @@ ENGINE_NS::VulkanSwapchain::VulkanSwapchain(VkSwapchainCreateInfoKHR create_info
 
     for (std::uint32_t idx = 0; idx < image_count; idx++) {
         VkImageViewCreateInfo view_info{};
-        view_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        view_info.image                           = images_[idx];
-        view_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-        view_info.format                          = format_;
+        view_info.sType    = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        view_info.image    = images_[idx];
+        view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        view_info.format   = format_;
 
-        view_info.components.r                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-        view_info.components.g                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-        view_info.components.b                    = VK_COMPONENT_SWIZZLE_IDENTITY;
-        view_info.components.a                    = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
         view_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
         view_info.subresourceRange.baseMipLevel   = 0;
@@ -122,9 +122,9 @@ auto ENGINE_NS::VulkanSwapchainBuilder::finish(VulkanPhysicalDevice& physical_de
     vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device.device, surface.surface, &format_count, nullptr);
     std::vector<VkSurfaceFormatKHR> formats(format_count);
     vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device.device, surface.surface, &format_count, formats.data());
-    bool does_format_exist                = false;
-    bool does_color_space_exist           = false;
-    bool does_combination_exist           = false;
+    bool does_format_exist      = false;
+    bool does_color_space_exist = false;
+    bool does_combination_exist = false;
 
     std::size_t idx                       = 0;
     std::size_t first_similar_format      = 0;
