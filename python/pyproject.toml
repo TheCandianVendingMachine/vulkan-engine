@@ -7,3 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "GitPython",
 ]
+
+[project.scripts]
+download-dependencies = "tools.download_dependencies:main"
+build-shaders = "tools.build_shaders:main"
