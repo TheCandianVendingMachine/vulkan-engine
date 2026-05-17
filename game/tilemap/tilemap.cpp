@@ -151,6 +151,10 @@ auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engi
                                                     engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue)
     -> std::optional<engine::ComputePipelineBuilder> {
     ZoneScoped;
+    tilemap_id_image_ =
+        engine.allocate_image(VkExtent3D{.width = 64, .height = 64, .depth = 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_STORAGE_BIT);
+    deletion_queue_.push(tilemap_id_image_);
+
     create_descriptors_(engine, device, pipeline_deletion_queue);
 
     auto shader_result = engine::asset::BytecodeShader::load_from_file("assets/shaders/game/tilemap/tilemap.spv").compile(device);
@@ -169,7 +173,7 @@ auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engi
 auto TilemapPreDrawPipeline::record_compute_(VkCommandBuffer) -> void {
 }
 
-auto TilemapPreDrawPipeline::create_descriptors_(engine::GraphicsEngine& engine,
+auto TilemapPreDrawPipeline::create_descriptors_(engine::GraphicsEngine&,
                                                  engine::VulkanDevice& device,
                                                  engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue) -> void {
     ZoneScoped;
@@ -179,7 +183,7 @@ auto TilemapPreDrawPipeline::create_descriptors_(engine::GraphicsEngine& engine,
 
     tilemap_id_image_descriptors_ = pipeline_descriptor_allocator_.allocate(device, tilemap_id_image_layout_.layout);
     engine::DescriptorWriter{}
-        .write_image(engine::Binding(0), draw_image_.view, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+        .write_image(engine::Binding(0), tilemap_id_image_.view, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_GENERAL, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
         .update_set(device, tilemap_id_image_descriptors_);
 
     pipeline_deletion_queue.push(tilemap_id_image_layout_);

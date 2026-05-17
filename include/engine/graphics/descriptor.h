@@ -65,6 +65,9 @@ namespace ENGINE_NS {
             DescriptorAllocatorGrowable(DescriptorAllocatorGrowable&& rhs) noexcept;
             auto operator=(DescriptorAllocatorGrowable&& rhs) noexcept -> DescriptorAllocatorGrowable&;
 
+            DescriptorAllocatorGrowable(const DescriptorAllocatorGrowable& rhs);
+            auto operator=(const DescriptorAllocatorGrowable& rhs) -> DescriptorAllocatorGrowable&;
+
         private:
             auto get_pool_(VulkanDevice& device) -> VkDescriptorPool;
             auto create_pool_(VulkanDevice& device, std::uint32_t set_count, std::span<PoolSizeRatio> pool_ratios) -> VkDescriptorPool;

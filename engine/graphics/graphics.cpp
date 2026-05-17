@@ -1146,5 +1146,5 @@ auto ENGINE_NS::graphics::RegisteredPipeline::dependencies() -> std::vector<std:
     return {};
 }
 
-auto ENGINE_NS::graphics::RegisteredPipeline::destroy_(VulkanDevice& device, VmaAllocator allocator) -> void {
+auto ENGINE_NS::graphics::RegisteredPipeline::destroy_(VulkanDevice&, VmaAllocator) -> void {
 }

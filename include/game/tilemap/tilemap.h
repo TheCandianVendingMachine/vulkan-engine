@@ -104,5 +104,7 @@ class TilemapPreDrawPipeline : public engine::StatePipeline {
 
         VkDescriptorSet tilemap_id_image_descriptors_ = VK_NULL_HANDLE;
         engine::VulkanDescriptorSetLayout tilemap_id_image_layout_{};
+
+        engine::ImageAllocation tilemap_id_image_{};
 };
 

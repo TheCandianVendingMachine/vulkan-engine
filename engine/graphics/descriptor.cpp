@@ -12,6 +12,7 @@
 #include <engine/meta_defines.h>
 #include <span>
 #include <type_traits>
+#include <utility>
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
@@ -159,7 +160,7 @@ auto ENGINE_NS::DescriptorAllocatorGrowable::init(VulkanDevice& device, std::uin
     }
 
     VkDescriptorPool new_pool = create_pool_(device, max_sets, ratios);
-    sets_per_pool_            = max_sets * 1.5;
+    sets_per_pool_            = static_cast<std::uint32_t>(max_sets * 1.5);
 
     ready_pools_.push_back(new_pool);
 }
@@ -200,7 +201,7 @@ auto ENGINE_NS::DescriptorAllocatorGrowable::destroy_pools(VkDevice device) -> v
 
 auto ENGINE_NS::DescriptorAllocatorGrowable::allocate(VulkanDevice& device, VkDescriptorSetLayout layout, void* pNext) -> VkDescriptorSet {
     if (this->moved_) {
-        return;
+        return VK_NULL_HANDLE;
     }
 
     VkDescriptorPool pool_to_use = get_pool_(device);
@@ -229,16 +230,32 @@ auto ENGINE_NS::DescriptorAllocatorGrowable::allocate(VulkanDevice& device, VkDe
 }
 
 ENGINE_NS::DescriptorAllocatorGrowable::DescriptorAllocatorGrowable(DescriptorAllocatorGrowable&& rhs) noexcept :
-    ratios_(std::move(rhs.ratios_)), full_pools_(std::move(rhs.full_pools_)), ready_pools_(std::move(rhs.ready_pools_)) {
+    ratios_(std::move(rhs.ratios_)), full_pools_(std::move(rhs.full_pools_)), ready_pools_(std::move(rhs.ready_pools_)),
+    sets_per_pool_(std::move(rhs.sets_per_pool_)) {
     rhs.moved_ = true;
 }
 
 auto ENGINE_NS::DescriptorAllocatorGrowable::operator=(DescriptorAllocatorGrowable&& rhs) noexcept -> DescriptorAllocatorGrowable& {
     if (&rhs != this) {
-        this->ratios_      = std::move(rhs.ratios_);
-        this->full_pools_  = std::move(rhs.full_pools_);
-        this->ready_pools_ = std::move(rhs.ready_pools_);
-        rhs.moved_         = true;
+        this->ratios_        = std::move(rhs.ratios_);
+        this->full_pools_    = std::move(rhs.full_pools_);
+        this->ready_pools_   = std::move(rhs.ready_pools_);
+        this->sets_per_pool_ = std::move(rhs.sets_per_pool_);
+        rhs.moved_           = true;
+    }
+    return *this;
+}
+
+ENGINE_NS::DescriptorAllocatorGrowable::DescriptorAllocatorGrowable(const DescriptorAllocatorGrowable& rhs) :
+    ratios_(rhs.ratios_), full_pools_(rhs.full_pools_), ready_pools_(rhs.ready_pools_), sets_per_pool_(rhs.sets_per_pool_) {
+}
+
+auto ENGINE_NS::DescriptorAllocatorGrowable::operator=(const DescriptorAllocatorGrowable& rhs) -> DescriptorAllocatorGrowable& {
+    if (&rhs != this) {
+        this->ratios_        = rhs.ratios_;
+        this->full_pools_    = rhs.full_pools_;
+        this->ready_pools_   = rhs.ready_pools_;
+        this->sets_per_pool_ = rhs.sets_per_pool_;
     }
     return *this;
 }
@@ -250,10 +267,7 @@ auto ENGINE_NS::DescriptorAllocatorGrowable::get_pool_(VulkanDevice& device) -> 
         ready_pools_.pop_back();
     } else {
         new_pool       = create_pool_(device, sets_per_pool_, ratios_);
-        sets_per_pool_ = sets_per_pool_ * 1.5;
-        if (sets_per_pool_ > 4'096) {
-            sets_per_pool_ = 4'096;
-        }
+        sets_per_pool_ = std::min(4'096u, static_cast<std::uint32_t>(sets_per_pool_ * 1.5));
     }
 
     return new_pool;
