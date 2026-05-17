@@ -1,5 +1,3 @@
-enable_testing()
-
 add_executable(test_linalg_scalar
     test_matrix2_float.cpp
     test_matrix2_double.cpp
@@ -16,7 +14,7 @@ add_executable(test_linalg_scalar
 set_target_properties(test_linalg_scalar PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BIARY_DIR}/tests"
 )
-target_include_directories(test_linalg_scalar PUBLIC
+target_include_directories(test_linalg_scalar PRIVATE
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
 )
@@ -43,7 +41,7 @@ add_executable(test_linalg_sse
 set_target_properties(test_linalg_sse PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BIARY_DIR}/tests"
 )
-target_include_directories(test_linalg_sse PUBLIC
+target_include_directories(test_linalg_sse PRIVATE
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
 )
@@ -71,7 +69,7 @@ add_executable(bench_linalg_scalar
 set_target_properties(test_linalg_scalar PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BIARY_DIR}/tests"
 )
-target_include_directories(bench_linalg_scalar PUBLIC
+target_include_directories(bench_linalg_scalar PRIVATE
     ${PROJECT_SOURCE_DIR}/include
     ${EXTERNAL_DIR}/catch2/include
 )
@@ -95,9 +93,8 @@ add_executable(bench_linalg_sse
     bench_vector2_double.cpp
     bench_vector3_double.cpp
     bench_vector4_double.cpp)
-target_include_directories(bench_linalg_sse PUBLIC
+target_include_directories(bench_linalg_sse PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${EXTERNAL_DIR}/catch2/include
 )
 target_link_libraries(bench_linalg_sse PRIVATE
     Catch2::Catch2WithMain

@@ -9,7 +9,6 @@ set(HEADER_LIST
 add_executable(game
     main.cpp
     world.cpp
-    ${EXTERNAL_HEADER_DIR}/Tracy/TracyClient.cpp
     ${HEADER_LIST}
 
 )
@@ -17,10 +16,10 @@ add_executable(game
 add_subdirectory(level)
 add_subdirectory(tilemap)
 
-target_include_directories(game PUBLIC
+target_include_directories(game PRIVATE
     ${PROJECT_SOURCE_DIR}/include
 )
-target_include_directories(game SYSTEM PUBLIC
+target_include_directories(game SYSTEM PRIVATE
     ${EXTERNAL_HEADER_DIR}/Tracy
 )
  
@@ -61,5 +60,4 @@ target_compile_definitions(game PRIVATE VK_NO_PROTOTYPES)
 target_link_libraries(game PRIVATE
     engine
     volk
-    PUBLIC
-    Tracy::TracyClient)
+)

@@ -1,5 +1,3 @@
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
- 
 set(LINALG_HEADER_PATH
     "${PROJECT_SOURCE_DIR}/include/linalg"
 )
@@ -31,10 +29,27 @@ target_include_directories(linalg_scalar PUBLIC
 target_compile_features(linalg_scalar PRIVATE cxx_std_23)
  
 if(MSVC)
-    # Applies to both MSVC and clang-cl
+    target_compile_options(linalg_scalar PRIVATE
+        /utf-8
+        /W4
+        /WX
+    )
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(linalg_scalar PRIVATE
+            /external:anglebrackets
+            /external:W0
+        )
+    endif()
     target_compile_definitions(linalg_scalar PRIVATE
         NOMINMAX
         _CRT_SECURE_NO_WARNINGS
+    )
+else()
+    target_compile_options(linalg_scalar PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Werror
     )
 endif()
  
@@ -57,17 +72,33 @@ target_include_directories(linalg_sse PUBLIC
 target_compile_features(linalg_sse PRIVATE cxx_std_23)
  
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    # clang-cl and clang++ both accept -m flags; GCC does too
     target_compile_options(linalg_sse PRIVATE -msse4.2)
 elseif(MSVC)
     target_compile_options(linalg_sse PRIVATE /arch:SSE4.2)
 endif()
  
 if(MSVC)
-    # Applies to both MSVC and clang-cl
+    target_compile_options(linalg_sse PRIVATE
+        /utf-8
+        /W4
+        /WX
+    )
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(linalg_sse PRIVATE
+            /external:anglebrackets
+            /external:W0
+        )
+    endif()
     target_compile_definitions(linalg_sse PRIVATE
         NOMINMAX
         _CRT_SECURE_NO_WARNINGS
+    )
+else()
+    target_compile_options(linalg_sse PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Werror
     )
 endif()
  
@@ -85,19 +116,46 @@ target_include_directories(linalg_avx PUBLIC
 target_compile_features(linalg_avx PRIVATE cxx_std_23)
  
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-    # clang-cl and clang++ both accept -m flags; GCC does too
     target_compile_options(linalg_avx PRIVATE -mavx2)
 elseif(MSVC)
     target_compile_options(linalg_avx PRIVATE /arch:AVX2)
 endif()
  
 if(MSVC)
-    # Applies to both MSVC and clang-cl
+    target_compile_options(linalg_avx PRIVATE
+        /utf-8
+        /W4
+        /WX
+    )
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        target_compile_options(linalg_avx PRIVATE
+            /external:anglebrackets
+            /external:W0
+        )
+    endif()
     target_compile_definitions(linalg_avx PRIVATE
         NOMINMAX
         _CRT_SECURE_NO_WARNINGS
     )
+else()
+    target_compile_options(linalg_avx PRIVATE
+        -Wall
+        -Wextra
+        -Wpedantic
+        -Werror
+    )
 endif()
+ 
+ 
+# ---------------------------------------------------------------------------
+# Shared config
+# ---------------------------------------------------------------------------
+ 
+# Use per-target property instead of the global CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS
+# which would otherwise affect every SHARED target in the entire build.
+set_target_properties(linalg_scalar linalg_sse linalg_avx PROPERTIES
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
  
 source_group(
     TREE "${PROJECT_SOURCE_DIR}/include"

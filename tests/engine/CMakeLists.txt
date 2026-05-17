@@ -1,13 +1,10 @@
-enable_testing()
-
 add_executable(test_engine
     test_bitset.cpp
     test_region.cpp
     test_pool.cpp
     )
-target_include_directories(test_engine PUBLIC
+target_include_directories(test_engine PRIVATE
     ${PROJECT_SOURCE_DIR}/include
-    ${EXTERNAL_DIR}/catch2/include
 )
 target_link_libraries(test_engine PRIVATE
     Catch2::Catch2WithMain

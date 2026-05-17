@@ -103,20 +103,23 @@ target_compile_definitions(engine PRIVATE
 target_include_directories(engine PUBLIC
     ${PROJECT_SOURCE_DIR}/include
 )
-target_include_directories(engine SYSTEM PUBLIC
+target_include_directories(engine SYSTEM PRIVATE
     ${EXTERNAL_HEADER_DIR}
     ${EXTERNAL_HEADER_DIR}/stb
     ${EXTERNAL_HEADER_DIR}/fmt
-    ${EXTERNAL_HEADER_DIR}/vulkan-headers
     ${EXTERNAL_HEADER_DIR}/VulkanMemoryAllocator
-    ${EXTERNAL_HEADER_DIR}/volk
     ${EXTERNAL_HEADER_DIR}/robin-map
-    ${EXTERNAL_HEADER_DIR}/Tracy
-    ${EXTERNAL_HEADER_DIR}/imgui
     ${EXTERNAL_HEADER_DIR}/imgui/backends
-    ${EXTERNAL_DIR}/fastgltf/include
     ${EXTERNAL_DIR}/fmtlib/include
+)
+# Headers needed by public API (Vulkan types in engine.h, Tracy in public headers, etc.)
+target_include_directories(engine SYSTEM PUBLIC
+    ${EXTERNAL_HEADER_DIR}/imgui
+    ${EXTERNAL_HEADER_DIR}/volk
+    ${EXTERNAL_HEADER_DIR}/vulkan-headers
+    ${EXTERNAL_HEADER_DIR}/Tracy
     ${EXTERNAL_DIR}/sdl/include
+    ${EXTERNAL_DIR}/fastgltf/include
 )
 
 target_compile_features(engine PRIVATE cxx_std_23)
