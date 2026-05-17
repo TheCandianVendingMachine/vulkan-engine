@@ -4,9 +4,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 ColumnLimit: 140
 UseTab: Never
----
 Language: Cpp
-AccessModifierOffset: 0
 # Force pointers to the type for C++.
 Standard: Latest
 NamespaceIndentation: All
@@ -22,7 +20,7 @@ AlignAfterOpenBracket: Align
 AlignArrayOfStructures: Left
 AlignConsecutiveAssignments:
   Enabled: true
-  AcrossEmptyLines: true
+  AcrossEmptyLines: false
   AcrossComments: true
 AlignConsecutiveBitFields:
   Enabled: true
@@ -49,11 +47,11 @@ AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
-AllowShortLambdasOnASingleLine: None
+AllowShortLambdasOnASingleLine: Inline
 AllowShortLoopsOnASingleLine: false
 AllowShortNamespacesOnASingleLine: false
 AlwaysBreakBeforeMultilineStrings: true
-BinPackArguments: true
+BinPackArguments: false
 BinPackParameters: OnePerLine
 BitFieldColonSpacing: After
 BreakBeforeBraces: Custom
@@ -101,4 +99,11 @@ KeepEmptyLines:
 QualifierAlignment: Custom
 QualifierOrder: [friend, static, inline, constexpr, const, volatile, type]
 IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:  '^"'
+    Priority: 1
+  - Regex:  '^<.*\.h>'
+    Priority: 2
+  - Regex:  '^<'
+    Priority: 3
 FixNamespaceComments: true

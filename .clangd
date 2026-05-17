@@ -1,0 +1,61 @@
+# .clangd — clangd language server configuration
+# Place at the repository root.
+# Full reference: https://clangd.llvm.org/config
+
+CompileFlags:
+  # Use the clang build's compile_commands.json.
+  # Switch to build/msvc if you want MSVC-parsed flags instead, though
+  # clangd works best with the clang build.
+  CompilationDatabase: build/clang
+
+  Add:
+    # Explicit target triple so clangd resolves Windows intrinsics and
+    # system headers correctly when invoked outside a VS Developer Prompt.
+    - --target=x86_64-pc-windows-msvc
+
+    # clang-cl passes these to the underlying clang driver; clangd needs
+    # them explicitly to match what the compiler sees.
+    - /utf-8
+
+  Remove:
+    # clangd doesn't understand these MSVC-only flags and will produce
+    # false errors or noise if they appear in compile_commands.json.
+    - /external:anglebrackets
+    - /external:W0
+    - /Gm   # deprecated incremental build flag, sometimes injected by CMake
+
+Formatting:
+  # Use the .clang-format file at the repository root.
+  # clangd searches parent directories by default, but this makes it explicit.
+  Style: file
+
+Diagnostics:
+  UnusedIncludes: Strict
+
+  ClangTidy:
+    Add:
+      - modernize-*
+      - performance-*
+      - readability-*
+      - bugprone-*
+    Remove:
+      # Trailing return types are a style choice, not an improvement
+      - modernize-use-trailing-return-type
+      # auto on every variable gets noisy fast
+      - modernize-use-auto
+
+Index:
+  StandardLibrary: Yes
+
+---
+# Fragment 2: suppress all diagnostics inside external/
+# This silences warnings from third-party headers that we can't fix,
+# equivalent to what /external:W0 does for the compiler.
+If:
+  PathMatch: external/.*
+
+Diagnostics:
+  Suppress: "*"
+
+ClangTidy:
+  Remove: "*"

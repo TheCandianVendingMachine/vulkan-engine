@@ -19,7 +19,7 @@ ENGINE_NS::fileio::error::types::Base::Base(const char* message, int error_code)
     } state   = State::MESSAGE;
 
     auto base = 0;
-    for (auto idx = 0; idx < error::MESSAGE_LENGTH && state != State::END; idx++) {
+    for (std::uint64_t idx = 0; idx < error::MESSAGE_LENGTH && state != State::END; idx++) {
         char current = '\0';
         switch (state) {
             case State::MESSAGE:
@@ -75,21 +75,21 @@ auto ENGINE_NS::fileio::error::types::Base::operator=(Base&& rhs) noexcept -> Ba
 }
 
 ENGINE_NS::fileio::error::Error::Contained::Contained() {
-    std::memset(this, 0, sizeof(Contained));
+    std::memset(static_cast<void*>(this), 0, sizeof(Contained));
 }
 
 ENGINE_NS::fileio::error::Error::Error(const Error& rhs) : error(rhs.error), reason(contained.unknown.reason) {
-    std::memcpy(&contained, &rhs.contained, sizeof(Contained));
+    std::memcpy(static_cast<void*>(&contained), static_cast<const void*>(&rhs.contained), sizeof(Contained));
 }
 
 ENGINE_NS::fileio::error::Error::Error(Error&& rhs) noexcept : error(std::move(rhs.error)), reason(contained.unknown.reason) {
-    std::memcpy(&contained, &rhs.contained, sizeof(Contained));
+    std::memcpy(static_cast<void*>(&contained), static_cast<void*>(&rhs.contained), sizeof(Contained));
 }
 
 auto ENGINE_NS::fileio::error::Error::operator=(const Error& rhs) -> Error& {
     if (&rhs != this) {
         error = rhs.error;
-        std::memcpy(&contained, &rhs.contained, sizeof(Contained));
+        std::memcpy(static_cast<void*>(&contained), static_cast<const void*>(&rhs.contained), sizeof(Contained));
     }
     return *this;
 }
@@ -97,7 +97,7 @@ auto ENGINE_NS::fileio::error::Error::operator=(const Error& rhs) -> Error& {
 auto ENGINE_NS::fileio::error::Error::operator=(Error&& rhs) noexcept -> Error& {
     if (&rhs != this) {
         error = std::move(rhs.error);
-        std::memcpy(&contained, &rhs.contained, sizeof(Contained));
+        std::memcpy(static_cast<void*>(&contained), static_cast<void*>(&rhs.contained), sizeof(Contained));
     }
     return *this;
 }
