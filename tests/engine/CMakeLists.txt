@@ -16,6 +16,10 @@ target_link_libraries(test_engine PRIVATE
 )
 target_compile_features(test_engine PRIVATE cxx_std_23)
 
+set_target_properties(test_engine PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BIARY_DIR}/tests"
+)
+
 if (MSVC)
     target_compile_options(test_engine PRIVATE
         /utf-8
@@ -28,4 +32,4 @@ endif()
 
 
 catch_discover_tests(test_engine
-    DL_PATHS "${CMAKE_BINARY_DIR}/engine/Release" "${CMAKE_BINARY_DIR}/engine/Debug")
+    DL_PATHS "${CMAKE_BINARY_DIR}/bin/$<CONFIG>")

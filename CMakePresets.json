@@ -1,0 +1,104 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 21,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja Multi-Config",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_CONFIGURATION_TYPES": "Debug;Release;RelWithDebInfo"
+            }
+        },
+        {
+            "name": "msvc",
+            "displayName": "MSVC",
+            "description": "Build with MSVC cl.exe. Run from a VS Developer Command Prompt.",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl"
+            }
+        },
+        {
+            "name": "clang",
+            "displayName": "Clang (clang-cl)",
+            "description": "Build with clang-cl (MSVC-compatible Clang frontend). Run from a VS Developer Command Prompt.",
+            "inherits": "base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-cl",
+                "CMAKE_CXX_COMPILER": "clang-cl"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "msvc-debug",
+            "displayName": "MSVC — Debug",
+            "configurePreset": "msvc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-release",
+            "displayName": "MSVC — Release",
+            "configurePreset": "msvc",
+            "configuration": "Release"
+        },
+        {
+            "name": "msvc-relwithdebinfo",
+            "displayName": "MSVC — Release with Debug Info",
+            "configurePreset": "msvc",
+            "configuration": "RelWithDebInfo"
+        },
+        {
+            "name": "clang-debug",
+            "displayName": "Clang — Debug",
+            "configurePreset": "clang",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-release",
+            "displayName": "Clang — Release",
+            "configurePreset": "clang",
+            "configuration": "Release"
+        },
+        {
+            "name": "clang-relwithdebinfo",
+            "displayName": "Clang — Release with Debug Info",
+            "configurePreset": "clang",
+            "configuration": "RelWithDebInfo"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "msvc-debug-tests",
+            "displayName": "MSVC — Debug Tests",
+            "configurePreset": "msvc",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-release-tests",
+            "displayName": "MSVC — Release Tests",
+            "configurePreset": "msvc",
+            "configuration": "Release"
+        },
+        {
+            "name": "clang-debug-tests",
+            "displayName": "Clang — Debug Tests",
+            "configurePreset": "clang",
+            "configuration": "Debug"
+        },
+        {
+            "name": "clang-release-tests",
+            "displayName": "Clang — Release Tests",
+            "configurePreset": "clang",
+            "configuration": "Release"
+        }
+    ]
+}

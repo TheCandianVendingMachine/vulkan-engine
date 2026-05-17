@@ -102,6 +102,8 @@ target_compile_definitions(engine PRIVATE
 
 target_include_directories(engine PUBLIC
     ${PROJECT_SOURCE_DIR}/include
+)
+target_include_directories(engine SYSTEM PUBLIC
     ${EXTERNAL_HEADER_DIR}
     ${EXTERNAL_HEADER_DIR}/stb
     ${EXTERNAL_HEADER_DIR}/fmt
@@ -116,17 +118,27 @@ target_include_directories(engine PUBLIC
     ${EXTERNAL_DIR}/fmtlib/include
     ${EXTERNAL_DIR}/sdl/include
 )
+
 target_compile_features(engine PRIVATE cxx_std_23)
 
-if (MSVC)
+if(MSVC)
+    # Flags accepted by both MSVC and clang-cl
     target_compile_options(engine PRIVATE
         /utf-8
         /W4
         /WX
-        /wd4201
-        /external:anglebrackets
-        /external:W0
+        /wd4201  # nonstandard extension: nameless struct/union
     )
+ 
+    if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        # Pure MSVC only — clang-cl suppresses external warnings via SYSTEM
+        # includes above and does not support these flags
+        target_compile_options(engine PRIVATE
+            /external:anglebrackets
+            /external:W0
+        )
+    endif()
+ 
     target_compile_definitions(engine PRIVATE
         NOMINMAX
         _CRT_SECURE_NO_WARNINGS
@@ -138,6 +150,7 @@ if (MSVC)
         $<BUILD_INTERFACE:${NATVIS_DIR}/tsl-robin-map.natvis>
     )
 else()
+    # GCC / clang++ (non-Windows or non-MSVC-frontend Clang)
     target_compile_options(engine PRIVATE
         -Wall
         -Wextra
