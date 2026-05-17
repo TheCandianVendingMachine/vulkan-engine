@@ -1,8 +1,5 @@
 #include "game/tilemap/tilemap.h"
 
-#include <array>
-#include <cmath>
-#include <cstdint>
 #include <engine/assets/library.h>
 #include <engine/deletion_queue.h>
 #include <engine/engine_utils.h>
@@ -13,11 +10,15 @@
 #include <engine/graphics/vulkan.h>
 #include <engine/linalg/vector.h>
 #include <engine/meta_defines.h>
-#include <iterator>
 #include <linalg/vector.h>
+#include <robin_set.h>
+
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <iterator>
 #include <numbers>
 #include <ranges>
-#include <robin_set.h>
 #include <string>
 #include <tracy/Tracy.hpp>
 #include <utility>
@@ -54,10 +55,7 @@ auto TileMap::get(linalg::Vector2<double> position) -> Tile {
 auto TileMap::get_nearby(linalg::Vector2<double> position, double radius) -> std::vector<Tile> {
     auto tile_ids = logic_.get_nearby(relative_position(position), radius);
     std::vector<Tile> tiles;
-    std::ranges::copy(std::views::transform(tile_ids,
-                                            [&](std::uint64_t tile_id) {
-                                                return hash_to_tile_.at(tile_id);
-                                            }),
+    std::ranges::copy(std::views::transform(tile_ids, [&](std::uint64_t tile_id) { return hash_to_tile_.at(tile_id); }),
                       std::back_inserter(tiles));
     return tiles;
 }
@@ -162,7 +160,7 @@ auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engi
         engine::crash(ErrorCode::CANNOT_READ_FILE, __LINE__, __func__, __FILE__);
         std::unreachable();
     }
-    auto shader            = shader_result.value();
+    auto shader = shader_result.value();
 
     auto triangle_pipeline = engine::ComputePipeline::build().layout().add_set_layout(tilemap_id_image_layout_).finish().shader(shader);
     engine.destroy_shader(shader);
@@ -177,9 +175,9 @@ auto TilemapPreDrawPipeline::create_descriptors_(engine::GraphicsEngine&,
                                                  engine::VulkanDevice& device,
                                                  engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue) -> void {
     ZoneScoped;
-    tilemap_id_image_layout_      = engine::VulkanDescriptorSetLayout::build()
-                                        .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
-                                        .build(device, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
+    tilemap_id_image_layout_ = engine::VulkanDescriptorSetLayout::build()
+                                   .with_binding(0, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE)
+                                   .build(device, VK_SHADER_STAGE_COMPUTE_BIT, nullptr, 0);
 
     tilemap_id_image_descriptors_ = pipeline_descriptor_allocator_.allocate(device, tilemap_id_image_layout_.layout);
     engine::DescriptorWriter{}
