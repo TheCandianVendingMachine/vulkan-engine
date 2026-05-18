@@ -35,14 +35,14 @@ auto ENGINE_NS::VulkanDescriptorLayoutBuilder::build(VulkanDevice& device,
         binding.stageFlags |= shader_stages;
     }
 
-    VkDescriptorSetLayoutCreateInfo info = {};
-    info.sType                           = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    info.pNext                           = next;
-    info.pBindings                       = bindings_.data();
-    info.bindingCount                    = static_cast<std::uint32_t>(bindings_.size());
-    info.flags                           = flags;
+    VkDescriptorSetLayoutCreateInfo info{};
+    info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    info.pNext        = next;
+    info.pBindings    = bindings_.data();
+    info.bindingCount = static_cast<std::uint32_t>(bindings_.size());
+    info.flags        = flags;
 
-    return VulkanDescriptorSetLayout(info, device);
+    return {info, device};
 }
 
 ENGINE_NS::VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VkDescriptorSetLayoutCreateInfo create_info, VulkanDevice& device) {
@@ -54,7 +54,7 @@ ENGINE_NS::VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(const VulkanDesc
 }
 
 ENGINE_NS::VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanDescriptorSetLayout&& rhs) noexcept :
-    set_(std::move(rhs.set_)), initialised_(true) {
+    set_(rhs.set_), initialised_(true) {
 }
 
 auto ENGINE_NS::VulkanDescriptorSetLayout::build() -> VulkanDescriptorLayoutBuilder {
@@ -299,7 +299,7 @@ auto ENGINE_NS::DescriptorWriter::write_image(Binding binding,
                                               VkSampler sampler,
                                               VkImageLayout layout,
                                               VkDescriptorType type) -> DescriptorWriter& {
-    VkDescriptorImageInfo image_info =
+    VkDescriptorImageInfo& image_info =
         image_infos.emplace_back(VkDescriptorImageInfo{.sampler = sampler, .imageView = image, .imageLayout = layout});
 
     VkWriteDescriptorSet write{};

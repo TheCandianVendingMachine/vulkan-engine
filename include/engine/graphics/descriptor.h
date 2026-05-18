@@ -3,17 +3,19 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 
+#include <vulkan/vulkan_core.h>
+
 #include <cstdint>
 #include <deque>
 #include <span>
 #include <vector>
-#include <vulkan/vulkan_core.h>
+
 
 namespace ENGINE_NS {
     struct DescriptorWriter {
-            std::deque<VkDescriptorImageInfo> image_infos{};
-            std::deque<VkDescriptorBufferInfo> buffer_infos{};
-            std::vector<VkWriteDescriptorSet> writes{};
+            std::deque<VkDescriptorImageInfo> image_infos;
+            std::deque<VkDescriptorBufferInfo> buffer_infos;
+            std::vector<VkWriteDescriptorSet> writes;
 
             auto write_image(Binding binding, VkImageView image, VkSampler sampler, VkImageLayout layout, VkDescriptorType type)
                 -> DescriptorWriter&;
@@ -72,9 +74,9 @@ namespace ENGINE_NS {
             auto get_pool_(VulkanDevice& device) -> VkDescriptorPool;
             auto create_pool_(VulkanDevice& device, std::uint32_t set_count, std::span<PoolSizeRatio> pool_ratios) -> VkDescriptorPool;
 
-            std::vector<PoolSizeRatio> ratios_{};
-            std::vector<VkDescriptorPool> full_pools_{};
-            std::vector<VkDescriptorPool> ready_pools_{};
+            std::vector<PoolSizeRatio> ratios_;
+            std::vector<VkDescriptorPool> full_pools_;
+            std::vector<VkDescriptorPool> ready_pools_;
             std::uint32_t sets_per_pool_ = 0;
             bool moved_                  = false;
     };

@@ -33,10 +33,10 @@ namespace ENGINE_NS {
                 return *this;
             }
 
-            PipelineLayoutBuilder(const PipelineLayoutBuilder& other) : from_(other.from_), push_constants_(other.push_constants_) {
+            PipelineLayoutBuilder(const PipelineLayoutBuilder& other) : push_constants_(other.push_constants_), from_(other.from_) {
             }
             PipelineLayoutBuilder(PipelineLayoutBuilder&& other) noexcept :
-                from_(other.from_), push_constants_(std::move(other.push_constants_)) {
+                push_constants_(std::move(other.push_constants_)), from_(other.from_) {
             }
 
 
@@ -56,7 +56,7 @@ namespace ENGINE_NS {
     class ComputePipelineBuilder {
         public:
             auto shader(asset::CompiledShader compute_shader) -> ComputePipelineBuilder&;
-            auto layout() -> PipelineLayoutBuilder<ComputePipelineBuilder>;
+            auto layout() -> PipelineLayoutBuilder<ComputePipelineBuilder>&;
             auto finish(VulkanDevice& device) -> ComputePipeline;
 
             ComputePipelineBuilder(const ComputePipelineBuilder& rhs)     = default;
@@ -65,6 +65,7 @@ namespace ENGINE_NS {
         private:
             VkPipelineShaderStageCreateInfo shader_stage_ = {};
             VkPipelineLayoutCreateInfo pipeline_layout_   = {};
+            PipelineLayoutBuilder<ComputePipelineBuilder> layout_builder_;
 
             ComputePipelineBuilder();
             friend class ComputePipeline;
@@ -106,7 +107,7 @@ namespace ENGINE_NS {
             auto disable_depthtest() -> GraphicsPipelineBuilder&;
             auto set_multisampling_none() -> GraphicsPipelineBuilder&;
             auto disable_blending() -> GraphicsPipelineBuilder&;
-            auto layout() -> PipelineLayoutBuilder<GraphicsPipelineBuilder>;
+            auto layout() -> PipelineLayoutBuilder<GraphicsPipelineBuilder>&;
 
             auto finish(VulkanDevice& device) -> GraphicsPipeline;
 
@@ -124,6 +125,7 @@ namespace ENGINE_NS {
             VkPipelineDepthStencilStateCreateInfo depth_stencil_{};
             VkPipelineRenderingCreateInfo render_info_{};
             VkFormat colour_attachment_format_{};
+            PipelineLayoutBuilder<GraphicsPipelineBuilder> layout_builder_;
 
             GraphicsPipelineBuilder();
             friend class GraphicsPipeline;

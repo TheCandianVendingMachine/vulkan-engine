@@ -46,7 +46,7 @@ ENGINE_NS::GraphicsPipeline::GraphicsPipeline(VulkanDevice& device,
     VK_CHECK(vkCreateGraphicsPipelines(device.device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline_));
 }
 
-ENGINE_NS::GraphicsPipelineBuilder::GraphicsPipelineBuilder() {
+ENGINE_NS::GraphicsPipelineBuilder::GraphicsPipelineBuilder() : layout_builder_(*this) {
     input_assembly_.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     rasterizer_.sType     = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     multisampling_.sType  = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
@@ -122,8 +122,8 @@ auto ENGINE_NS::GraphicsPipelineBuilder::disable_blending() -> GraphicsPipelineB
     return *this;
 }
 
-auto ENGINE_NS::GraphicsPipelineBuilder::layout() -> PipelineLayoutBuilder<GraphicsPipelineBuilder> {
-    return PipelineLayoutBuilder<GraphicsPipelineBuilder>(*this);
+auto ENGINE_NS::GraphicsPipelineBuilder::layout() -> PipelineLayoutBuilder<GraphicsPipelineBuilder>& {
+    return this->layout_builder_;
 }
 
 auto ENGINE_NS::GraphicsPipelineBuilder::finish(VulkanDevice& device) -> GraphicsPipeline {
@@ -165,7 +165,7 @@ auto ENGINE_NS::GraphicsPipelineBuilder::finish(VulkanDevice& device) -> Graphic
     return GraphicsPipeline(device, pipeline_info, pipeline_layout_);
 }
 
-ENGINE_NS::ComputePipelineBuilder::ComputePipelineBuilder() {
+ENGINE_NS::ComputePipelineBuilder::ComputePipelineBuilder() : layout_builder_(*this) {
     shader_stage_.sType    = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     pipeline_layout_.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 }
@@ -210,8 +210,8 @@ auto ENGINE_NS::ComputePipelineBuilder::shader(asset::CompiledShader compute_sha
     return *this;
 }
 
-auto ENGINE_NS::ComputePipelineBuilder::layout() -> PipelineLayoutBuilder<ComputePipelineBuilder> {
-    return PipelineLayoutBuilder<ComputePipelineBuilder>(*this);
+auto ENGINE_NS::ComputePipelineBuilder::layout() -> PipelineLayoutBuilder<ComputePipelineBuilder>& {
+    return this->layout_builder_;
 }
 
 auto ENGINE_NS::ComputePipelineBuilder::finish(VulkanDevice& device) -> ComputePipeline {

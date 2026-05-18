@@ -320,7 +320,7 @@ namespace ENGINE_NS {
                 -> VulkanDescriptorSetLayout;
 
         private:
-            std::vector<VkDescriptorSetLayoutBinding> bindings_{};
+            std::vector<VkDescriptorSetLayoutBinding> bindings_;
 
             friend class VulkanDescriptorSetLayout;
             VulkanDescriptorLayoutBuilder() = default;
