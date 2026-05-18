@@ -1,16 +1,14 @@
 #include "engine/engine.h"
 
 #include "engine/linalg/linalg.h"
-#include "engine/linalg/matrix.h"
-#include "engine/linalg/vector.h"
+#include "engine/linalg/matrix_operations.h"
+#include "engine/linalg/vector_operations.h"
 
 #include <SDL3/SDL.h>
 #include <imgui.h>
 
 #include <Tracy/Tracy.hpp>
 #include <chrono>
-#include <cstdlib>
-#include <cstring>
 #include <thread>
 
 
@@ -73,9 +71,9 @@ auto ENGINE_NS::LogLocator::imgui() -> void {
             level_colour.w /= 255.f;
             ImGui::Text("[%s]", entry->owner.c_str());
             ImGui::SameLine();
-            ImGui::TextColored(level_colour, logger::level_to_string(entry->level).data());
+            ImGui::TextColored(level_colour, "%s", logger::level_to_string(entry->level).data());
             ImGui::SameLine();
-            ImGui::Text(entry->message.c_str());
+            ImGui::Text("%s", entry->message.c_str());
         }
     }
     ImGui::End();

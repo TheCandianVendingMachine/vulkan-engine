@@ -1,7 +1,6 @@
-#include "engine/linalg/matrix.h"
-
 #include "engine/engine.h"
 #include "engine/engine_utils.h"
+#include "engine/linalg/matrix_operations.h"
 #include "engine/meta_defines.h"
 
 #include <Windows.h>

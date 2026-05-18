@@ -88,7 +88,7 @@ auto LoggerBuilder::build(std::uint64_t& idx) -> Logger {
 }
 
 Logger::Logger(std::string_view identifier, std::vector<Stream>&& streams, std::uint64_t& idx) :
-    m_streams(std::move(streams)), m_identifier(identifier), start_time_(logger::Clock::now()), m_log_idx(idx) {
+    m_log_idx(idx), start_time_(logger::Clock::now()), m_streams(std::move(streams)), m_identifier(identifier) {
 }
 
 auto Logger::last_entries(uint64_t count) const -> std::vector<const logger::Entry*> {

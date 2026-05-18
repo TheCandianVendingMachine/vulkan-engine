@@ -15,7 +15,7 @@ namespace ENGINE_NS {
                 explicit Library(Arch arch);
                 ~Library();
 
-                const Arch& arch    = arch_;
+                const Arch& arch = arch_;
 
                 const void* library = nullptr;
 

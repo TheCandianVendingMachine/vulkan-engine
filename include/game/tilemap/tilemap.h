@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdint>
 #include <engine/graphics/descriptor.h>
 #include <engine/graphics/types.h>
 #include <engine/graphics/vulkan.h>
@@ -8,15 +7,19 @@
 #include <engine/state/state.h>
 #include <linalg/vector.h>
 #include <robin_map.h>
-#include <string>
-#include <vector>
 #include <vk_mem_alloc.h>
 
-struct Tile {
-        std::string tile_name{};
-        std::string asset_name{};
-        std::string collision_layer{};
+#include <cstdint>
+#include <string>
+#include <vector>
 
+
+struct Tile {
+        std::string tile_name;
+        std::string asset_name;
+        std::string collision_layer;
+
+        [[nodiscard]]
         auto id() const -> std::size_t;
 
         REFLECT_START(Tile)
@@ -79,6 +82,7 @@ class TileMap {
         linalg::Vector2<double> position_;
 
         LogicMap logic_;
+        [[maybe_unused]]
         GraphicOverlay graphics_;
 };
 

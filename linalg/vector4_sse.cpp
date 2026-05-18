@@ -195,11 +195,11 @@ namespace linalg {
             auto v_bh = _mm_loadu_pd(b.elements + 2);
 
             auto v_abl  = _mm_mul_pd(v_al, v_bl);
-            auto v_bal  = _mm_shuffle_pd(v_abl, v_abl, 0b0001'0001);
+            auto v_bal  = _mm_shuffle_pd(v_abl, v_abl, _MM_SHUFFLE2(0, 1));
             auto v_dotl = _mm_add_pd(v_abl, v_bal);
 
             auto v_abh  = _mm_mul_pd(v_ah, v_bh);
-            auto v_bah  = _mm_shuffle_pd(v_abh, v_abh, 0b0001'0001);
+            auto v_bah  = _mm_shuffle_pd(v_abh, v_abh, _MM_SHUFFLE2(0, 1));
             auto v_doth = _mm_add_pd(v_abh, v_bah);
 
             return _mm_cvtsd_f64(v_dotl) + _mm_cvtsd_f64(v_doth);

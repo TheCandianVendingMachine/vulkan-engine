@@ -2,29 +2,21 @@
 setlocal EnableDelayedExpansion
 
 :: ---------------------------------------------------------------------------
-:: Shader compilation script.
+:: Download dependencies — downloads C++ dependencies.
 :: Assumes uv is available on PATH.
 :: Run from anywhere; paths are resolved relative to this script's location.
 :: ---------------------------------------------------------------------------
 
 set "REPO_ROOT=%~dp0"
 set "PYTHON_DIR=%REPO_ROOT%python"
-set "BASE_DIRECTORY=%REPO_ROOT%"
-set "TARGET_DIRECTORY=%REPO_ROOT%assets\shaders"
 
-echo Compiling shaders...
+echo Downloading C++ dependencies...
 cd /d "%PYTHON_DIR%"
-uv run build-shaders
+set "BASE_DIRECTORY=%REPO_ROOT%"
+uv run download-dependencies
 if %errorlevel% neq 0 (
-    echo [ERROR] build-shaders failed.
-    goto end
+    echo [ERROR] download-dependencies failed.
+    exit /b %errorlevel%
 )
-
-echo.
-echo Completed.
-
-:end
-choice /d n /t 1 /n /m "Press Y to pause"
-if %errorlevel%==1 pause
 
 endlocal

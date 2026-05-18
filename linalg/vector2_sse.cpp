@@ -146,7 +146,7 @@ namespace linalg {
             auto v_b = _mm_loadu_pd(b.elements);
 
             auto v_ab  = _mm_mul_pd(v_a, v_b);
-            auto v_ba  = _mm_shuffle_pd(v_ab, v_ab, 0b0001'0001);
+            auto v_ba  = _mm_shuffle_pd(v_ab, v_ab, _MM_SHUFFLE2(0, 1));
             auto v_dot = _mm_add_pd(v_ab, v_ba);
             return _mm_cvtsd_f64(v_dot);
         }

@@ -1,7 +1,8 @@
 #pragma once
 #include "engine/meta_defines.h"
-#include "linalg/matrix.h"
-#include "linalg/vector.h"
+
+#include <linalg/matrix.h>
+#include <linalg/vector.h>
 
 // Matrix2
 namespace linalg {

@@ -17,7 +17,7 @@ namespace ENGINE_NS {
             }
             template <typename T, typename... Args>
             auto queue(Args&&... args) -> void {
-                queued_states_.emplace_back(std::make_unique<T>(std::forward<Args>(args...)));
+                queued_states_.emplace_back(std::make_unique<T>(std::forward<Args...>(args...)));
             }
 
             auto pop() -> void;
@@ -32,8 +32,8 @@ namespace ENGINE_NS {
             auto shutdown(GraphicsEngine& engine) -> void;
 
         private:
-            std::vector<std::unique_ptr<State>> queued_states_ = {};
-            std::vector<std::unique_ptr<State>> state_stack_   = {};
-            std::uint64_t queued_pops_                         = 0;
+            std::vector<std::unique_ptr<State>> queued_states_;
+            std::vector<std::unique_ptr<State>> state_stack_;
+            std::uint64_t queued_pops_ = 0;
     };
 } // namespace ENGINE_NS

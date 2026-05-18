@@ -2,6 +2,7 @@
 
 #include "engine/graphics/util.h"
 #include "engine/graphics/vulkan.h"
+#include "engine/meta_defines.h"
 
 #include <Volk/volk.h>
 #include <vulkan/vulkan_core.h>
@@ -43,6 +44,14 @@ ENGINE_NS::GraphicsPipeline::GraphicsPipeline(VulkanDevice& device,
     pipeline_info.layout = layout_;
 
     VK_CHECK(vkCreateGraphicsPipelines(device.device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline_));
+}
+
+ENGINE_NS::GraphicsPipelineBuilder::GraphicsPipelineBuilder() {
+    input_assembly_.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    rasterizer_.sType     = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    multisampling_.sType  = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    depth_stencil_.sType  = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    render_info_.sType    = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
 }
 
 auto ENGINE_NS::GraphicsPipelineBuilder::shaders(asset::CompiledShader vertex_shader, asset::CompiledShader pixel_shader)
@@ -156,6 +165,10 @@ auto ENGINE_NS::GraphicsPipelineBuilder::finish(VulkanDevice& device) -> Graphic
     return GraphicsPipeline(device, pipeline_info, pipeline_layout_);
 }
 
+ENGINE_NS::ComputePipelineBuilder::ComputePipelineBuilder() {
+    shader_stage_.sType    = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    pipeline_layout_.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+}
 auto ENGINE_NS::ComputePipeline::build() -> ComputePipelineBuilder {
     return ComputePipelineBuilder();
 }

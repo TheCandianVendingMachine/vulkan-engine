@@ -3,10 +3,11 @@
 #include "engine/meta_defines.h"
 
 #include <SDL3/SDL_events.h>
-#include <client/TracyProfiler.hpp>
 #include <imgui.h>
-#include <vector>
 #include <vulkan/vulkan_core.h>
+
+#include <client/TracyProfiler.hpp>
+#include <vector>
 
 #define VK_CHECK(x)                                                                                                                        \
     do {                                                                                                                                   \

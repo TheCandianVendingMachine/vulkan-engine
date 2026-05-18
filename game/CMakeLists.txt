@@ -20,7 +20,6 @@ target_include_directories(game PRIVATE
     ${PROJECT_SOURCE_DIR}/include
 )
 target_include_directories(game SYSTEM PRIVATE
-    ${EXTERNAL_HEADER_DIR}/Tracy
 )
  
 target_compile_features(game PRIVATE cxx_std_23)

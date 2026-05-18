@@ -7,12 +7,12 @@
 
 #define DESIRED_PRECISION (1e-10)
 
-constexpr auto range() -> Range<double> {
-    return Range<double>{-250000.f, 250000.f};
+constexpr auto range() -> engine::Range<double> {
+    return {-250000.f, 250000.f};
 }
 
 TEST_CASE("blas1 - bench [Vector2<double>]", "[blas1][Vector2][bench]") {
-    auto rng = Random();
+    auto rng = engine::Random();
     BENCHMARK_ADVANCED("blas1::axpy - random")(Catch::Benchmark::Chronometer meter) {
         auto a = rng.range<double>(range());
         auto x = linalg::Vector2<double>{rng.range(range()), rng.range(range())};

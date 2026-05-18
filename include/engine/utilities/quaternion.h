@@ -7,10 +7,10 @@
 namespace ENGINE_NS {
     class Quaternion {
         public:
-            Quaternion()                                             = default;
-            Quaternion(const Quaternion& other)                      = default;
-            Quaternion(Quaternion&& other) noexcept                  = default;
-            ~Quaternion()                                            = default;
+            Quaternion()                            = default;
+            Quaternion(const Quaternion& other)     = default;
+            Quaternion(Quaternion&& other) noexcept = default;
+            ~Quaternion()                           = default;
 
             auto operator=(const Quaternion& rhs) -> Quaternion&     = default;
             auto operator=(Quaternion&& rhs) noexcept -> Quaternion& = default;

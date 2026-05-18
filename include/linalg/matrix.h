@@ -369,14 +369,28 @@ namespace linalg {
             static auto from(const Matrix3<T>& A) -> Matrix3LU;
 
             auto lower() -> Matrix3<T> {
-                return Matrix3<T>(combined.r1c1, T(0), T(0), combined.r2c1, combined.r2c2, T(0), combined.r3c1, combined.r3c2,
+                return Matrix3<T>(combined.r1c1,
+                                  T(0),
+                                  T(0),
+                                  combined.r2c1,
+                                  combined.r2c2,
+                                  T(0),
+                                  combined.r3c1,
+                                  combined.r3c2,
                                   combined.r3c3);
             }
             auto lower_unit() -> Matrix3<T> {
                 return Matrix3<T>(T(1), T(0), T(0), combined.r2c1, T(1), T(0), combined.r3c1, combined.r3c2, T(1));
             }
             auto upper() -> Matrix3<T> {
-                return Matrix3<T>(combined.r1c1, combined.r1c2, combined.r1c3, T(0), combined.r2c2, combined.r2c3, T(0), T(0),
+                return Matrix3<T>(combined.r1c1,
+                                  combined.r1c2,
+                                  combined.r1c3,
+                                  T(0),
+                                  combined.r2c2,
+                                  combined.r2c3,
+                                  T(0),
+                                  T(0),
                                   combined.r3c3);
             }
             auto upper_unit() -> Matrix3<T> {
@@ -395,20 +409,76 @@ namespace linalg {
             static auto from(const Matrix4<T>& A) -> Matrix4LU<T>;
 
             auto lower_unit() -> Matrix4<T> {
-                return Matrix4<T>(T(1), T(0), T(0), T(0), combined.r2c1, T(1), T(0), T(0), combined.r3c1, combined.r3c2, T(1), T(0),
-                                  combined.r4c1, combined.r4c2, combined.r4c3, T(1));
+                return Matrix4<T>(T(1),
+                                  T(0),
+                                  T(0),
+                                  T(0),
+                                  combined.r2c1,
+                                  T(1),
+                                  T(0),
+                                  T(0),
+                                  combined.r3c1,
+                                  combined.r3c2,
+                                  T(1),
+                                  T(0),
+                                  combined.r4c1,
+                                  combined.r4c2,
+                                  combined.r4c3,
+                                  T(1));
             }
             auto lower() -> Matrix4<T> {
-                return Matrix4<T>(combined.r1c1, T(0), T(0), T(0), combined.r2c1, combined.r2c2, T(0), T(0), combined.r3c1, combined.r3c2,
-                                  combined.r3c3, T(0), combined.r4c1, combined.r4c2, combined.r4c3, combined.r4c4);
+                return Matrix4<T>(combined.r1c1,
+                                  T(0),
+                                  T(0),
+                                  T(0),
+                                  combined.r2c1,
+                                  combined.r2c2,
+                                  T(0),
+                                  T(0),
+                                  combined.r3c1,
+                                  combined.r3c2,
+                                  combined.r3c3,
+                                  T(0),
+                                  combined.r4c1,
+                                  combined.r4c2,
+                                  combined.r4c3,
+                                  combined.r4c4);
             }
             auto upper_unit() -> Matrix4<T> {
-                return Matrix4<T>(T(1), combined.r1c2, combined.r1c3, combined.r1c4, T(0), T(1), combined.r2c3, combined.r2c4, T(0), T(0),
-                                  T(1), combined.r3c4, T(0), T(0), T(0), T(1));
+                return Matrix4<T>(T(1),
+                                  combined.r1c2,
+                                  combined.r1c3,
+                                  combined.r1c4,
+                                  T(0),
+                                  T(1),
+                                  combined.r2c3,
+                                  combined.r2c4,
+                                  T(0),
+                                  T(0),
+                                  T(1),
+                                  combined.r3c4,
+                                  T(0),
+                                  T(0),
+                                  T(0),
+                                  T(1));
             }
             auto upper() -> Matrix4<T> {
-                return Matrix4<T>(combined.r1c1, combined.r1c2, combined.r1c3, combined.r1c4, T(0), combined.r2c2, combined.r2c3,
-                                  combined.r2c4, T(0), T(0), combined.r3c3, combined.r3c4, T(0), T(0), T(0), combined.r4c4);
+                return Matrix4<T>(combined.r1c1,
+                                  combined.r1c2,
+                                  combined.r1c3,
+                                  combined.r1c4,
+                                  T(0),
+                                  combined.r2c2,
+                                  combined.r2c3,
+                                  combined.r2c4,
+                                  T(0),
+                                  T(0),
+                                  combined.r3c3,
+                                  combined.r3c4,
+                                  T(0),
+                                  T(0),
+                                  T(0),
+                                  combined.r4c4);
             }
     };
 } // namespace linalg

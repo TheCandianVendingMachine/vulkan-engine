@@ -1,7 +1,7 @@
 target_sources(engine PRIVATE
     "${ENGINE_HEADER_PATH}/linalg/linalg.h"
-    "${ENGINE_HEADER_PATH}/linalg/matrix.h"
-    "${ENGINE_HEADER_PATH}/linalg/vector.h"
+    "${ENGINE_HEADER_PATH}/linalg/matrix_operations.h"
+    "${ENGINE_HEADER_PATH}/linalg/vector_operations.h"
 )
 target_sources(engine PRIVATE
     linalg.cpp

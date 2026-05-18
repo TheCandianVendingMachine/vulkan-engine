@@ -7,11 +7,13 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 
+#include <vk_mem_alloc.h>
+#include <vulkan/vulkan_core.h>
+
 #include <cstdint>
 #include <type_traits>
 #include <vector>
-#include <vk_mem_alloc.h>
-#include <vulkan/vulkan_core.h>
+
 
 namespace ENGINE_NS {
     template <typename T>
@@ -19,35 +21,49 @@ namespace ENGINE_NS {
             T object;
             std::uint64_t idx = 0;
 
-            template <typename = std::enable_if<std::is_default_constructible<T>::value>::type>
-            DeletionInterface() : object(T{}) {
-            }
-            template <typename = std::enable_if<std::is_copy_constructible<T>::value>::type>
-            DeletionInterface(const DeletionInterface& rhs) : object(rhs.object), idx(rhs.idx) {
-            }
-            template <typename = std::enable_if<std::is_move_constructible<T>::value>::type>
-            DeletionInterface(DeletionInterface&& rhs) : object(std::move(rhs.object)), idx(std::move(rhs.idx)) {
-            }
-            template <typename = std::enable_if<std::is_copy_constructible<T>::value>::type>
-            DeletionInterface(T& object, std::uint64_t idx) : object(object), idx(idx) {
-            }
-            template <typename = std::enable_if<std::is_move_constructible<T>::value>::type>
-            DeletionInterface(T&& object, std::uint64_t idx) : object(std::move(object)), idx(idx) {
+
+            DeletionInterface()
+                requires std::is_default_constructible_v<T>
+                : object(T{}) {
             }
 
-            template <typename = std::enable_if<std::is_copy_constructible<T>::value>::type>
-            auto operator=(const DeletionInterface& rhs) -> DeletionInterface& {
+            DeletionInterface(const DeletionInterface& rhs)
+                requires std::is_copy_constructible_v<T>
+                : object(rhs.object), idx(rhs.idx) {
+            }
+
+            DeletionInterface(DeletionInterface&& rhs) noexcept
+                requires std::is_move_constructible_v<T>
+                : object(std::move(rhs.object)), idx(rhs.idx) {
+            }
+
+            DeletionInterface(T& object, std::uint64_t idx)
+                requires std::is_copy_constructible_v<T>
+                : object(object), idx(idx) {
+            }
+
+            DeletionInterface(T&& object, std::uint64_t idx)
+                requires std::is_move_constructible_v<T>
+                : object(std::move(object)), idx(idx) {
+            }
+
+
+            auto operator=(const DeletionInterface& rhs) -> DeletionInterface&
+                requires(std::is_copy_constructible_v<T>)
+            {
                 if (&rhs != this) {
                     object = rhs.object;
                     idx    = rhs.idx;
                 }
                 return *this;
             }
-            template <typename = std::enable_if<std::is_move_assignable<T>::value>::type>
-            auto operator=(DeletionInterface&& rhs) -> DeletionInterface& {
+
+            auto operator=(DeletionInterface&& rhs) noexcept -> DeletionInterface&
+                requires std::is_move_assignable<T>::value
+            {
                 if (&rhs != this) {
                     object = std::move(rhs.object);
-                    idx    = std::move(rhs.idx);
+                    idx    = rhs.idx;
                 }
                 return *this;
             }
@@ -138,14 +154,14 @@ namespace ENGINE_NS {
 
 
         private:
-            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_{};
+            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_;
             Deletion<ImageAllocation> draw_image_{};
             Deletion<graphics::ImGui> imgui_{};
-            std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
-            std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_{};
-            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
-            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
-            std::vector<Deletion<graphics::Immediate>> immediates_{};
+            std::vector<Deletion<ComputePipeline>> compute_pipelines_;
+            std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_;
+            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_;
+            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_;
+            std::vector<Deletion<graphics::Immediate>> immediates_;
     };
     class GraphicsPerFrameDeletionQueue {
         public:
@@ -159,12 +175,12 @@ namespace ENGINE_NS {
             auto push(asset::CompiledShader& shader) -> void;
 
         private:
-            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_{};
-            std::vector<Deletion<ImageAllocation>> images_{};
-            std::vector<Deletion<BufferAllocation>> buffers_{};
-            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
-            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
-            std::vector<Deletion<asset::CompiledShader>> shaders_{};
+            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_;
+            std::vector<Deletion<ImageAllocation>> images_;
+            std::vector<Deletion<BufferAllocation>> buffers_;
+            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_;
+            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_;
+            std::vector<Deletion<asset::CompiledShader>> shaders_;
 
             std::uint64_t index_ = 0;
     };
@@ -175,7 +191,7 @@ namespace ENGINE_NS {
             auto push(BufferAllocation& allocation) -> void;
 
         private:
-            std::vector<Deletion<BufferAllocation>> buffers_{};
+            std::vector<Deletion<BufferAllocation>> buffers_;
             std::uint64_t index_ = 0;
     };
     class GraphicsRegisteredPipelineDeletionQueue {
@@ -192,14 +208,14 @@ namespace ENGINE_NS {
             auto push(asset::CompiledShader& shader) -> void;
 
         private:
-            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_{};
-            std::vector<Deletion<ImageAllocation>> images_{};
-            std::vector<Deletion<ComputePipeline>> compute_pipelines_{};
-            std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_{};
-            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_{};
-            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_{};
-            std::vector<Deletion<graphics::Immediate>> immediates_{};
-            std::vector<Deletion<asset::CompiledShader>> shaders_{};
+            std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_;
+            std::vector<Deletion<ImageAllocation>> images_;
+            std::vector<Deletion<ComputePipeline>> compute_pipelines_;
+            std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_;
+            std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_;
+            std::vector<Deletion<GPUMeshBuffers>> mesh_buffers_;
+            std::vector<Deletion<graphics::Immediate>> immediates_;
+            std::vector<Deletion<asset::CompiledShader>> shaders_;
 
             std::uint64_t index_ = 0;
     };

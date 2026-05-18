@@ -1,11 +1,12 @@
 #pragma once
 #include "engine/assets/library.h"
-#include "engine/engine_utils.h"
 #include "engine/graphics/vulkan.h"
+
+#include <vulkan/vulkan_core.h>
 
 #include <cstdint>
 #include <vector>
-#include <vulkan/vulkan_core.h>
+
 
 namespace ENGINE_NS {
     template <class TFrom>
@@ -34,13 +35,14 @@ namespace ENGINE_NS {
 
             PipelineLayoutBuilder(const PipelineLayoutBuilder& other) : from_(other.from_), push_constants_(other.push_constants_) {
             }
-            PipelineLayoutBuilder(PipelineLayoutBuilder&& other) : from_(other.from_), push_constants_(std::move(other.push_constants_)) {
+            PipelineLayoutBuilder(PipelineLayoutBuilder&& other) noexcept :
+                from_(other.from_), push_constants_(std::move(other.push_constants_)) {
             }
 
 
         private:
-            std::vector<VkPushConstantRange> push_constants_{};
-            std::vector<VkDescriptorSetLayout> descriptor_set_layouts_{};
+            std::vector<VkPushConstantRange> push_constants_;
+            std::vector<VkDescriptorSetLayout> descriptor_set_layouts_;
             Contained& from_;
 
             friend Contained;
@@ -61,10 +63,10 @@ namespace ENGINE_NS {
             ComputePipelineBuilder(ComputePipelineBuilder&& rhs) noexcept = default;
 
         private:
-            VkPipelineShaderStageCreateInfo shader_stage_{.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
-            VkPipelineLayoutCreateInfo pipeline_layout_{.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+            VkPipelineShaderStageCreateInfo shader_stage_ = {};
+            VkPipelineLayoutCreateInfo pipeline_layout_   = {};
 
-            ComputePipelineBuilder() = default;
+            ComputePipelineBuilder();
             friend class ComputePipeline;
             friend class PipelineLayoutBuilder<ComputePipelineBuilder>;
     };
@@ -112,18 +114,18 @@ namespace ENGINE_NS {
             GraphicsPipelineBuilder(GraphicsPipelineBuilder&& rhs) noexcept = default;
 
         private:
-            std::vector<VkPipelineShaderStageCreateInfo> shader_stages_{};
+            std::vector<VkPipelineShaderStageCreateInfo> shader_stages_;
 
-            VkPipelineInputAssemblyStateCreateInfo input_assembly_{.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
-            VkPipelineRasterizationStateCreateInfo rasterizer_{.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+            VkPipelineInputAssemblyStateCreateInfo input_assembly_{};
+            VkPipelineRasterizationStateCreateInfo rasterizer_{};
             VkPipelineColorBlendAttachmentState color_blend_attachment_{};
-            VkPipelineMultisampleStateCreateInfo multisampling_{.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
+            VkPipelineMultisampleStateCreateInfo multisampling_{};
             VkPipelineLayoutCreateInfo pipeline_layout_{};
-            VkPipelineDepthStencilStateCreateInfo depth_stencil_{.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
-            VkPipelineRenderingCreateInfo render_info_{.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO};
+            VkPipelineDepthStencilStateCreateInfo depth_stencil_{};
+            VkPipelineRenderingCreateInfo render_info_{};
             VkFormat colour_attachment_format_{};
 
-            GraphicsPipelineBuilder() = default;
+            GraphicsPipelineBuilder();
             friend class GraphicsPipeline;
             friend class PipelineLayoutBuilder<GraphicsPipelineBuilder>;
     };

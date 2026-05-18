@@ -7,32 +7,9 @@
 #include <Volk/volk.h>
 
 #include <cstdint>
-#include <cstdio>
 #include <filesystem>
 #include <optional>
-
-ENGINE_NS::asset::BytecodeShader::BytecodeShader(const BytecodeShader& rhs) : spirv_(rhs.spirv_), metadata_(rhs.metadata_) {
-}
-
-ENGINE_NS::asset::BytecodeShader::BytecodeShader(BytecodeShader&& rhs) noexcept :
-    spirv_(std::move(rhs.spirv_)), metadata_(std::move(rhs.metadata_)) {
-}
-
-auto ENGINE_NS::asset::BytecodeShader::operator=(const BytecodeShader& rhs) -> BytecodeShader& {
-    if (&rhs != this) {
-        spirv_    = rhs.spirv_;
-        metadata_ = rhs.metadata_;
-    }
-    return *this;
-}
-
-auto ENGINE_NS::asset::BytecodeShader::operator=(BytecodeShader&& rhs) noexcept -> BytecodeShader& {
-    if (&rhs != this) {
-        spirv_    = std::move(rhs.spirv_);
-        metadata_ = std::move(rhs.metadata_);
-    }
-    return *this;
-}
+#include <utility>
 
 auto ENGINE_NS::asset::BytecodeShader::compile(VulkanDevice& device) -> std::optional<CompiledShader> {
     VkShaderModuleCreateInfo create_info{};
@@ -72,14 +49,7 @@ auto ENGINE_NS::asset::BytecodeShader::load_from_file(const std::filesystem::pat
 }
 
 ENGINE_NS::asset::BytecodeShader::BytecodeShader(std::vector<std::uint32_t>&& spirv, ShaderMetadata metadata) :
-    spirv_(std::move(spirv)), metadata_(metadata) {
-}
-
-ENGINE_NS::asset::CompiledShader::CompiledShader(const CompiledShader& rhs) : metadata_(rhs.metadata_), shader_(rhs.shader_) {
-}
-
-ENGINE_NS::asset::CompiledShader::CompiledShader(CompiledShader&& rhs) noexcept :
-    metadata_(std::move(rhs.metadata_)), shader_(std::move(rhs.shader_)) {
+    metadata_(std::move(metadata)), spirv_(std::move(spirv)) {
 }
 
 auto ENGINE_NS::asset::CompiledShader::operator=(const CompiledShader& rhs) -> CompiledShader& {
@@ -93,10 +63,11 @@ auto ENGINE_NS::asset::CompiledShader::operator=(const CompiledShader& rhs) -> C
 auto ENGINE_NS::asset::CompiledShader::operator=(CompiledShader&& rhs) noexcept -> CompiledShader& {
     if (&rhs != this) {
         metadata_ = std::move(rhs.metadata_);
-        shader_   = std::move(rhs.shader_);
+        shader_   = rhs.shader_;
     }
     return *this;
 }
 
-ENGINE_NS::asset::CompiledShader::CompiledShader(VkShaderModule handle, ShaderMetadata metadata) : metadata_(metadata), shader_(handle) {
+ENGINE_NS::asset::CompiledShader::CompiledShader(VkShaderModule handle, ShaderMetadata metadata) :
+    metadata_(std::move(metadata)), shader_(handle) {
 }

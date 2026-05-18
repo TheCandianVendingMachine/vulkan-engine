@@ -69,7 +69,6 @@ source_group(
 )
 
 target_sources(engine PRIVATE
-    ${EXTERNAL_DIR}/Tracy/public/TracyClient.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui_demo.cpp
     ${EXTERNAL_HEADER_DIR}/imgui/imgui_draw.cpp
@@ -105,19 +104,18 @@ target_include_directories(engine PUBLIC
 )
 target_include_directories(engine SYSTEM PRIVATE
     ${EXTERNAL_HEADER_DIR}
-    ${EXTERNAL_HEADER_DIR}/stb
-    ${EXTERNAL_HEADER_DIR}/fmt
-    ${EXTERNAL_HEADER_DIR}/VulkanMemoryAllocator
-    ${EXTERNAL_HEADER_DIR}/robin-map
     ${EXTERNAL_HEADER_DIR}/imgui/backends
-    ${EXTERNAL_DIR}/fmtlib/include
 )
 # Headers needed by public API (Vulkan types in engine.h, Tracy in public headers, etc.)
 target_include_directories(engine SYSTEM PUBLIC
     ${EXTERNAL_HEADER_DIR}/imgui
     ${EXTERNAL_HEADER_DIR}/volk
+    ${EXTERNAL_HEADER_DIR}/VulkanMemoryAllocator
     ${EXTERNAL_HEADER_DIR}/vulkan-headers
+    ${EXTERNAL_DIR}/fmtlib/include
     ${EXTERNAL_HEADER_DIR}/Tracy
+    ${EXTERNAL_HEADER_DIR}/stb
+    ${EXTERNAL_HEADER_DIR}/robin-map
     ${EXTERNAL_DIR}/sdl/include
     ${EXTERNAL_DIR}/fastgltf/include
 )

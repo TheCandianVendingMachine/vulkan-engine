@@ -1,21 +1,22 @@
-#include <catch2/benchmark/catch_benchmark.hpp>
-#include <catch2/catch_test_macros.hpp>
-
 #include <engine/random.h>
-
 #include <linalg/vector.h>
 #include <linalg/vector_ops.h>
 
+#include <catch2/benchmark/catch_benchmark.hpp>
+#include <catch2/catch_test_macros.hpp>
+
 #define DESIRED_PRECISION (1e-10)
 
-constexpr auto range() -> Range<double> { return Range<double>{-250000.0, 250000.f}; }
+constexpr auto range() -> engine::Range<double> {
+    return {-250000.0, 250000.f};
+}
 
-auto random_vector(Random& rng) -> linalg::Vector3<double> {
+auto random_vector(engine::Random& rng) -> linalg::Vector3<double> {
     return linalg::Vector3<double>{rng.range(range()), rng.range(range()), rng.range(range())};
 }
 
 TEST_CASE("blas1 - bench [Vector3<double>]", "[blas1][Vector3][bench]") {
-    auto rng = Random();
+    auto rng = engine::Random();
     BENCHMARK_ADVANCED("blas1::axpy - random")(Catch::Benchmark::Chronometer meter) {
         auto a = rng.range<double>(range());
         auto x = random_vector(rng);

@@ -9,10 +9,10 @@ namespace ENGINE_NS {
         public:
             using UnderlyingBitRepresentation = std::uint64_t;
 
-            ENGINE_API Bitset()               = default;
+            ENGINE_API Bitset() = default;
             ENGINE_API Bitset(size_t bitcount);
-            ENGINE_API Bitset(const Bitset& other)                  = default;
-            ENGINE_API Bitset(Bitset&& other)                       = default;
+            ENGINE_API Bitset(const Bitset& other) = default;
+            ENGINE_API Bitset(Bitset&& other)      = default;
 
             ENGINE_API auto operator=(const Bitset& rhs) -> Bitset& = default;
             ENGINE_API auto operator=(Bitset&& rhs) -> Bitset&      = default;
@@ -54,7 +54,7 @@ namespace ENGINE_NS {
 
         private:
             std::vector<UnderlyingBitRepresentation> m_set;
-            size_t m_bitcount   = 0;
+            size_t m_bitcount = 0;
 
             std::uint64_t hash_ = 0;
 

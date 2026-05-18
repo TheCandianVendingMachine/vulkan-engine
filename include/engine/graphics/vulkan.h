@@ -2,12 +2,12 @@
 #include "engine/meta_defines.h"
 #include "engine/version.h"
 
-#include <cstdint>
 #include <linalg/vector.h>
 #include <robin_map.h>
-#include <string>
-
 #include <vulkan/vulkan_core.h>
+
+#include <cstdint>
+#include <string>
 
 
 struct SDL_Window;
@@ -121,7 +121,6 @@ namespace ENGINE_NS {
         private:
             std::vector<std::string> extensions_;
 
-            SDL_Window* window_ = nullptr;
             VkPhysicalDeviceVulkan14Features features_14_{};
             VkPhysicalDeviceVulkan13Features features_13_{};
             VkPhysicalDeviceVulkan12Features features_12_{};

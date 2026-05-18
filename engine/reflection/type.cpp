@@ -75,6 +75,9 @@ namespace ENGINE_NS {
             return RuntimeMember{*this, owner};
         }
 
+        RuntimeMember::RuntimeMember(const Member& meta, const void* owner) : meta(meta), owner_(owner) {
+        }
+
         auto RuntimeMember::to_string() const -> std::string {
             auto base = static_cast<const std::uint8_t*>(owner_);
             return this->meta.type_info->to_string(base + this->meta.offset_);

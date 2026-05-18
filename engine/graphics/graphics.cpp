@@ -9,7 +9,7 @@
 #include "engine/logger.h"
 #include "engine/rwlock.h"
 // clang-format off
-#include <volk/volk.h>
+#include <Volk/volk.h>
 // clang-format on
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -28,11 +28,11 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <span>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -58,20 +58,20 @@ void ENGINE_NS::GraphicsEngine::initialise() {
         ZoneScoped;
         running_.store(true, std::memory_order_release);
         update_rate_   = std::chrono::milliseconds(8);
-        render_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::draw_, this);
+        render_thread_ = std::thread(&ENGINE_NS::GraphicsEngine::draw_, this);
     }
 
     logger.get().info("Initialising upload thread");
     {
         ZoneScoped;
         upload_ready_.store(false, std::memory_order_release);
-        upload_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::upload_, this);
+        upload_thread_ = std::thread(&ENGINE_NS::GraphicsEngine::upload_, this);
     }
 
     logger.get().info("Initialising pipeline compile thread");
     {
         ZoneScoped;
-        pipeline_compile_thread_ = std::thread::thread(&ENGINE_NS::GraphicsEngine::compile_, this);
+        pipeline_compile_thread_ = std::thread(&ENGINE_NS::GraphicsEngine::compile_, this);
     }
 
     init_immediates_();
@@ -88,8 +88,8 @@ void ENGINE_NS::GraphicsEngine::draw() {
     {
         auto lock = imgui.write();
         ImGui::Render();
-        auto draw_data = ImGui::GetDrawData();
-        if (draw_data) {
+        auto* draw_data = ImGui::GetDrawData();
+        if (draw_data != nullptr) {
             lock.get().latest_draw = draw_data;
         }
     }
@@ -139,22 +139,22 @@ void ENGINE_NS::GraphicsEngine::cleanup() {
         {
             ZoneScopedN(StaticNames::DeleteRegisteredPipelines);
             auto to_delete_pipelines = to_delete_pipelines_.read();
-            for (auto& to_delete : to_delete_pipelines.get()) {
+            for (const auto& to_delete : to_delete_pipelines.get()) {
                 to_delete->destroy(device_, allocator_);
             }
 
             auto registered_pipelines = registered_pipelines_.read();
-            for (auto& [_, pipeline] : registered_pipelines.get()) {
+            for (const auto& [_, pipeline] : registered_pipelines.get()) {
                 pipeline->destroy(device_, allocator_);
             }
         }
 
-        for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+        for (std::size_t idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
             auto frame = frames_[idx].write();
             vkDestroySemaphore(device_.device, frame.get().swapchain_semaphore_, nullptr);
             vkDestroyFence(device_.device, frame.get().render_fence_, nullptr);
 
-            if (frame.get().tracy_context_) {
+            if (frame.get().tracy_context_ != nullptr) {
                 TracyVkDestroy(frame.get().tracy_context_);
             }
             vkDestroyCommandPool(device_.device, frame.get().command_pool, nullptr);
@@ -282,14 +282,14 @@ auto ENGINE_NS::GraphicsEngine::upload_image(void* data, VkExtent3D size, VkForm
 
 auto ENGINE_NS::GraphicsEngine::pause_registered_pipelines() -> void {
     auto registered_pipelines = registered_pipelines_.write();
-    for (auto& [_, pipeline] : registered_pipelines.get()) {
+    for (const auto& [_, pipeline] : registered_pipelines.get()) {
         pipeline->paused_.fetch_add(1, std::memory_order_release);
     }
 }
 
 auto ENGINE_NS::GraphicsEngine::resume_registered_pipelines() -> void {
     auto registered_pipelines = registered_pipelines_.write();
-    for (auto& [_, pipeline] : registered_pipelines.get()) {
+    for (const auto& [_, pipeline] : registered_pipelines.get()) {
         pipeline->paused_.fetch_sub(1, std::memory_order_release);
     }
 }
@@ -353,17 +353,20 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     surface_ = VulkanSurface(window_, vulkan_instance_);
 
     // vulkan 1.3 features
-    VkPhysicalDeviceVulkan13Features features{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES};
-    features.dynamicRendering = true;
-    features.synchronization2 = true;
+    VkPhysicalDeviceVulkan13Features features;
+    features.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    features.dynamicRendering = VK_TRUE;
+    features.synchronization2 = VK_TRUE;
 
     // vulkan 1.2 features
-    VkPhysicalDeviceVulkan12Features features12{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES};
-    features12.bufferDeviceAddress = true;
-    features12.descriptorIndexing  = true;
+    VkPhysicalDeviceVulkan12Features features12;
+    features12.sType               = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+    features12.bufferDeviceAddress = VK_TRUE;
+    features12.descriptorIndexing  = VK_TRUE;
 
-    VkPhysicalDeviceVulkan11Features features11{.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES};
-    features11.shaderDrawParameters = true;
+    VkPhysicalDeviceVulkan11Features features11;
+    features11.sType                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+    features11.shaderDrawParameters = VK_TRUE;
 
     logger.get().debug("Picking physical device");
     physical_device_ = VulkanPhysicalDevice::choose(window_)
@@ -429,7 +432,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     VkFenceCreateInfo fence_info         = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
 
     logger.get().debug("Initialising sync structures");
-    for (auto idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
+    for (std::size_t idx = 0; idx < graphics::FRAME_OVERLAP; idx++) {
         auto frame = frames_[idx].write();
         VK_CHECK(vkCreateCommandPool(device_.device, &pool_info, nullptr, &frame.get().command_pool));
 
@@ -492,10 +495,10 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
 
 auto ENGINE_NS::GraphicsEngine::init_descriptors_() -> void {
     std::vector<DescriptorAllocatorGrowable::PoolSizeRatio> sizes = {
-      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          3},
-      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         3},
-      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         3},
-      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+      {.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          .ratio = 3},
+      {.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         .ratio = 3},
+      {.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         .ratio = 3},
+      {.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .ratio = 4},
     };
     global_descriptor_allocator_.init(device_, 100, sizes);
     deletion_queue_.push(global_descriptor_allocator_);
@@ -555,14 +558,14 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
-    for (auto& thread : {graphics::Thread::MAIN, graphics::Thread::DRAW, graphics::Thread::UPLOAD}) {
+    for (const auto& thread : {graphics::Thread::MAIN, graphics::Thread::DRAW, graphics::Thread::UPLOAD}) {
         auto& immediate = immediates_.insert({thread, {}}).first.value();
 
         VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
         VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &immediate.fence));
 
-        auto& queue     = device_.queues.at(graphics::thread_immediate_name(thread));
-        immediate.queue = queue.get();
+        const auto& queue = device_.queues.at(graphics::thread_immediate_name(thread));
+        immediate.queue   = queue.get();
 
         VkCommandPoolCreateInfo pool_info = command_pool_create_info(queue.family, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
@@ -589,7 +592,7 @@ auto ENGINE_NS::GraphicsEngine::draw_imgui_(VkCommandBuffer cmd, VkImageView ima
         &colour_attachment,
         nullptr);
 
-    if (lock.get().latest_draw) {
+    if (lock.get().latest_draw != nullptr) {
         vkCmdBeginRendering(cmd, &render_info);
         ImGui_ImplVulkan_RenderDrawData(lock.get().latest_draw, cmd);
         vkCmdEndRendering(cmd);
@@ -635,7 +638,7 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
     auto registered_pipelines = registered_pipelines_.read();
-    for (auto& [id, pipeline] : registered_pipelines.get()) {
+    for (const auto& [id, pipeline] : registered_pipelines.get()) {
         ZoneScoped;
         if (!pipeline->enabled) {
             continue;
@@ -649,7 +652,7 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->graphics_pipeline_.value().pipeline);
 
             auto push_constants = pipeline->push_constants();
-            if (push_constants.size > 0 && push_constants.data) {
+            if (push_constants.size > 0 && (push_constants.data != nullptr)) {
                 vkCmdPushConstants(cmd,
                                    pipeline->graphics_pipeline_.value().layout,
                                    VK_SHADER_STAGE_VERTEX_BIT,
@@ -664,7 +667,7 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->compute_pipeline_.value().pipeline);
 
             auto push_constants = pipeline->push_constants();
-            if (push_constants.size > 0 && push_constants.data) {
+            if (push_constants.size > 0 && (push_constants.data != nullptr)) {
                 vkCmdPushConstants(cmd,
                                    pipeline->compute_pipeline_.value().layout,
                                    VK_SHADER_STAGE_VERTEX_BIT,
@@ -715,7 +718,7 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             VK_CHECK(vkResetCommandBuffer(cmd, 0));
             VkCommandBufferBeginInfo cmd_begin_info = command_buffer_begin_info(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-            VkExtent2D draw_extent = {draw_image_.extent.width, draw_image_.extent.height};
+            VkExtent2D draw_extent = {.width = draw_image_.extent.width, .height = draw_image_.extent.height};
 
             VK_CHECK(vkBeginCommandBuffer(cmd, &cmd_begin_info));
             TracyVkCollect(frame.get().tracy_context_, cmd);
@@ -784,7 +787,7 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
             ZoneScopedN(StaticNames::DeleteRegisteredPipelines);
             auto to_delete_pipelines = to_delete_pipelines_.read();
             auto in_use_pipelines    = in_use_pipelines_.write();
-            for (auto& to_delete : to_delete_pipelines.get()) {
+            for (const auto& to_delete : to_delete_pipelines.get()) {
                 if (in_use_pipelines.get().at(to_delete->id_) != 0) {
                     continue;
                 }
@@ -911,10 +914,12 @@ auto ENGINE_NS::GraphicsEngine::upload_meshes_(std::vector<graphics::StagingBuff
                 break;
             }
         }
-        if (!staging) {
+        if (staging == nullptr) {
             auto alloc_size = desired_size + (1'024 - (desired_size % 1'024));
             staging_buffers.push_back(
-                {allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY), nullptr, alloc_size});
+                {.allocation  = allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
+                 .mapped_data = nullptr,
+                 .total_size  = alloc_size});
             vmaMapMemory(allocator_, staging_buffers.back().allocation.allocation, &staging_buffers.back().mapped_data);
             staging = &staging_buffers.back();
         }
@@ -923,14 +928,14 @@ auto ENGINE_NS::GraphicsEngine::upload_meshes_(std::vector<graphics::StagingBuff
         std::memcpy(static_cast<std::uint8_t*>(staging->mapped_data) + vertex_buffer_size, mesh.indices.data(), index_buffer_size);
 
         immediate_submit([&](VkCommandBuffer cmd) {
-            VkBufferCopy vertex_copy{0};
+            VkBufferCopy vertex_copy{};
             vertex_copy.dstOffset = 0;
             vertex_copy.srcOffset = 0;
             vertex_copy.size      = vertex_buffer_size;
 
             vkCmdCopyBuffer(cmd, staging->allocation.buffer, new_surface.vertex_buffer.buffer, 1, &vertex_copy);
 
-            VkBufferCopy index_copy{0};
+            VkBufferCopy index_copy{};
             index_copy.dstOffset = 0;
             index_copy.srcOffset = vertex_buffer_size;
             index_copy.size      = index_buffer_size;
@@ -956,7 +961,7 @@ auto ENGINE_NS::GraphicsEngine::upload_textures_(std::vector<graphics::StagingBu
         ZoneScoped;
         auto& texture = uploads.back();
 
-        std::size_t data_size            = texture.size.width * texture.size.depth * texture.size.height * 4;
+        std::size_t data_size            = static_cast<std::size_t>(texture.size.width * texture.size.depth * texture.size.height * 4);
         graphics::StagingBuffer* staging = nullptr;
         for (auto& buffer : staging_buffers) {
             if (buffer.total_size >= data_size) {
@@ -964,10 +969,12 @@ auto ENGINE_NS::GraphicsEngine::upload_textures_(std::vector<graphics::StagingBu
                 break;
             }
         }
-        if (!staging) {
+        if (staging == nullptr) {
             auto alloc_size = data_size + (1'024 - (data_size % 1'024));
             staging_buffers.push_back(
-                {allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY), nullptr, alloc_size});
+                {.allocation  = allocate_buffer(alloc_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY),
+                 .mapped_data = nullptr,
+                 .total_size  = alloc_size});
             vmaMapMemory(allocator_, staging_buffers.back().allocation.allocation, &staging_buffers.back().mapped_data);
             staging = &staging_buffers.back();
         }
@@ -1124,10 +1131,10 @@ auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engi
     logger.get().debug("Creating registered pipeline \"{}\"", this->name());
 
     std::vector<DescriptorAllocatorGrowable::PoolSizeRatio> frame_sizes = {
-      {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          3},
-      {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         3},
-      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         3},
-      {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4},
+      {.type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,          .ratio = 3},
+      {.type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,         .ratio = 3},
+      {.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         .ratio = 3},
+      {.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, .ratio = 4},
     };
 
     pipeline_descriptor_allocator_.init(device, 1'000, frame_sizes);
@@ -1135,12 +1142,12 @@ auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engi
 
     auto graphics_pipeline = this->build_graphics_pipeline(engine, device, this->deletion_queue_);
     if (graphics_pipeline.has_value()) {
-        this->graphics_pipeline_ = std::move(graphics_pipeline.value().finish(device));
+        this->graphics_pipeline_ = graphics_pipeline.value().finish(device);
         this->deletion_queue_.push(this->graphics_pipeline_.value());
     }
     auto compute_pipeline = this->build_compute_pipeline(engine, device, this->deletion_queue_);
     if (compute_pipeline.has_value()) {
-        this->compute_pipeline_ = std::move(compute_pipeline.value().finish(device));
+        this->compute_pipeline_ = compute_pipeline.value().finish(device);
         this->deletion_queue_.push(this->compute_pipeline_.value());
     }
 }

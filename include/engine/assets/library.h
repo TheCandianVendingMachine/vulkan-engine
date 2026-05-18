@@ -4,13 +4,14 @@
 #include "engine/meta_defines.h"
 #include "engine/pool.h"
 
+#include <vulkan/vulkan_core.h>
+
 #include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 namespace ENGINE_NS {
     namespace asset {
@@ -24,8 +25,8 @@ namespace ENGINE_NS {
                 const VkShaderModule& shader   = shader_;
                 const ShaderMetadata& metadata = metadata_;
 
-                CompiledShader(const CompiledShader& rhs);
-                CompiledShader(CompiledShader&& rhs) noexcept;
+                CompiledShader(const CompiledShader& rhs)     = default;
+                CompiledShader(CompiledShader&& rhs) noexcept = default;
 
                 auto operator=(const CompiledShader& rhs) -> CompiledShader&;
                 auto operator=(CompiledShader&& rhs) noexcept -> CompiledShader&;
@@ -38,11 +39,11 @@ namespace ENGINE_NS {
         };
         class BytecodeShader {
             public:
-                BytecodeShader(const BytecodeShader& rhs);
-                BytecodeShader(BytecodeShader&& rhs) noexcept;
+                BytecodeShader(const BytecodeShader& rhs)     = default;
+                BytecodeShader(BytecodeShader&& rhs) noexcept = default;
 
-                auto operator=(const BytecodeShader& rhs) -> BytecodeShader&;
-                auto operator=(BytecodeShader&& rhs) noexcept -> BytecodeShader&;
+                auto operator=(const BytecodeShader& rhs) -> BytecodeShader&     = default;
+                auto operator=(BytecodeShader&& rhs) noexcept -> BytecodeShader& = default;
 
                 auto compile(VulkanDevice& device) -> std::optional<CompiledShader>;
 

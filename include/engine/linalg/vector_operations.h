@@ -2,7 +2,6 @@
 #include "engine/meta_defines.h"
 
 #include <linalg/vector.h>
-#include <type_traits>
 
 template <typename T>
 struct std::hash<::linalg::Vector2<T>> {

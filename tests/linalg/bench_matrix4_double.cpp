@@ -7,11 +7,11 @@
 #include <catch2/catch_test_macros.hpp>
 
 namespace bench_matrix3 {
-    constexpr auto range() -> Range<double> {
-        return Range<double>{-250000.0, 250000.0};
+    constexpr auto range() -> engine::Range<double> {
+        return {-250000.0, 250000.0};
     }
 
-    auto random_vector(Random& rng) -> linalg::Vector4<double> {
+    auto random_vector(engine::Random& rng) -> linalg::Vector4<double> {
         return linalg::Vector4<double>{
           rng.range(range()),
           rng.range(range()),
@@ -20,7 +20,7 @@ namespace bench_matrix3 {
         };
     }
 
-    auto random_matrix(Random& rng) -> linalg::Matrix4<double> {
+    auto random_matrix(engine::Random& rng) -> linalg::Matrix4<double> {
         return linalg::Matrix4<double>{
           rng.range(range()),
           rng.range(range()),
@@ -41,7 +41,7 @@ namespace bench_matrix3 {
         };
     }
 
-    auto random_matrix_lower_triangular(Random& rng) -> linalg::Matrix4<double> {
+    auto random_matrix_lower_triangular(engine::Random& rng) -> linalg::Matrix4<double> {
         return linalg::Matrix4<double>{
           rng.range(range()),
           0.0,
@@ -62,7 +62,7 @@ namespace bench_matrix3 {
         };
     }
 
-    auto random_matrix_upper_triangular(Random& rng) -> linalg::Matrix4<double> {
+    auto random_matrix_upper_triangular(engine::Random& rng) -> linalg::Matrix4<double> {
         return linalg::Matrix4<double>{
           rng.range(range()),
           rng.range(range()),
@@ -84,7 +84,7 @@ namespace bench_matrix3 {
     }
 
     TEST_CASE("blas2 - bench [Matrix4<double>]", "[blas2][Matrix4][bench]") {
-        auto rng = Random();
+        auto rng = engine::Random();
         BENCHMARK_ADVANCED("linalg::lu_decomposition - random")(Catch::Benchmark::Chronometer meter) {
             auto A = random_matrix(rng);
             meter.measure([&] { return linalg::Matrix4LU<double>::from(A); });

@@ -7,25 +7,25 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
-#include "linalg/vector.h"
 
 #include <Volk/volk.h>
+#include <linalg/vector.h>
+#include <robin_map.h>
+#include <vk_mem_alloc.h>
+
 #include <atomic>
 #include <chrono>
 #include <cstdint>
-#include <deque>
 #include <future>
 #include <limits>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <robin_map.h>
 #include <span>
 #include <string>
 #include <thread>
-#include <type_traits>
 #include <vector>
-#include <vk_mem_alloc.h>
+
 
 // clang-format off
 #include <Tracy/Tracy.hpp>
@@ -124,7 +124,7 @@ namespace ENGINE_NS {
             private:
                 RegisteredPipelineReceipt(GraphicsEngine& engine, std::vector<std::uint64_t>&& ids);
 
-                friend class GraphicsEngine;
+                friend class ENGINE_NS::GraphicsEngine;
                 GraphicsEngine& engine_;
                 std::vector<std::uint64_t> pipeline_ids_{};
                 bool moved_ = false;
@@ -136,7 +136,7 @@ namespace ENGINE_NS {
                 std::size_t total_size = 0;
         };
 
-        enum class Thread {
+        enum class Thread : std::uint8_t {
             MAIN,
             UPLOAD,
             DRAW,
@@ -161,7 +161,7 @@ namespace ENGINE_NS {
             auto allocate_image(VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped = false) -> ImageAllocation;
             auto destroy_image(ImageAllocation allocation) -> void;
 
-            auto destroy_shader(engine::asset::CompiledShader shader) -> void;
+            auto destroy_shader(ENGINE_NS::asset::CompiledShader shader) -> void;
 
             auto upload_mesh(std::span<std::uint32_t> indices, std::span<Vertex> vertices) -> std::future<GPUMeshBuffers>;
             auto upload_image(void* data, VkExtent3D size, VkFormat format, VkImageUsageFlags usage, bool mipmapped = false)

@@ -13,7 +13,6 @@
 #include <cstdint>
 #include <deque>
 #include <span>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -303,7 +302,8 @@ auto ENGINE_NS::DescriptorWriter::write_image(Binding binding,
     VkDescriptorImageInfo image_info =
         image_infos.emplace_back(VkDescriptorImageInfo{.sampler = sampler, .imageView = image, .imageLayout = layout});
 
-    VkWriteDescriptorSet write{.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    VkWriteDescriptorSet write{};
+    write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.dstBinding      = static_cast<std::uint32_t>(binding);
     write.dstSet          = VK_NULL_HANDLE;
     write.descriptorCount = 1;
@@ -322,7 +322,8 @@ auto ENGINE_NS::DescriptorWriter::write_buffer(Binding binding,
     VkDescriptorBufferInfo& buffer_info =
         buffer_infos.emplace_back(VkDescriptorBufferInfo{.buffer = buffer, .offset = offset, .range = size});
 
-    VkWriteDescriptorSet write{.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    VkWriteDescriptorSet write{};
+    write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     write.dstBinding      = static_cast<std::uint32_t>(binding);
     write.dstSet          = VK_NULL_HANDLE;
     write.descriptorCount = 1;

@@ -1,12 +1,12 @@
 #pragma once
 #include "engine/meta_defines.h"
-#include "engine/rwlock.h"
+
+#include <fmt/format.h>
 
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
 #include <deque>
-#include <fmt/format.h>
 #include <iterator>
 #include <string>
 #include <string_view>
@@ -37,8 +37,8 @@ namespace ENGINE_NS {
         struct Entry {
                 std::uint64_t index{};
                 Level level{};
-                std::string owner{};
-                std::string message{};
+                std::string owner;
+                std::string message;
                 std::chrono::duration<double> log_time_{};
         };
     } // namespace logger
@@ -52,7 +52,7 @@ namespace ENGINE_NS {
         public:
             Logger(const Logger&) = delete;
             Logger(Logger&& rhs) noexcept :
-                m_log_idx(rhs.m_log_idx), start_time_(std::move(rhs.start_time_)), m_streams(std::move(rhs.m_streams)),
+                m_log_idx(rhs.m_log_idx), start_time_(rhs.start_time_), m_streams(std::move(rhs.m_streams)),
                 m_entries(std::move(rhs.m_entries)), m_identifier(std::move(rhs.m_identifier)) {
             }
 
@@ -83,8 +83,10 @@ namespace ENGINE_NS {
                 this->append(level, std::move(message));
             }
 
-            ENGINE_API auto last_entries(uint64_t count) const -> std::vector<const logger::Entry*>;
-            ENGINE_API auto last_entries_of(uint64_t count, logger::Level filter) const -> std::vector<const logger::Entry*>;
+            ENGINE_API [[nodiscard]]
+            auto last_entries(uint64_t count) const -> std::vector<const logger::Entry*>;
+            ENGINE_API [[nodiscard]]
+            auto last_entries_of(uint64_t count, logger::Level filter) const -> std::vector<const logger::Entry*>;
 
             friend auto swap(Logger& a, Logger& b) noexcept -> void {
                 std::swap(a.m_log_idx, b.m_log_idx);
@@ -102,12 +104,11 @@ namespace ENGINE_NS {
             Logger(std::string_view identifier, std::vector<Stream>&& streams, std::uint64_t& idx);
             auto append(logger::Level level, std::string&& message) -> void;
 
-        private:
             uint64_t& m_log_idx;
-            std::chrono::time_point<logger::Clock> start_time_{};
-            std::vector<Stream> m_streams{};
-            std::deque<logger::Entry> m_entries{};
-            std::string m_identifier{};
+            std::chrono::time_point<logger::Clock> start_time_;
+            std::vector<Stream> m_streams;
+            std::deque<logger::Entry> m_entries;
+            std::string m_identifier;
     };
 
     class LoggerBuilder {
@@ -119,8 +120,8 @@ namespace ENGINE_NS {
             ENGINE_API auto build(std::uint64_t& idx) -> Logger;
 
         private:
-            std::string m_identifier{};
-            std::vector<Stream> m_streams{};
+            std::string m_identifier;
+            std::vector<Stream> m_streams;
     };
 } // namespace ENGINE_NS
 

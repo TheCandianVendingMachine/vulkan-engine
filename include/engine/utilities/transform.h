@@ -8,13 +8,13 @@
 namespace ENGINE_NS {
     class Transform {
         public:
-            Transform()                                        = default;
-            Transform(const Transform& other)                  = default;
-            Transform(Transform&& other)                       = default;
-            ~Transform()                                       = default;
+            Transform()                       = default;
+            Transform(const Transform& other) = default;
+            Transform(Transform&& other)      = default;
+            ~Transform()                      = default;
 
-            auto operator=(const Transform& rhs) -> Transform& = default;
-            auto operator=(Transform&& rhs) -> Transform&      = default;
+            auto operator=(const Transform& rhs) -> Transform&;
+            auto operator=(Transform&& rhs) noexcept -> Transform&;
 
             Transform(const ::linalg::Matrix4<double>& matrix);
 
@@ -29,6 +29,7 @@ namespace ENGINE_NS {
             auto set_rotation(const Quaternion& new_rotation) -> Transform&;
 
             auto matrix() -> ::linalg::Matrix4<double>;
+            [[nodiscard]]
             auto matrix() const -> ::linalg::Matrix4<double>;
 
             friend auto operator*(const Transform& lhs, const Transform& rhs) -> Transform;
@@ -41,10 +42,10 @@ namespace ENGINE_NS {
         private:
             ::linalg::Matrix4<double> matrix_ = ::linalg::Matrix4<double>::identity();
 
-            ::linalg::Vector3<double> position_{};
+            ::linalg::Vector3<double> position_;
             ::linalg::Vector3<double> scale_{1.0, 1.0, 1.0};
-            Quaternion rotation_{};
+            Quaternion rotation_;
 
-            bool dirty = true;
+            bool dirty_ = true;
     };
 } // namespace ENGINE_NS

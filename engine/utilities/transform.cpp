@@ -1,17 +1,38 @@
 #include "engine/utilities/transform.h"
 
-#include "engine/linalg/matrix.h"
-#include "engine/linalg/vector.h"
+#include "engine/linalg/matrix_operations.h"
+#include "engine/linalg/vector_operations.h"
 
 #include <linalg/matrix.h>
 #include <linalg/vector.h>
+
+auto ENGINE_NS::Transform::operator=(const Transform& rhs) -> Transform& {
+    if (&rhs != this) {
+        matrix_   = rhs.matrix_;
+        position_ = rhs.position_;
+        scale_    = rhs.scale_;
+        rotation_ = rhs.rotation_;
+        dirty_    = rhs.dirty_;
+    }
+    return *this;
+}
+auto ENGINE_NS::Transform::operator=(Transform&& rhs) noexcept -> Transform& {
+    if (&rhs != this) {
+        matrix_   = std::move(rhs.matrix_);
+        position_ = std::move(rhs.position_);
+        scale_    = std::move(rhs.scale_);
+        rotation_ = std::move(rhs.rotation_);
+        dirty_    = rhs.dirty_;
+    }
+    return *this;
+}
 
 auto ENGINE_NS::operator*(const Transform& lhs, const Transform& rhs) -> Transform {
     return Transform(lhs.matrix() * rhs.matrix());
 }
 
 auto ENGINE_NS::operator*=(Transform& lhs, const Transform& rhs) -> Transform& {
-    if (lhs.dirty) {
+    if (lhs.dirty_) {
         lhs.matrix();
     }
     lhs.matrix_ *= rhs.matrix();
@@ -24,62 +45,62 @@ ENGINE_NS::Transform::Transform(const ::linalg::Matrix4<double>& matrix) :
 
 auto ENGINE_NS::Transform::translate(const ::linalg::Vector3<double>& offset) -> Transform& {
     position_ += offset;
-    dirty = true;
+    dirty_ = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::scale_by(const ::linalg::Vector3<double>& scale_offset) -> Transform& {
     scale_ += scale_offset;
-    dirty = true;
+    dirty_ = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::scale_by(double scale_offset) -> Transform& {
     scale_ += {scale_offset, scale_offset, scale_offset};
-    dirty = true;
+    dirty_ = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::rotate(const Quaternion& rotation_offset) -> Transform& {
     rotation_ *= rotation_offset;
-    dirty = true;
+    dirty_ = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::set_translate(const ::linalg::Vector3<double>& new_position) -> Transform& {
     position_ = new_position;
-    dirty     = true;
+    dirty_    = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::set_scale(const ::linalg::Vector3<double>& new_scale) -> Transform& {
     scale_ = new_scale;
-    dirty  = true;
+    dirty_ = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::set_scale(double new_scale) -> Transform& {
     scale_ = {new_scale, new_scale, new_scale};
-    dirty  = true;
+    dirty_ = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::set_rotation(const Quaternion& new_rotation) -> Transform& {
     rotation_ = new_rotation;
-    dirty     = true;
+    dirty_    = true;
     return *this;
 }
 
 auto ENGINE_NS::Transform::matrix() -> ::linalg::Matrix4<double> {
-    if (dirty) {
+    if (dirty_) {
         matrix_ = static_cast<const Transform*>(this)->matrix();
-        dirty   = false;
+        dirty_  = false;
     }
     return matrix_;
 }
 
 auto ENGINE_NS::Transform::matrix() const -> ::linalg::Matrix4<double> {
-    if (!dirty) {
+    if (!dirty_) {
         return matrix_;
     }
     auto our_rotation = rotation_.as_rotation_matrix();

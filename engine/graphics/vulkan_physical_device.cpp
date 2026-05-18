@@ -8,26 +8,25 @@
 #include <Tracy/Tracy.hpp>
 #include <algorithm>
 #include <cstdint>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
 auto ENGINE_NS::VulkanPhysicalDevice::choose(SDL_Window* window) -> VulkanPhysicalDeviceSelector {
-    return VulkanPhysicalDeviceSelector(window);
+    return {window};
 }
 
 auto ENGINE_NS::VulkanPhysicalDevice::operator=(VulkanPhysicalDevice&& rhs) noexcept -> VulkanPhysicalDevice& {
     if (this != &rhs && !rhs.moved_) {
         extensions_ = std::move(rhs.extensions_);
 
-        device_ = std::move(rhs.device_);
+        device_ = rhs.device_;
 
-        features_    = std::move(rhs.features_);
-        features_10_ = std::move(rhs.features_10_);
-        features_11_ = std::move(rhs.features_11_);
-        features_12_ = std::move(rhs.features_12_);
-        features_13_ = std::move(rhs.features_13_);
-        features_14_ = std::move(rhs.features_14_);
+        features_    = rhs.features_;
+        features_10_ = rhs.features_10_;
+        features_11_ = rhs.features_11_;
+        features_12_ = rhs.features_12_;
+        features_13_ = rhs.features_13_;
+        features_14_ = rhs.features_14_;
 
         features_.pNext    = &features_11_;
         features_11_.pNext = &features_12_;
@@ -46,8 +45,8 @@ ENGINE_NS::VulkanPhysicalDevice::VulkanPhysicalDevice(VkPhysicalDevice device,
                                                       VkPhysicalDeviceVulkan13Features f13,
                                                       VkPhysicalDeviceVulkan14Features f14,
                                                       std::vector<std::string>&& extensions) :
-    device_(device), features_10_(f10), features_11_(f11), features_12_(f12), features_13_(f13), features_14_(f14),
-    extensions_(extensions) {
+    extensions_(extensions), device_(device), features_14_(f14), features_13_(f13), features_12_(f12), features_11_(f11),
+    features_10_(f10) {
     ZoneScoped;
 
     features_.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
@@ -282,7 +281,7 @@ auto ENGINE_NS::VulkanPhysicalDeviceSelector::with_extension(std::string extensi
     return *this;
 }
 
-ENGINE_NS::VulkanPhysicalDeviceSelector::VulkanPhysicalDeviceSelector(SDL_Window* window) : window_(window) {
+ENGINE_NS::VulkanPhysicalDeviceSelector::VulkanPhysicalDeviceSelector(SDL_Window* /* unused */) {
     features_11_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     features_12_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     features_13_.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;

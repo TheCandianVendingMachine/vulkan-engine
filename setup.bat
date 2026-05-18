@@ -8,7 +8,6 @@ setlocal EnableDelayedExpansion
 :: ---------------------------------------------------------------------------
 
 set "REPO_ROOT=%~dp0"
-set "PYTHON_DIR=%REPO_ROOT%python"
 
 :: ---- Check for uv ---------------------------------------------------------
 where uv >nul 2>&1
@@ -19,38 +18,31 @@ if %errorlevel% neq 0 (
 )
 
 :: ---- Sync Python environment ----------------------------------------------
-echo.
 echo [1/3] Syncing Python environment...
-cd /d "%PYTHON_DIR%"
+cd /d "%REPO_ROOT%python"
 uv sync
 if %errorlevel% neq 0 (
     echo [ERROR] uv sync failed.
     exit /b %errorlevel%
 )
 
-:: ---- Download C++ dependencies --------------------------------------------
+:: ---- Download dependencies ------------------------------------------------
 echo.
-echo [2/3] Downloading C++ dependencies...
-set "BASE_DIRECTORY=%REPO_ROOT%"
-uv run download-dependencies
-if %errorlevel% neq 0 (
-    echo [ERROR] download-dependencies failed.
-    exit /b %errorlevel%
-)
+echo [2/3] Downloading dependencies...
+echo.
+call "%REPO_ROOT%download_dependencies.bat"
+if %errorlevel% neq 0 exit /b %errorlevel%
 
 :: ---- Compile shaders -------------------------------------------------------
 echo.
 echo [3/3] Compiling shaders...
-set "TARGET_DIRECTORY=%REPO_ROOT%assets\shaders"
-uv run build-shaders
-if %errorlevel% neq 0 (
-    echo [ERROR] build-shaders failed.
-    exit /b %errorlevel%
-)
+echo.
+call "%REPO_ROOT%compile_shaders.bat"
+if %errorlevel% neq 0 exit /b %errorlevel%
 
 echo.
 echo Done. You can now configure and build with CMake:
-echo   cmake --preset msvc
-echo   cmake --build --preset msvc-release
+echo   cmake --preset clang
+echo   cmake --build --preset clang-release
 
 endlocal

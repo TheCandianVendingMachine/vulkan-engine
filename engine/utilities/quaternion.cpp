@@ -1,6 +1,6 @@
 #include "engine/utilities/quaternion.h"
 
-#include "engine/linalg/vector.h"
+#include "engine/linalg/vector_operations.h"
 
 #include <linalg/matrix.h>
 #include <linalg/vector.h>

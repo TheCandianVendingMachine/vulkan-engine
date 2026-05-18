@@ -8,7 +8,7 @@
 #include <engine/graphics/pipeline.h>
 #include <engine/graphics/types.h>
 #include <engine/graphics/vulkan.h>
-#include <engine/linalg/vector.h>
+#include <engine/linalg/vector_operations.h>
 #include <engine/meta_defines.h>
 #include <linalg/vector.h>
 #include <robin_set.h>
@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 // clang-format off
-#include <volk/volk.h>
+#include <volk.h>
 // clang-format on
 
 TileMap::TileMap(std::uint64_t size_x, std::uint64_t size_y, std::uint64_t tile_size, Tile null_tile) :
@@ -32,18 +32,18 @@ TileMap::TileMap(std::uint64_t size_x, std::uint64_t size_y, std::uint64_t tile_
 }
 
 auto TileMap::set_position(linalg::Vector2<double> position) {
-    position_ = position;
+    position_ = std::move(position);
 }
 
 auto TileMap::set(linalg::Vector2<std::uint64_t> position, Tile tile) -> void {
     if (!hash_to_tile_.contains(tile.id())) {
         hash_to_tile_.insert({tile.id(), tile});
     }
-    logic_.set(position, tile);
+    logic_.set(std::move(position), tile);
 }
 
 auto TileMap::get(linalg::Vector2<std::uint64_t> position) -> Tile {
-    auto tile_id = logic_.get(position);
+    auto tile_id = logic_.get(std::move(position));
     return hash_to_tile_.at(tile_id);
 }
 

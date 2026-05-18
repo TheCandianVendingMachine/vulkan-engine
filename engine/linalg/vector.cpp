@@ -1,7 +1,5 @@
-#include "engine/linalg/vector.h"
-
 #include "engine/engine.h"
-#include "engine/engine_utils.h"
+#include "engine/linalg/vector_operations.h"
 #include "engine/meta_defines.h"
 
 #include <Windows.h>

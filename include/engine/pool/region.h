@@ -2,11 +2,12 @@
 #include "engine/meta_defines.h"
 #include "engine/pool/types.h"
 
+#include <robin_set.h>
+
 #include <Tracy/Tracy.hpp>
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <robin_set.h>
 #include <utility>
 
 namespace ENGINE_NS {
@@ -79,9 +80,8 @@ namespace ENGINE_NS {
     class Region {
         public:
             Region() = default;
-            Region(Region&& rhs) :
-                m_block(std::move(rhs.m_block)), m_pool(std::move(rhs.m_pool)), m_free_list(std::move(rhs.m_free_list)),
-                m_capacity(std::move(rhs.m_capacity)) {
+            Region(Region&& rhs) noexcept :
+                m_block(rhs.m_block), m_pool(std::move(rhs.m_pool)), m_free_list(std::move(rhs.m_free_list)), m_capacity(rhs.m_capacity) {
                 rhs.m_block = nullptr;
             }
             Region(size_t capacity) {
@@ -99,7 +99,7 @@ namespace ENGINE_NS {
                     Iterator(pointer ptr) : m_ptr(ptr) {
                     }
                     Iterator(const Iterator& rhs) = default;
-                    Iterator(const Iterator&& rhs) : m_ptr(std::move(rhs.m_ptr)) {
+                    Iterator(Iterator&& rhs) noexcept : m_ptr(std::move(rhs.m_ptr)) {
                     }
 
                     auto operator*() -> reference {
@@ -183,7 +183,7 @@ namespace ENGINE_NS {
                             if (right->state == AllocationState::GRAVESTONE || right->state == AllocationState::IN_USE) {
                                 spot->state = AllocationState::IN_USE;
                             } else if (right->state == AllocationState::FREE) {
-                                auto last   = spot + static_cast<size_t>(spot->jump.last_free);
+                                auto last = spot + static_cast<size_t>(spot->jump.last_free);
 
                                 spot->state = AllocationState::IN_USE;
 
@@ -206,7 +206,7 @@ namespace ENGINE_NS {
 
             auto free(Index idx) {
                 ZoneScoped;
-                if (!m_pool) {
+                if (m_pool == nullptr) {
                     return;
                 }
                 if (static_cast<size_t>(idx) > m_capacity) {
@@ -228,7 +228,7 @@ namespace ENGINE_NS {
                     current->state = AllocationState::FREE;
                     if (right->state == AllocationState::FIRST_FREE) {
                         m_free_list.erase(idx + ForwardJump(1));
-                        right->state               = AllocationState::FREE;
+                        right->state = AllocationState::FREE;
 
                         auto last_free             = right + static_cast<size_t>(right->jump.last_free);
                         last_free->jump.first_free = last_free->jump.first_free + left->jump.first_free + BackwardJump(1);
@@ -252,7 +252,7 @@ namespace ENGINE_NS {
                         current->state = AllocationState::FIRST_FREE;
 
                         m_free_list.erase(idx + ForwardJump(1));
-                        right->state               = AllocationState::FREE;
+                        right->state = AllocationState::FREE;
 
                         auto last_free_jump        = right->jump.last_free;
                         auto last_free             = right + static_cast<size_t>(last_free_jump);
@@ -276,15 +276,15 @@ namespace ENGINE_NS {
                 if (count <= m_capacity) {
                     return;
                 }
-                auto bytes            = alignof(Allocation<T>) + sizeof(Allocation<T>) * (count + 1);
+                auto bytes            = alignof(Allocation<T>) + (sizeof(Allocation<T>) * (count + 1));
                 bool first_allocation = false;
-                if (!m_block) {
+                if (m_block == nullptr) {
                     m_block          = static_cast<std::uint8_t*>(calloc(bytes, 1));
                     first_allocation = true;
                 } else {
-                    auto original = m_block;
-                    m_block       = static_cast<std::uint8_t*>(realloc(original, bytes));
-                    if (!m_block) {
+                    auto* original = m_block;
+                    m_block        = static_cast<std::uint8_t*>(realloc(original, bytes));
+                    if (m_block == nullptr) {
                         ::free(original);
                         return;
                     }
@@ -294,7 +294,7 @@ namespace ENGINE_NS {
                     m_block + alignof(Allocation<T>) - (reinterpret_cast<std::uintptr_t>(m_block) % alignof(Allocation<T>));
                 if (!first_allocation) {
                     auto new_bytes = sizeof(Allocation<T>) * (count - m_capacity - 1);
-                    memset(pool + (m_capacity + 1) * sizeof(Allocation<T>), 0, new_bytes);
+                    memset(pool + ((m_capacity + 1) * sizeof(Allocation<T>)), 0, new_bytes);
                 }
                 m_pool         = reinterpret_cast<Allocation<T>*>(pool);
                 auto first     = m_pool;
@@ -316,8 +316,8 @@ namespace ENGINE_NS {
                                 old_first->jump.last_free = old_first->jump.last_free + ForwardJump(count - m_capacity);
                                 new_first->state          = AllocationState::FREE;
 
-                                auto last_free_jump       = ForwardJump(count - m_capacity - 1);
-                                auto new_last             = new_first + static_cast<size_t>(last_free_jump);
+                                auto last_free_jump = ForwardJump(count - m_capacity - 1);
+                                auto new_last       = new_first + static_cast<size_t>(last_free_jump);
                                 assert((new_last + 1)->state == AllocationState::GRAVESTONE);
                                 new_last->jump.first_free = BackwardJump(static_cast<size_t>(old_first->jump.last_free));
                             };
@@ -350,10 +350,10 @@ namespace ENGINE_NS {
             }
 
             auto index_of(void* ptr) -> Index {
-                if (!ptr) {
+                if (ptr == nullptr) {
                     return Index::gravestone();
                 }
-                if (!m_pool) {
+                if (m_pool == nullptr) {
                     return Index::gravestone();
                 }
                 if (ptr < m_pool) {
@@ -368,7 +368,7 @@ namespace ENGINE_NS {
             }
 
             auto get(Index idx) const -> const Allocation<T>* {
-                if (!m_pool) {
+                if (m_pool == nullptr) {
                     return nullptr;
                 }
                 if (static_cast<size_t>(idx) >= m_capacity) {
@@ -381,7 +381,7 @@ namespace ENGINE_NS {
                 return allocation;
             }
             auto get(Index idx) -> Allocation<T>* {
-                if (!m_pool) {
+                if (m_pool == nullptr) {
                     return nullptr;
                 }
                 if (static_cast<size_t>(idx) >= m_capacity) {
@@ -395,7 +395,7 @@ namespace ENGINE_NS {
             }
 
             auto clear() -> void {
-                if (!this->m_block) {
+                if (this->m_block == nullptr) {
                     return;
                 }
                 for (auto& allocation : *this) {
@@ -411,7 +411,7 @@ namespace ENGINE_NS {
                 clear();
             }
 
-            static auto operator delete(void* ptr, size_t size) -> void {
+            static auto operator delete(void* ptr, size_t) -> void {
                 auto region = static_cast<Region<T>*>(ptr);
                 region->clear();
             }
@@ -448,7 +448,7 @@ namespace ENGINE_NS {
             // Run integrity checks to ensure all axioms hold
             // Used exclusively for debugging
             auto do_axioms_hold_() -> bool {
-                if (!m_pool) {
+                if (m_pool == nullptr) {
                     assert(m_pool);
                     return false;
                 }
@@ -480,7 +480,7 @@ namespace ENGINE_NS {
                             assert(!in_free_block);
                             return false;
                         }
-                        in_free_block  = true;
+                        in_free_block = true;
 
                         // The allocation at the jump offset must be FREE
                         auto last_free = allocation + static_cast<size_t>(allocation->jump.last_free);
@@ -576,7 +576,7 @@ namespace ENGINE_NS {
             Allocation<T>* m_pool = nullptr;
 
             // How many objects are allocated
-            size_t m_capacity     = 0;
+            size_t m_capacity = 0;
 
             // Indices of FIRST_FREE blocks
             tsl::robin_set<Index> m_free_list;

@@ -37,14 +37,14 @@ void ENGINE_NS::linalg::load_library() {
     auto arch = Arch::SCALAR;
     if (has_sse) {
         logger.get().info("Detected SSE4.2");
-        arch = Arch::SSE;
+        // arch = Arch::SSE;
     } else {
         logger.get().info("SSE4.2 not present");
     }
 
     if (has_avx) {
         logger.get().info("Detected AVX2");
-        arch = Arch::AVX;
+        // arch = Arch::AVX;
     } else {
         logger.get().info("AVX2 not present");
     }

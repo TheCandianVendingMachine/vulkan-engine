@@ -34,9 +34,9 @@ namespace ENGINE_NS {
     };
 
     struct BufferAllocation {
-            VkBuffer buffer                                                  = VK_NULL_HANDLE;
-            VmaAllocation allocation                                         = VK_NULL_HANDLE;
-            VmaAllocationInfo info                                           = {};
+            VkBuffer buffer          = VK_NULL_HANDLE;
+            VmaAllocation allocation = VK_NULL_HANDLE;
+            VmaAllocationInfo info   = {};
 
             BufferAllocation()                                               = default;
             BufferAllocation(const BufferAllocation& rhs)                    = default;

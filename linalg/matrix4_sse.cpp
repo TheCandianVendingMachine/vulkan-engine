@@ -8,341 +8,148 @@
 namespace linalg {
     template <>
     auto Matrix4LU<float>::from(const Matrix4<float>& A) -> Matrix4LU<float> {
-        // Doolittle matrix decomposition without pivoting
-        auto v_A1  = _mm_loadu_ps(&A.elements[0]);
-        auto v_A2  = _mm_loadu_ps(&A.elements[4]);
-        auto temp1 = _mm_shuffle_ps(v_A1, v_A2, 0b1000'1000);
-        auto temp2 = _mm_shuffle_ps(v_A1, v_A2, 0b1101'1101);
+        __m128 row0 = _mm_loadu_ps(&A.elements[0]);
+        __m128 row1 = _mm_loadu_ps(&A.elements[4]);
+        __m128 row2 = _mm_loadu_ps(&A.elements[8]);
+        __m128 row3 = _mm_loadu_ps(&A.elements[12]);
 
-        auto v_A3  = _mm_loadu_ps(&A.elements[8]);
-        auto v_A4  = _mm_loadu_ps(&A.elements[12]);
-        auto temp3 = _mm_shuffle_ps(v_A3, v_A4, 0b1000'1000);
-        auto temp4 = _mm_shuffle_ps(v_A3, v_A4, 0b1101'1101);
-
-        auto v_A1t = _mm_shuffle_ps(temp1, temp3, 0b1000'1000);
-        auto v_A2t = _mm_shuffle_ps(temp2, temp4, 0b1000'1000);
-        auto v_A3t = _mm_shuffle_ps(temp1, temp3, 0b1101'1101);
-        auto v_A4t = _mm_shuffle_ps(temp2, temp4, 0b1101'1101);
-
-        auto v_c0 = _mm_undefined_ps();
-        auto v_c1 = _mm_undefined_ps();
-        auto v_c2 = _mm_undefined_ps();
-        auto v_c3 = _mm_undefined_ps();
-
-        auto v_r0 = _mm_undefined_ps();
-        auto v_r1 = _mm_undefined_ps();
-        auto v_r2 = _mm_undefined_ps();
-        auto v_r3 = _mm_undefined_ps();
-
-        /*
-        // Crout matrix decomposition without pivoting
-        // Unrolled loop with commented annotations, very long
-        auto LU           = Matrix4<float>::identity();
-        Matrix4<float>& L = LU;
-        Matrix4<float>& U = LU;
-
+        // ── j = 0: L col 0 is already A col 0; scale row 0 → U[0][1..3] ──────
         {
-            // j = 0; j < 4
-            {
-                // i = 0; i < 4
-                {
-                    // k = 0; k < 0
-                    L.r0c0 = A.r0c0;
-                }
-                // i = 1; i < 4
-                {
-                    // k = 0; k < 0
-                    L.r1c0 = A.r1c0;
-                }
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 0
-                    L.r2c0 = A.r2c0;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 0
-                    L.r3c0 = A.r3c0;
-                }
-            }
-
-            {
-                // i = 1; i < 4
-                {
-                    // k = 0; k < 0
-                    U.r0c1 = A.r0c1 / L.r0c0;
-                }
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 0
-                    U.r0c2 = A.r0c2 / L.r0c0;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 0
-                    U.r0c3 = A.r0c3 / L.r0c0;
-                }
-            }
+            float inv    = 1.0f / _mm_cvtss_f32(row0);
+            __m128 scale = _mm_mul_ps(row0, _mm_set1_ps(inv));
+            // _mm_move_ss(a,b): lane 0 ← b[0], lanes 1–3 ← a[1–3]
+            row0         = _mm_move_ss(scale, row0); // [L00 | U01 U02 U03]
         }
+
+        // Eliminate column 0 from rows 1–3; blend mask 0b1110 keeps lane 0 (= L[i][0])
         {
-            // j = 1; j < 4
-            {
-                // i = 1; i < 4
-                {
-                    // k = 0; k < 1
-                    L.r1c1 = A.r1c1 - L.r1c0 * U.r0c1;
-                }
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 1
-                    L.r2c1 = A.r2c1 - L.r2c0 * U.r0c1;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 1
-                    L.r3c1 = A.r3c1 - L.r3c0 * U.r0c1;
-                }
-            }
-
-            {
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 1
-                    U.r1c2 = (A.r1c2 - L.r1c0 * U.r0c2) / L.r1c1;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 1
-                    U.r1c3 = (A.r1c3 - L.r1c0 * U.r0c3) / L.r1c1;
-                }
-            }
+            __m128 f1 = _mm_shuffle_ps(row1, row1, 0x00); // broadcast L[1][0]
+            __m128 f2 = _mm_shuffle_ps(row2, row2, 0x00);
+            __m128 f3 = _mm_shuffle_ps(row3, row3, 0x00);
+            row1      = _mm_blend_ps(row1, _mm_sub_ps(row1, _mm_mul_ps(f1, row0)), 0b1110);
+            row2      = _mm_blend_ps(row2, _mm_sub_ps(row2, _mm_mul_ps(f2, row0)), 0b1110);
+            row3      = _mm_blend_ps(row3, _mm_sub_ps(row3, _mm_mul_ps(f3, row0)), 0b1110);
         }
+
+        // ── j = 1: scale row 1 lanes 2–3 → U[1][2..3] ────────────────────────
         {
-            // j = 2; j < 4
-            {
-                // i = 2; i < 4
-                {
-                    float sum = 0.f;
-                    {
-                        // k = 0; k < 2
-                        sum += L.r2c0 * U.r0c2;
-                    }
-                    {
-                        // k = 1; k < 2
-                        sum += L.r2c1 * U.r1c2;
-                    }
-                    L.r2c2 = A.r2c2 - sum;
-                }
-                // i = 3; i < 4
-                {
-                    float sum = 0.f;
-                    {
-                        // k = 0; k < 2
-                        sum += L.r3c0 * U.r0c2;
-                    }
-                    {
-                        // k = 1; k < 2
-                        sum += L.r3c1 * U.r1c2;
-                    }
-                    L.r3c2 = A.r3c2 - sum;
-                }
-            }
-
-            {
-                // i = 3; i < 4
-                {
-                    float sum = 0.f;
-                    {
-                        // k = 0; k < 2
-                        sum += L.r2c0 * U.r0c3;
-                    }
-                    {
-                        // k = 1; k < 2
-                        sum += L.r2c1 * U.r1c3;
-                    }
-                    U.r2c3 = (A.r2c3 - sum) / L.r2c2;
-                }
-            }
+            // _mm_shuffle_ps(x,x, 0x55): broadcast lane 1
+            float inv = 1.0f / _mm_cvtss_f32(_mm_shuffle_ps(row1, row1, 0x55));
+            // _mm_set_ps(e3,e2,e1,e0): [1 1 inv inv] → multiply only lanes 2–3
+            row1      = _mm_mul_ps(row1, _mm_set_ps(inv, inv, 1.0f, 1.0f));
         }
+
+        // Eliminate column 1 from rows 2–3; blend mask 0b1100 keeps lanes 0–1
         {
-            // j = 3; j < 4
-            {
-                // i = 3; i < 4
-                {
-                    float sum = 0.f;
-                    {
-                        // k = 0; k < 3
-                        sum += L.r3c0 * U.r0c3;
-                    }
-                    {
-                        // k = 1; k < 3
-                        sum += L.r3c1 * U.r1c3;
-                    }
-                    {
-                        // k = 2; k < 3
-                        sum += L.r3c2 * U.r2c3;
-                    }
-                    L.r3c3 = A.r3c3 - sum;
-                }
-            }
+            __m128 f2 = _mm_shuffle_ps(row2, row2, 0x55); // broadcast L[2][1]
+            __m128 f3 = _mm_shuffle_ps(row3, row3, 0x55);
+            row2      = _mm_blend_ps(row2, _mm_sub_ps(row2, _mm_mul_ps(f2, row1)), 0b1100);
+            row3      = _mm_blend_ps(row3, _mm_sub_ps(row3, _mm_mul_ps(f3, row1)), 0b1100);
         }
-        */
 
-        float row1[4];
-        float row2[4];
-        float row3[4];
-        float row4[4];
+        // ── j = 2: scale row 2 lane 3 → U[2][3] ──────────────────────────────
+        {
+            // _mm_shuffle_ps(x,x, 0xAA): broadcast lane 2
+            float inv = 1.0f / _mm_cvtss_f32(_mm_shuffle_ps(row2, row2, 0xAA));
+            // _mm_set_ps(e3,e2,e1,e0): [inv 1 1 1] → multiply only lane 3
+            row2      = _mm_mul_ps(row2, _mm_set_ps(inv, 1.0f, 1.0f, 1.0f));
+        }
+
+        // Eliminate column 2 from row 3; blend mask 0b1000 keeps lanes 0–2
+        {
+            __m128 f3 = _mm_shuffle_ps(row3, row3, 0xAA); // broadcast L[3][2]
+            row3      = _mm_blend_ps(row3, _mm_sub_ps(row3, _mm_mul_ps(f3, row2)), 0b1000);
+        }
+
+        // ── j = 3: L[3][3] already sits in row3 lane 3 ───────────────────────
 
         Matrix4<float> LU = Matrix4<float>::zero();
-        std::memcpy(LU.elements + 0, row1, 4 * sizeof(float));
-        std::memcpy(LU.elements + 4, row2, 4 * sizeof(float));
-        std::memcpy(LU.elements + 8, row3, 4 * sizeof(float));
-        std::memcpy(LU.elements + 12, row4, 4 * sizeof(float));
+        _mm_storeu_ps(&LU.elements[0], row0);
+        _mm_storeu_ps(&LU.elements[4], row1);
+        _mm_storeu_ps(&LU.elements[8], row2);
+        _mm_storeu_ps(&LU.elements[12], row3);
 
         return Matrix4LU<float>{LU};
     }
 
     template <>
     auto Matrix4LU<double>::from(const Matrix4<double>& A) -> Matrix4LU<double> {
-        // Crout matrix decomposition without pivoting
-        // Unrolled loop with commented annotations, very long
-        auto LU            = Matrix4<double>::identity();
-        Matrix4<double>& L = LU;
-        Matrix4<double>& U = LU;
+        // Two __m128d per row: lo = [col0, col1], hi = [col2, col3]
+        __m128d r0l = _mm_loadu_pd(&A.elements[0]);
+        __m128d r0h = _mm_loadu_pd(&A.elements[2]);
+        __m128d r1l = _mm_loadu_pd(&A.elements[4]);
+        __m128d r1h = _mm_loadu_pd(&A.elements[6]);
+        __m128d r2l = _mm_loadu_pd(&A.elements[8]);
+        __m128d r2h = _mm_loadu_pd(&A.elements[10]);
+        __m128d r3l = _mm_loadu_pd(&A.elements[12]);
+        __m128d r3h = _mm_loadu_pd(&A.elements[14]);
 
+        // ── j=0: pivot = r0l[0]; scale lanes 1–3 → U[0][1..3] ───────────────
         {
-            // j = 0; j < 4
-            {
-                // i = 0; i < 4
-                {
-                    // k = 0; k < 0
-                    L.m00 = A.m00;
-                }
-                // i = 1; i < 4
-                {
-                    // k = 0; k < 0
-                    L.m10 = A.m10;
-                }
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 0
-                    L.m20 = A.m20;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 0
-                    L.m30 = A.m30;
-                }
-            }
+            double inv     = 1.0 / _mm_cvtsd_f64(r0l);
+            __m128d vscale = _mm_set1_pd(inv);
+            r0l            = _mm_blend_pd(r0l, _mm_mul_pd(r0l, vscale), 0b10); // keep L[0][0], scale U[0][1]
+            r0h            = _mm_mul_pd(r0h, vscale);                          // U[0][2], U[0][3]
+        }
 
-            {
-                // i = 1; i < 4
-                {
-                    // k = 0; k < 0
-                    U.m01 = A.m01 / L.m00;
-                }
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 0
-                    U.m02 = A.m02 / L.m00;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 0
-                    U.m03 = A.m03 / L.m00;
-                }
-            }
-        }
+        // Eliminate col 0 from rows 1–3
+        // lo: keep lane 0 (L[i][0]), update lane 1;  hi: update both
         {
-            // j = 1; j < 4
-            {
-                // i = 1; i < 4
-                {
-                    // k = 0; k < 1
-                    L.m11 = A.m11 - L.m10 * U.m01;
-                }
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 1
-                    L.m21 = A.m21 - L.m20 * U.m01;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 1
-                    L.m31 = A.m31 - L.m30 * U.m01;
-                }
-            }
+            __m128d f1 = _mm_movedup_pd(r1l); // broadcast L[1][0]
+            __m128d f2 = _mm_movedup_pd(r2l);
+            __m128d f3 = _mm_movedup_pd(r3l);
+            r1l        = _mm_blend_pd(r1l, _mm_sub_pd(r1l, _mm_mul_pd(f1, r0l)), 0b10);
+            r2l        = _mm_blend_pd(r2l, _mm_sub_pd(r2l, _mm_mul_pd(f2, r0l)), 0b10);
+            r3l        = _mm_blend_pd(r3l, _mm_sub_pd(r3l, _mm_mul_pd(f3, r0l)), 0b10);
+            r1h        = _mm_sub_pd(r1h, _mm_mul_pd(f1, r0h));
+            r2h        = _mm_sub_pd(r2h, _mm_mul_pd(f2, r0h));
+            r3h        = _mm_sub_pd(r3h, _mm_mul_pd(f3, r0h));
+        }
+        // After this step: r_il = [L[i][0], L[i][1]] — both lo lanes are final L entries
 
-            {
-                // i = 2; i < 4
-                {
-                    // k = 0; k < 1
-                    U.m12 = (A.m12 - L.m10 * U.m02) / L.m11;
-                }
-                // i = 3; i < 4
-                {
-                    // k = 0; k < 1
-                    U.m13 = (A.m13 - L.m10 * U.m03) / L.m11;
-                }
-            }
-        }
+        // ── j=1: pivot = r1l[1]; scale r1h → U[1][2..3] ─────────────────────
+        // r1l is all L — no blend needed, just scale hi
         {
-            // j = 2; j < 4
-            {
-                // i = 2; i < 4
-                {
-                    double sum = 0.0;
-                    {
-                        // k = 0; k < 2
-                        sum += L.m20 * U.m02;
-                    }
-                    {
-                        // k = 1; k < 2
-                        sum += L.m21 * U.m12;
-                    }
-                    L.m22 = A.m22 - sum;
-                }
-                // i = 3; i < 4
-                {
-                    double sum = 0.0;
-                    {
-                        // k = 0; k < 2
-                        sum += L.m30 * U.m02;
-                    }
-                    {
-                        // k = 1; k < 2
-                        sum += L.m31 * U.m12;
-                    }
-                    L.m32 = A.m32 - sum;
-                }
-            }
+            double inv     = 1.0 / _mm_cvtsd_f64(_mm_unpackhi_pd(r1l, r1l)); // extract lane 1
+            __m128d vscale = _mm_set1_pd(inv);
+            r1h            = _mm_mul_pd(r1h, vscale);                        // U[1][2], U[1][3]
+        }
 
-            {
-                // i = 3; i < 4
-                {
-                    double sum = 0.0;
-                    {
-                        // k = 0; k < 2
-                        sum += L.m20 * U.m03;
-                    }
-                    {
-                        // k = 1; k < 2
-                        sum += L.m21 * U.m13;
-                    }
-                    U.m23 = (A.m23 - sum) / L.m22;
-                }
-            }
-        }
+        // Eliminate col 1 from rows 2–3
+        // lo is already all L entries — only hi needs updating
         {
-            // j = 3; j < 4
-            {
-                // i = 3; i < 4
-                {
-                    double sum = L.m30 * U.m03 + L.m31 * U.m13 + L.m32 * U.m23;
-                    L.m33      = A.m33 - sum;
-                }
-            }
+            __m128d f2 = _mm_unpackhi_pd(r2l, r2l); // broadcast L[2][1]
+            __m128d f3 = _mm_unpackhi_pd(r3l, r3l);
+            r2h        = _mm_sub_pd(r2h, _mm_mul_pd(f2, r1h));
+            r3h        = _mm_sub_pd(r3h, _mm_mul_pd(f3, r1h));
         }
+        // After this step: r_il fully final; r_ih = [L[i][2], partial[i][3]]
+
+        // ── j=2: pivot = r2h[0]; scale lane 1 → U[2][3] ─────────────────────
+        {
+            double inv     = 1.0 / _mm_cvtsd_f64(r2h);                         // lane 0 = L[2][2]
+            __m128d vscale = _mm_set1_pd(inv);
+            r2h            = _mm_blend_pd(r2h, _mm_mul_pd(r2h, vscale), 0b10); // keep L[2][2], scale U[2][3]
+        }
+
+        // Eliminate col 2 from row 3
+        // keep lane 0 of r3h (L[3][2]), update lane 1 → L[3][3]
+        {
+            __m128d f3 = _mm_movedup_pd(r3h); // broadcast L[3][2]
+            r3h        = _mm_blend_pd(r3h, _mm_sub_pd(r3h, _mm_mul_pd(f3, r2h)), 0b10);
+        }
+
+        // ── j=3: L[3][3] = r3h[1], already final ─────────────────────────────
+
+        Matrix4<double> LU = Matrix4<double>::zero();
+        _mm_storeu_pd(&LU.elements[0], r0l);
+        _mm_storeu_pd(&LU.elements[2], r0h);
+        _mm_storeu_pd(&LU.elements[4], r1l);
+        _mm_storeu_pd(&LU.elements[6], r1h);
+        _mm_storeu_pd(&LU.elements[8], r2l);
+        _mm_storeu_pd(&LU.elements[10], r2h);
+        _mm_storeu_pd(&LU.elements[12], r3l);
+        _mm_storeu_pd(&LU.elements[14], r3h);
 
         return Matrix4LU<double>{LU};
     }

@@ -1,4 +1,4 @@
-#include "engine/linalg/vector.h"
+#include "engine/linalg/vector_operations.h"
 
 #include <Tracy/Tracy.hpp>
 
