@@ -1,6 +1,7 @@
 #include "engine/graphics/graphics.h"
 
 #include "engine/assets/library.h"
+#include "engine/deletion_queue.h"
 #include "engine/engine.h"
 #include "engine/graphics/descriptor.h"
 #include "engine/graphics/types.h"
@@ -386,6 +387,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
             .request_queue(graphics::thread_immediate_name(graphics::Thread::MAIN), VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
             .request_queue(graphics::thread_immediate_name(graphics::Thread::UPLOAD), VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
             .request_queue(graphics::thread_immediate_name(graphics::Thread::DRAW), VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
+            .request_queue(graphics::thread_immediate_name(graphics::Thread::COMPILE), VulkanQueueType::TRANSFER | VulkanQueueType::COMPUTE)
             .finish(physical_device_);
 
     logger.get().debug("Initialising allocator");
@@ -1039,10 +1041,10 @@ auto ENGINE_NS::GraphicsEngine::compile_() -> void {
                 std::unique_ptr<graphics::RegisteredPipeline> pipeline = std::move(new_pipelines.get().back());
                 new_pipelines.get().pop_back();
 
-                logger.get().debug("Compiling pipeline \"{}\" with id \"{}\"", pipeline->name(), pipeline->id_);
+                logger.get().debug(R"(Compiling pipeline "{}" with id "{}")", pipeline->name(), pipeline->id_);
 
                 auto pipeline_id = pipeline->id_;
-                pipeline->init_pipeline(*this, device_);
+                pipeline->init_pipeline(*this, device_, allocator_);
                 registered_pipelines.get()[pipeline_id] = std::move(pipeline);
                 in_use_pipelines.get().insert({pipeline_id, 0});
             }
@@ -1114,21 +1116,21 @@ auto ENGINE_NS::graphics::RegisteredPipeline::operator=(RegisteredPipeline&& rhs
     return *this;
 }
 
-auto ENGINE_NS::graphics::RegisteredPipeline::build_graphics_pipeline(ENGINE_NS::GraphicsEngine&,
-                                                                      VulkanDevice&,
-                                                                      GraphicsRegisteredPipelineDeletionQueue&)
+auto ENGINE_NS::graphics::RegisteredPipeline::build_graphics_pipeline(ENGINE_NS::GraphicsEngine& /* unused */,
+                                                                      VulkanDevice& /* unused */,
+                                                                      GraphicsRegisteredPipelineDeletionQueue& /*unused*/)
     -> std::optional<GraphicsPipelineBuilder> {
     return std::nullopt;
 }
 
-auto ENGINE_NS::graphics::RegisteredPipeline::build_compute_pipeline(ENGINE_NS::GraphicsEngine&,
-                                                                     VulkanDevice&,
-                                                                     GraphicsRegisteredPipelineDeletionQueue&)
+auto ENGINE_NS::graphics::RegisteredPipeline::build_compute_pipeline(ENGINE_NS::GraphicsEngine& /* unused */,
+                                                                     VulkanDevice& /* unused */,
+                                                                     GraphicsRegisteredPipelineDeletionQueue& /*unused*/)
     -> std::optional<ComputePipelineBuilder> {
     return std::nullopt;
 }
 
-auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engine, VulkanDevice& device) -> void {
+auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engine, VulkanDevice& device, VmaAllocator allocator) -> void {
     auto logger = ENGINE_NS::g_ENGINE->logger.get(ENGINE_NS::LogNamespaces::GRAPHICS);
     logger.get().debug("Creating registered pipeline \"{}\"", this->name());
 
@@ -1142,16 +1144,20 @@ auto ENGINE_NS::graphics::RegisteredPipeline::init_pipeline(GraphicsEngine& engi
     pipeline_descriptor_allocator_.init(device, 1'000, frame_sizes);
     this->deletion_queue_.push(pipeline_descriptor_allocator_);
 
-    auto graphics_pipeline = this->build_graphics_pipeline(engine, device, this->deletion_queue_);
+    engine::GraphicsRegisteredPipelineDeletionQueue initialisation_queue{};
+
+    auto graphics_pipeline = this->build_graphics_pipeline(engine, device, initialisation_queue);
     if (graphics_pipeline.has_value()) {
         this->graphics_pipeline_ = graphics_pipeline.value().finish(device);
         this->deletion_queue_.push(this->graphics_pipeline_.value());
     }
-    auto compute_pipeline = this->build_compute_pipeline(engine, device, this->deletion_queue_);
+    auto compute_pipeline = this->build_compute_pipeline(engine, device, initialisation_queue);
     if (compute_pipeline.has_value()) {
         this->compute_pipeline_ = compute_pipeline.value().finish(device);
         this->deletion_queue_.push(this->compute_pipeline_.value());
     }
+
+    initialisation_queue.flush(device, allocator);
 }
 
 auto ENGINE_NS::graphics::RegisteredPipeline::destroy(VulkanDevice& device, VmaAllocator allocator) -> void {

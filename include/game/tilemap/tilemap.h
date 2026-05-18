@@ -91,14 +91,14 @@ class TilemapPreDrawPipeline : public engine::StatePipeline {
     public:
         using engine::StatePipeline::StatePipeline;
 
-        virtual auto name() const -> std::string override final;
-        virtual auto build_compute_pipeline(engine::GraphicsEngine& engine,
-                                            engine::VulkanDevice& device,
-                                            engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue)
-            -> std::optional<engine::ComputePipelineBuilder> override final;
+        auto name() const -> std::string final;
+        auto build_compute_pipeline(engine::GraphicsEngine& engine,
+                                    engine::VulkanDevice& device,
+                                    engine::GraphicsRegisteredPipelineDeletionQueue& initialisation_deletion_queue)
+            -> std::optional<engine::ComputePipelineBuilder> final;
 
     protected:
-        virtual auto record_compute_(VkCommandBuffer cmd) -> void override final;
+        auto record_compute_(VkCommandBuffer cmd) -> void final;
 
 
     private:

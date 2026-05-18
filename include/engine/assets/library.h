@@ -2,7 +2,6 @@
 #include "engine/fileio/file.h"
 #include "engine/graphics/vulkan.h"
 #include "engine/meta_defines.h"
-#include "engine/pool.h"
 
 #include <vulkan/vulkan_core.h>
 
@@ -10,23 +9,22 @@
 #include <filesystem>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 namespace ENGINE_NS {
     namespace asset {
         class BytecodeShader;
         struct ShaderMetadata {
-                std::optional<fileio::FileMetadata> file_info{};
-                std::string entrypoint = "main";
+                std::optional<fileio::FileMetadata> file_info = std::nullopt;
+                std::string entrypoint                        = "main";
         };
         class CompiledShader {
             public:
                 const VkShaderModule& shader   = shader_;
                 const ShaderMetadata& metadata = metadata_;
 
-                CompiledShader(const CompiledShader& rhs)     = default;
-                CompiledShader(CompiledShader&& rhs) noexcept = default;
+                CompiledShader(const CompiledShader& rhs);
+                CompiledShader(CompiledShader&& rhs) noexcept;
 
                 auto operator=(const CompiledShader& rhs) -> CompiledShader&;
                 auto operator=(CompiledShader&& rhs) noexcept -> CompiledShader&;
@@ -52,7 +50,7 @@ namespace ENGINE_NS {
             private:
                 BytecodeShader(std::vector<std::uint32_t>&& spirv, ShaderMetadata metadata);
                 ShaderMetadata metadata_{};
-                std::vector<std::uint32_t> spirv_{};
+                std::vector<std::uint32_t> spirv_;
         };
     } // namespace asset
 } // namespace ENGINE_NS

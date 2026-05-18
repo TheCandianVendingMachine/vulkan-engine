@@ -82,14 +82,14 @@ namespace ENGINE_NS {
                 virtual auto name() const -> std::string = 0;
                 virtual auto build_graphics_pipeline(ENGINE_NS::GraphicsEngine& engine,
                                                      VulkanDevice& device,
-                                                     GraphicsRegisteredPipelineDeletionQueue& deletion_queue)
+                                                     GraphicsRegisteredPipelineDeletionQueue& initialisation_deletion_queue)
                     -> std::optional<GraphicsPipelineBuilder>;
                 virtual auto build_compute_pipeline(ENGINE_NS::GraphicsEngine& engine,
                                                     VulkanDevice& device,
-                                                    GraphicsRegisteredPipelineDeletionQueue& deletion_queue)
+                                                    GraphicsRegisteredPipelineDeletionQueue& initialisation_deletion_queue)
                     -> std::optional<ComputePipelineBuilder>;
 
-                auto init_pipeline(ENGINE_NS::GraphicsEngine& engine, VulkanDevice& device) -> void;
+                auto init_pipeline(ENGINE_NS::GraphicsEngine& engine, VulkanDevice& device, VmaAllocator allocator) -> void;
                 auto destroy(VulkanDevice& device, VmaAllocator allocator) -> void;
 
                 virtual auto record_graphics(VkCommandBuffer buffer) -> void;

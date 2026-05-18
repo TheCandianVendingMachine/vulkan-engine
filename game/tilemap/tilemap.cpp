@@ -146,14 +146,14 @@ auto TilemapPreDrawPipeline::name() const -> std::string {
 
 auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engine,
                                                     engine::VulkanDevice& device,
-                                                    engine::GraphicsRegisteredPipelineDeletionQueue& pipeline_deletion_queue)
+                                                    engine::GraphicsRegisteredPipelineDeletionQueue& initialisation_deletion_queue)
     -> std::optional<engine::ComputePipelineBuilder> {
     ZoneScoped;
     tilemap_id_image_ =
         engine.allocate_image(VkExtent3D{.width = 64, .height = 64, .depth = 1}, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_STORAGE_BIT);
     deletion_queue_.push(tilemap_id_image_);
 
-    create_descriptors_(engine, device, pipeline_deletion_queue);
+    create_descriptors_(engine, device, deletion_queue_);
 
     auto shader_result = engine::asset::BytecodeShader::load_from_file("assets/shaders/game/tilemap/tilemap.spv").compile(device);
     if (!shader_result.has_value()) {
@@ -163,7 +163,7 @@ auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engi
     auto shader = shader_result.value();
 
     auto triangle_pipeline = engine::ComputePipeline::build().layout().add_set_layout(tilemap_id_image_layout_).finish().shader(shader);
-    engine.destroy_shader(shader);
+    initialisation_deletion_queue.push(shader);
 
     return triangle_pipeline;
 }

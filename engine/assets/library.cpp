@@ -52,6 +52,13 @@ ENGINE_NS::asset::BytecodeShader::BytecodeShader(std::vector<std::uint32_t>&& sp
     metadata_(std::move(metadata)), spirv_(std::move(spirv)) {
 }
 
+ENGINE_NS::asset::CompiledShader::CompiledShader(const CompiledShader& other) : metadata_(other.metadata_), shader_(other.shader_) {
+}
+
+ENGINE_NS::asset::CompiledShader::CompiledShader(CompiledShader&& other) noexcept :
+    metadata_(std::move(other.metadata_)), shader_(other.shader_) {
+}
+
 auto ENGINE_NS::asset::CompiledShader::operator=(const CompiledShader& rhs) -> CompiledShader& {
     if (&rhs != this) {
         metadata_ = rhs.metadata_;
