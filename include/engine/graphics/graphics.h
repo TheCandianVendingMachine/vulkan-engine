@@ -47,8 +47,8 @@ namespace ENGINE_NS {
         struct FrameData {
                 // Allocations that are created in the process of rendering. Should never be pushed to outside the render thread
                 GraphicsPerFrameDeletionQueue deletion_queue{};
-                std::vector<std::uint64_t> in_use_pipelines{};
-                DescriptorAllocatorGrowable descriptor_allocator{};
+                std::vector<std::uint64_t> in_use_pipelines;
+                DescriptorAllocatorGrowable descriptor_allocator;
                 VkCommandPool command_pool          = VK_NULL_HANDLE;
                 VkCommandBuffer main_command_buffer = VK_NULL_HANDLE;
                 VkSemaphore swapchain_semaphore_    = VK_NULL_HANDLE;
@@ -102,7 +102,7 @@ namespace ENGINE_NS {
                 friend class ENGINE_NS::GraphicsEngine;
 
             protected:
-                DescriptorAllocatorGrowable pipeline_descriptor_allocator_{};
+                DescriptorAllocatorGrowable pipeline_descriptor_allocator_;
                 GraphicsRegisteredPipelineDeletionQueue deletion_queue_{};
                 std::optional<GraphicsPipeline> graphics_pipeline_ = std::nullopt;
                 std::optional<ComputePipeline> compute_pipeline_   = std::nullopt;
@@ -126,7 +126,7 @@ namespace ENGINE_NS {
 
                 friend class ENGINE_NS::GraphicsEngine;
                 GraphicsEngine& engine_;
-                std::vector<std::uint64_t> pipeline_ids_{};
+                std::vector<std::uint64_t> pipeline_ids_;
                 bool moved_ = false;
         };
 
@@ -188,9 +188,9 @@ namespace ENGINE_NS {
                 -> graphics::RegisteredPipelineReceipt;
             auto deregister_pipelines(std::vector<std::uint64_t>& ids) -> void;
 
-            RwLock<graphics::ImGui> imgui{};
+            const RwLock<graphics::ImGui> imgui;
 
-            const ImageAllocation& draw_image = draw_image_;
+            ImageAllocation& draw_image = draw_image_;
 
         private:
             bool initialised_ = false;
@@ -199,27 +199,27 @@ namespace ENGINE_NS {
             GraphicsPerFrameDeletionQueue frame_deletion_queue_{};
             VmaAllocator allocator_{};
 
-            DescriptorAllocatorGrowable global_descriptor_allocator_{};
+            DescriptorAllocatorGrowable global_descriptor_allocator_;
             VkDescriptorSet draw_image_descriptors_ = VK_NULL_HANDLE;
             VulkanDescriptorSetLayout draw_image_layout_{};
 
-            RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> new_pipelines_{};
-            RwLock<tsl::robin_map<std::uint64_t, std::unique_ptr<graphics::RegisteredPipeline>>> registered_pipelines_{};
-            RwLock<tsl::robin_map<std::uint64_t, std::uint64_t>> in_use_pipelines_{};
-            RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> to_delete_pipelines_{};
+            RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> new_pipelines_;
+            RwLock<tsl::robin_map<std::uint64_t, std::unique_ptr<graphics::RegisteredPipeline>>> registered_pipelines_;
+            RwLock<tsl::robin_map<std::uint64_t, std::uint64_t>> in_use_pipelines_;
+            RwLock<std::vector<std::unique_ptr<graphics::RegisteredPipeline>>> to_delete_pipelines_;
             std::uint64_t next_pipeline_uid_ = 0;
 
             std::thread render_thread_;
             std::chrono::milliseconds update_rate_;
 
             GraphicsUploadDeletionQueue upload_deletion_queue_{};
-            RwLock<std::deque<graphics::MeshUpload>> mesh_uploads_{};
-            RwLock<std::deque<graphics::TextureUpload>> texture_uploads_{};
+            RwLock<std::deque<graphics::MeshUpload>> mesh_uploads_;
+            RwLock<std::deque<graphics::TextureUpload>> texture_uploads_;
             std::thread upload_thread_;
             std::atomic<bool> upload_ready_;
 
-            std::thread pipeline_compile_thread_{};
-            std::mutex pipeline_compile_lock_{};
+            std::thread pipeline_compile_thread_;
+            std::mutex pipeline_compile_lock_;
             std::condition_variable pipeline_compile_condition_{};
 
             std::atomic<bool> running_;
@@ -230,8 +230,8 @@ namespace ENGINE_NS {
             VkQueue transfer_queue_                                      = VK_NULL_HANDLE;
 
             std::mutex thread_init_mutex_{};
-            tsl::robin_map<graphics::Thread, graphics::Immediate> immediates_{};
-            tsl::robin_map<std::thread::id, graphics::Thread> thread_ids_{};
+            tsl::robin_map<graphics::Thread, graphics::Immediate> immediates_;
+            tsl::robin_map<std::thread::id, graphics::Thread> thread_ids_;
 
             ::linalg::Vector2<int> window_extent_{1'700, 900};
 
