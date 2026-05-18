@@ -7,18 +7,16 @@
 #include <Volk/volk.h>
 #include <vulkan/vulkan_core.h>
 
-#include <type_traits>
-
 
 auto ENGINE_NS::GraphicsPipeline::build() -> GraphicsPipelineBuilder {
-    return GraphicsPipelineBuilder();
+    return {};
 }
 
 ENGINE_NS::GraphicsPipeline::GraphicsPipeline(const GraphicsPipeline& rhs) : pipeline_(rhs.pipeline_), layout_(rhs.layout_) {
 }
 
 ENGINE_NS::GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& rhs) noexcept :
-    pipeline_(std::move(rhs.pipeline_)), layout_(std::move(rhs.layout_)) {
+    pipeline_(rhs.pipeline_)), layout_(rhs.layout_) {
 }
 
 auto ENGINE_NS::GraphicsPipeline::operator=(const GraphicsPipeline& rhs) -> GraphicsPipeline& {
@@ -31,8 +29,8 @@ auto ENGINE_NS::GraphicsPipeline::operator=(const GraphicsPipeline& rhs) -> Grap
 
 auto ENGINE_NS::GraphicsPipeline::operator=(GraphicsPipeline&& rhs) noexcept -> GraphicsPipeline& {
     if (this != &rhs) {
-        pipeline_ = std::move(rhs.pipeline_);
-        layout_   = std::move(rhs.layout_);
+        pipeline_ = rhs.pipeline_;
+        layout_   = rhs.layout_;
     }
     return *this;
 }
@@ -162,7 +160,7 @@ auto ENGINE_NS::GraphicsPipelineBuilder::finish(VulkanDevice& device) -> Graphic
     pipeline_info.pDepthStencilState  = &depth_stencil_;
     pipeline_info.pDynamicState       = &dynamic_info;
 
-    return GraphicsPipeline(device, pipeline_info, pipeline_layout_);
+    return {device, pipeline_info, pipeline_layout_};
 }
 
 ENGINE_NS::ComputePipelineBuilder::ComputePipelineBuilder() : layout_builder_(*this) {
@@ -170,14 +168,13 @@ ENGINE_NS::ComputePipelineBuilder::ComputePipelineBuilder() : layout_builder_(*t
     pipeline_layout_.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 }
 auto ENGINE_NS::ComputePipeline::build() -> ComputePipelineBuilder {
-    return ComputePipelineBuilder();
+    return {};
 }
 
 ENGINE_NS::ComputePipeline::ComputePipeline(const ComputePipeline& rhs) : pipeline_(rhs.pipeline_), layout_(rhs.layout_) {
 }
 
-ENGINE_NS::ComputePipeline::ComputePipeline(ComputePipeline&& rhs) noexcept :
-    pipeline_(std::move(rhs.pipeline_)), layout_(std::move(rhs.layout_)) {
+ENGINE_NS::ComputePipeline::ComputePipeline(ComputePipeline&& rhs) noexcept : pipeline_(rhs.pipeline_), layout_(rhs.layout_) {
 }
 
 auto ENGINE_NS::ComputePipeline::operator=(const ComputePipeline& rhs) -> ComputePipeline& {
@@ -190,8 +187,8 @@ auto ENGINE_NS::ComputePipeline::operator=(const ComputePipeline& rhs) -> Comput
 
 auto ENGINE_NS::ComputePipeline::operator=(ComputePipeline&& rhs) noexcept -> ComputePipeline& {
     if (this != &rhs) {
-        pipeline_ = std::move(rhs.pipeline_);
-        layout_   = std::move(rhs.layout_);
+        pipeline_ = rhs.pipeline_;
+        layout_   = rhs.layout_;
     }
     return *this;
 }
@@ -218,5 +215,5 @@ auto ENGINE_NS::ComputePipelineBuilder::finish(VulkanDevice& device) -> ComputeP
     VkComputePipelineCreateInfo create_info{};
     create_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     create_info.stage = shader_stage_;
-    return ComputePipeline(device, create_info, pipeline_layout_);
+    return {device, create_info, pipeline_layout_};
 }
