@@ -21,7 +21,6 @@ class TestState : public engine::State {
         }
 
         virtual auto update() -> void override final {
-            engine::g_ENGINE->logger.get(engine::LogNamespaces::GAME).get().info("hiii");
         }
 
         virtual auto init_pipelines(engine::GraphicsEngine&) -> std::vector<std::unique_ptr<engine::StatePipeline>> override final {
