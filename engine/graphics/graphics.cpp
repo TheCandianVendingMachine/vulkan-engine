@@ -191,10 +191,10 @@ auto ENGINE_NS::GraphicsEngine::next_frame() -> RwLock<graphics::FrameData>& {
 }
 
 auto ENGINE_NS::GraphicsEngine::allocate_buffer(std::size_t size, VkBufferUsageFlags flags, VmaMemoryUsage usage) -> BufferAllocation {
-    VkBufferCreateInfo buffer_info = {};
-    buffer_info.sType              = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_info.size               = size;
-    buffer_info.usage              = flags;
+    VkBufferCreateInfo buffer_info{};
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.size  = size;
+    buffer_info.usage = flags;
 
     VmaAllocationCreateInfo alloc_info{};
     alloc_info.usage = usage;
@@ -353,18 +353,18 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
     surface_ = VulkanSurface(window_, vulkan_instance_);
 
     // vulkan 1.3 features
-    VkPhysicalDeviceVulkan13Features features;
+    VkPhysicalDeviceVulkan13Features features{};
     features.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
     features.dynamicRendering = VK_TRUE;
     features.synchronization2 = VK_TRUE;
 
     // vulkan 1.2 features
-    VkPhysicalDeviceVulkan12Features features12;
+    VkPhysicalDeviceVulkan12Features features12{};
     features12.sType               = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
     features12.bufferDeviceAddress = VK_TRUE;
     features12.descriptorIndexing  = VK_TRUE;
 
-    VkPhysicalDeviceVulkan11Features features11;
+    VkPhysicalDeviceVulkan11Features features11{};
     features11.sType                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
     features11.shaderDrawParameters = VK_TRUE;
 
@@ -468,7 +468,9 @@ auto ENGINE_NS::GraphicsEngine::create_swapchain_() -> void {
             .add_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
             .finish(physical_device_, surface_, device_);
 
-    VkExtent3D draw_extent = {static_cast<std::uint32_t>(window_extent_.x), static_cast<std::uint32_t>(window_extent_.y), 1};
+    VkExtent3D draw_extent = {.width  = static_cast<std::uint32_t>(window_extent_.x),
+                              .height = static_cast<std::uint32_t>(window_extent_.y),
+                              .depth  = 1};
     draw_image_.format     = VK_FORMAT_R16G16B16A16_SFLOAT;
     draw_image_.extent     = draw_extent;
 
@@ -517,10 +519,10 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
       {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4 * IMGUI_IMPL_VULKAN_MINIMUM_IMAGE_SAMPLER_POOL_SIZE},
     };
 
-    VkDescriptorPoolCreateInfo pool_info = {};
-    pool_info.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_info.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    pool_info.maxSets                    = 0;
+    VkDescriptorPoolCreateInfo pool_info{};
+    pool_info.sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags   = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets = 0;
     for (VkDescriptorPoolSize& pool_size : pool_sizes) {
         pool_info.maxSets += pool_size.descriptorCount;
     }
@@ -534,7 +536,7 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     ImGui_ImplSDL3_InitForVulkan(window_);
-    ImGui_ImplVulkan_InitInfo init_info                                            = {};
+    ImGui_ImplVulkan_InitInfo init_info{};
     init_info.Instance                                                             = vulkan_instance_.instance;
     init_info.PhysicalDevice                                                       = physical_device_.device;
     init_info.Device                                                               = device_.device;
@@ -619,17 +621,17 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
 
     vkCmdBeginRendering(cmd, &render_info);
 
-    VkViewport viewport = {};
-    viewport.x          = 0;
-    viewport.y          = 0;
-    viewport.width      = static_cast<float>(window_extent_.x);
-    viewport.height     = static_cast<float>(window_extent_.y);
-    viewport.minDepth   = 0.f;
-    viewport.maxDepth   = 1.f;
+    VkViewport viewport{};
+    viewport.x        = 0;
+    viewport.y        = 0;
+    viewport.width    = static_cast<float>(window_extent_.x);
+    viewport.height   = static_cast<float>(window_extent_.y);
+    viewport.minDepth = 0.f;
+    viewport.maxDepth = 1.f;
 
     vkCmdSetViewport(cmd, 0, 1, &viewport);
 
-    VkRect2D scissor      = {};
+    VkRect2D scissor{};
     scissor.offset.x      = 0;
     scissor.offset.y      = 0;
     scissor.extent.width  = window_extent_.x;
@@ -773,7 +775,7 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
 
             VK_CHECK(vkQueueSubmit2(graphics_queue_, 1, &submit_info, frame.get().render_fence_));
 
-            VkPresentInfoKHR present_info   = {};
+            VkPresentInfoKHR present_info{};
             present_info.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
             present_info.pSwapchains        = &swapchain_.swapchain;
             present_info.swapchainCount     = 1;

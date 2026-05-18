@@ -56,10 +56,10 @@ namespace ENGINE_NS {
             VulkanInstanceBuilder();
             friend class VulkanInstance;
 
-            std::string game_name_{};
-            std::string engine_name_{};
-            Version game_version_{};
-            Version engine_version_{};
+            std::string game_name_;
+            std::string engine_name_;
+            Version game_version_;
+            Version engine_version_;
             bool with_validation_layers_ = false;
     };
 
@@ -126,7 +126,7 @@ namespace ENGINE_NS {
             VkPhysicalDeviceVulkan12Features features_12_{};
             VkPhysicalDeviceVulkan11Features features_11_{};
             VkPhysicalDeviceFeatures features_10_{};
-            Version vulkan_version_{};
+            Version vulkan_version_;
 
             VulkanPhysicalDeviceSelector(SDL_Window* window);
             friend class VulkanPhysicalDevice;

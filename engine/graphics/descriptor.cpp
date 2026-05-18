@@ -282,12 +282,12 @@ auto ENGINE_NS::DescriptorAllocatorGrowable::create_pool_(VulkanDevice& device,
         pool_sizes.push_back(VkDescriptorPoolSize{.type = ratio.type, .descriptorCount = std::uint32_t(ratio.ratio * set_count)});
     }
 
-    VkDescriptorPoolCreateInfo pool_info = {};
-    pool_info.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_info.flags                      = 0;
-    pool_info.maxSets                    = set_count;
-    pool_info.poolSizeCount              = std::uint32_t(pool_sizes.size());
-    pool_info.pPoolSizes                 = pool_sizes.data();
+    VkDescriptorPoolCreateInfo pool_info{};
+    pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags         = 0;
+    pool_info.maxSets       = set_count;
+    pool_info.poolSizeCount = std::uint32_t(pool_sizes.size());
+    pool_info.pPoolSizes    = pool_sizes.data();
 
     VkDescriptorPool pool;
     vkCreateDescriptorPool(device.device, &pool_info, nullptr, &pool);

@@ -44,9 +44,9 @@ auto ENGINE_NS::image_subresource_range(VkImageAspectFlags aspect_mask) -> VkIma
 }
 
 auto ENGINE_NS::image_create_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent) -> VkImageCreateInfo {
-    VkImageCreateInfo info = {};
-    info.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    info.pNext             = nullptr;
+    VkImageCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    info.pNext = nullptr;
 
     info.imageType = VK_IMAGE_TYPE_2D;
 
@@ -68,9 +68,9 @@ auto ENGINE_NS::image_create_info(VkFormat format, VkImageUsageFlags usage_flags
 
 auto ENGINE_NS::image_view_create_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_flags) -> VkImageViewCreateInfo {
     // build a image-view for the depth image to use for rendering
-    VkImageViewCreateInfo info = {};
-    info.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    info.pNext                 = nullptr;
+    VkImageViewCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    info.pNext = nullptr;
 
     info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
     info.image                           = image;

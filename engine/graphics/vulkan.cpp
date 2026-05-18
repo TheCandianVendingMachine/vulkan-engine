@@ -39,18 +39,18 @@ auto ENGINE_NS::command_buffer_begin_info(VkCommandBufferUsageFlags flags) -> Vk
 }
 
 auto ENGINE_NS::fence_create_info(VkFenceCreateFlags flags) -> VkFenceCreateInfo {
-    VkFenceCreateInfo info = {};
-    info.sType             = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    info.pNext             = nullptr;
-    info.flags             = flags;
+    VkFenceCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = flags;
     return info;
 }
 
 auto ENGINE_NS::semaphore_create_info(VkSemaphoreCreateFlags flags) -> VkSemaphoreCreateInfo {
-    VkSemaphoreCreateInfo info = {};
-    info.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    info.pNext                 = nullptr;
-    info.flags                 = flags;
+    VkSemaphoreCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    info.pNext = nullptr;
+    info.flags = flags;
 
     return info;
 }
@@ -80,9 +80,9 @@ auto ENGINE_NS::command_buffer_submit_info(VkCommandBuffer command_buffer) -> Vk
 auto ENGINE_NS::submit_info(VkCommandBufferSubmitInfo* cmd,
                             VkSemaphoreSubmitInfo* signal_semaphore_info,
                             VkSemaphoreSubmitInfo* wait_semaphore_info) -> VkSubmitInfo2 {
-    VkSubmitInfo2 info = {};
-    info.sType         = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
-    info.pNext         = nullptr;
+    VkSubmitInfo2 info{};
+    info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2;
+    info.pNext = nullptr;
 
     info.waitSemaphoreInfoCount = wait_semaphore_info == nullptr ? 0 : 1;
     info.pWaitSemaphoreInfos    = wait_semaphore_info;
