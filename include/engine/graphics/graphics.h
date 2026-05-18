@@ -188,8 +188,7 @@ namespace ENGINE_NS {
                 -> graphics::RegisteredPipelineReceipt;
             auto deregister_pipelines(std::vector<std::uint64_t>& ids) -> void;
 
-            const RwLock<graphics::ImGui> imgui;
-
+            RwLock<graphics::ImGui> imgui;
             ImageAllocation& draw_image = draw_image_;
 
         private:
