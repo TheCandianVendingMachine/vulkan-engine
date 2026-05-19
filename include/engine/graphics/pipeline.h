@@ -34,7 +34,8 @@ namespace ENGINE_NS {
             }
 
             PipelineLayoutBuilder(PipelineLayoutBuilder&& other) noexcept :
-                push_constants_(std::move(other.push_constants_)), from_(other.from_) {
+                push_constants_(std::move(other.push_constants_)), descriptor_set_layouts_(std::move(other.descriptor_set_layouts_)),
+                from_(other.from_) {
             }
 
 
