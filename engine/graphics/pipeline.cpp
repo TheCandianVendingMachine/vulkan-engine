@@ -15,8 +15,7 @@ auto ENGINE_NS::GraphicsPipeline::build() -> GraphicsPipelineBuilder {
 ENGINE_NS::GraphicsPipeline::GraphicsPipeline(const GraphicsPipeline& rhs) : pipeline_(rhs.pipeline_), layout_(rhs.layout_) {
 }
 
-ENGINE_NS::GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& rhs) noexcept :
-    pipeline_(rhs.pipeline_)), layout_(rhs.layout_) {
+ENGINE_NS::GraphicsPipeline::GraphicsPipeline(GraphicsPipeline&& rhs) noexcept : pipeline_(rhs.pipeline_), layout_(rhs.layout_) {
 }
 
 auto ENGINE_NS::GraphicsPipeline::operator=(const GraphicsPipeline& rhs) -> GraphicsPipeline& {

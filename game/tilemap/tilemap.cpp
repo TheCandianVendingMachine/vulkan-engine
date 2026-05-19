@@ -162,7 +162,8 @@ auto TilemapPreDrawPipeline::build_compute_pipeline(engine::GraphicsEngine& engi
     }
     auto shader = shader_result.value();
 
-    auto triangle_pipeline = engine::ComputePipeline::build().layout().add_set_layout(tilemap_id_image_layout_).finish().shader(shader);
+    auto triangle_pipeline =
+        std::move(engine::ComputePipeline::build().layout().add_set_layout(tilemap_id_image_layout_).finish().shader(shader));
     initialisation_deletion_queue.push(shader);
 
     return triangle_pipeline;

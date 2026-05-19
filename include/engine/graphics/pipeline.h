@@ -33,8 +33,6 @@ namespace ENGINE_NS {
                 return *this;
             }
 
-            PipelineLayoutBuilder(const PipelineLayoutBuilder& other) : push_constants_(other.push_constants_), from_(other.from_) {
-            }
             PipelineLayoutBuilder(PipelineLayoutBuilder&& other) noexcept :
                 push_constants_(std::move(other.push_constants_)), from_(other.from_) {
             }
@@ -59,7 +57,6 @@ namespace ENGINE_NS {
             auto layout() -> PipelineLayoutBuilder<ComputePipelineBuilder>&;
             auto finish(VulkanDevice& device) -> ComputePipeline;
 
-            ComputePipelineBuilder(const ComputePipelineBuilder& rhs)     = default;
             ComputePipelineBuilder(ComputePipelineBuilder&& rhs) noexcept = default;
 
         private:
@@ -111,7 +108,6 @@ namespace ENGINE_NS {
 
             auto finish(VulkanDevice& device) -> GraphicsPipeline;
 
-            GraphicsPipelineBuilder(const GraphicsPipelineBuilder& rhs)     = default;
             GraphicsPipelineBuilder(GraphicsPipelineBuilder&& rhs) noexcept = default;
 
         private:
