@@ -3,9 +3,9 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
 // clang-format disable
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format enable
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <utility>

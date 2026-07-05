@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+#include "engine/shared_library.h"
 
 #include <memory>
 
@@ -17,7 +18,7 @@ namespace ENGINE_NS {
 
                 const Arch& arch = arch_;
 
-                const void* library = nullptr;
+                const LibraryHandle library = nullptr;
 
             private:
                 void load_scalar_();
@@ -25,7 +26,7 @@ namespace ENGINE_NS {
                 void load_avx_();
 
                 Arch arch_;
-                void* library_ = nullptr;
+                LibraryHandle library_ = nullptr;
         };
 
         extern std::unique_ptr<Library> g_VECTOR_LIBRARY;

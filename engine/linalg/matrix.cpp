@@ -1,95 +1,141 @@
 #include "engine/engine.h"
-#include "engine/engine_utils.h"
 #include "engine/linalg/matrix_operations.h"
 #include "engine/meta_defines.h"
+#include "engine/shared_library.h"
 
-#include <Windows.h>
-#include <libloaderapi.h>
-
-#include <Tracy/Tracy.hpp>
-
-#define VERIFY(function)                                                                                                                   \
-    if (!function) {                                                                                                                       \
-        engine::crash(ErrorCode::CANNOT_LOAD_LINEAR_ALGEBRA_FUNCTION, __LINE__, __func__, __FILE__);                                       \
-    }
+#include <tracy/Tracy.hpp>
 
 void ENGINE_NS::linalg::load_matrix_functions(const void* clibrary) {
     ZoneScoped;
     auto logger = engine::g_ENGINE->logger.get(engine::LogNamespaces::CORE);
     logger.get().info("Linking matrix functions");
-    HMODULE library = static_cast<HMODULE>(const_cast<void*>(clibrary));
+    LibraryHandle library               = const_cast<void*>(clibrary);
     // Matrix2
-    blas2::matrix2::float32::matrix_vector_product =
-        reinterpret_cast<blas2::matrix2::float32::matrix_vector_product_def>(GetProcAddress(library, "smvprod2"));
-    VERIFY(blas2::matrix2::float32::matrix_vector_product);
-    blas2::matrix2::float32::solve_lower_triangular =
-        reinterpret_cast<blas2::matrix2::float32::solve_lower_triangular_def>(GetProcAddress(library, "ssolve2l"));
-    VERIFY(blas2::matrix2::float32::solve_lower_triangular);
-    blas2::matrix2::float32::solve_upper_triangular =
-        reinterpret_cast<blas2::matrix2::float32::solve_upper_triangular_def>(GetProcAddress(library, "ssolve2u"));
-    VERIFY(blas2::matrix2::float32::solve_upper_triangular);
-    blas2::matrix2::float32::solve = reinterpret_cast<blas2::matrix2::float32::solve_def>(GetProcAddress(library, "ssolve2"));
-    VERIFY(blas2::matrix2::float32::solve);
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float32::matrix_vector_product,
+        "smvprod2"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float32::solve_lower_triangular,
+        "ssolve2l"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float32::solve_upper_triangular,
+        "ssolve2u"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float32::solve,
+        "ssolve2"
+    );
 
-    blas2::matrix2::float64::matrix_vector_product =
-        reinterpret_cast<blas2::matrix2::float64::matrix_vector_product_def>(GetProcAddress(library, "dmvprod2"));
-    VERIFY(blas2::matrix2::float64::matrix_vector_product);
-    blas2::matrix2::float64::solve_lower_triangular =
-        reinterpret_cast<blas2::matrix2::float64::solve_lower_triangular_def>(GetProcAddress(library, "dsolve2l"));
-    VERIFY(blas2::matrix2::float64::solve_lower_triangular);
-    blas2::matrix2::float64::solve_upper_triangular =
-        reinterpret_cast<blas2::matrix2::float64::solve_upper_triangular_def>(GetProcAddress(library, "dsolve2u"));
-    VERIFY(blas2::matrix2::float64::solve_upper_triangular);
-    blas2::matrix2::float64::solve = reinterpret_cast<blas2::matrix2::float64::solve_def>(GetProcAddress(library, "dsolve2"));
-    VERIFY(blas2::matrix2::float64::solve);
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float64::matrix_vector_product,
+        "dmvprod2"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float64::solve_lower_triangular,
+        "dsolve2l"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float64::solve_upper_triangular,
+        "dsolve2u"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix2::float64::solve,
+        "dsolve2"
+    );
     // Matrix3
-    blas2::matrix3::float32::matrix_vector_product =
-        reinterpret_cast<blas2::matrix3::float32::matrix_vector_product_def>(GetProcAddress(library, "smvprod3"));
-    VERIFY(blas2::matrix3::float32::matrix_vector_product);
-    blas2::matrix3::float32::solve_lower_triangular =
-        reinterpret_cast<blas2::matrix3::float32::solve_lower_triangular_def>(GetProcAddress(library, "ssolve3l"));
-    VERIFY(blas2::matrix3::float32::solve_lower_triangular);
-    blas2::matrix3::float32::solve_upper_triangular =
-        reinterpret_cast<blas2::matrix3::float32::solve_upper_triangular_def>(GetProcAddress(library, "ssolve3u"));
-    VERIFY(blas2::matrix3::float32::solve_upper_triangular);
-    blas2::matrix3::float32::solve = reinterpret_cast<blas2::matrix3::float32::solve_def>(GetProcAddress(library, "ssolve3"));
-    VERIFY(blas2::matrix3::float32::solve);
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float32::matrix_vector_product,
+        "smvprod3"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float32::solve_lower_triangular,
+        "ssolve3l"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float32::solve_upper_triangular,
+        "ssolve3u"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float32::solve,
+        "ssolve3"
+    );
 
-    blas2::matrix3::float64::matrix_vector_product =
-        reinterpret_cast<blas2::matrix3::float64::matrix_vector_product_def>(GetProcAddress(library, "dmvprod3"));
-    VERIFY(blas2::matrix3::float64::matrix_vector_product);
-    blas2::matrix3::float64::solve_lower_triangular =
-        reinterpret_cast<blas2::matrix3::float64::solve_lower_triangular_def>(GetProcAddress(library, "dsolve3l"));
-    VERIFY(blas2::matrix3::float64::solve_lower_triangular);
-    blas2::matrix3::float64::solve_upper_triangular =
-        reinterpret_cast<blas2::matrix3::float64::solve_upper_triangular_def>(GetProcAddress(library, "dsolve3u"));
-    VERIFY(blas2::matrix3::float64::solve_upper_triangular);
-    blas2::matrix3::float64::solve = reinterpret_cast<blas2::matrix3::float64::solve_def>(GetProcAddress(library, "dsolve3"));
-    VERIFY(blas2::matrix3::float64::solve);
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float64::matrix_vector_product,
+        "dmvprod3"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float64::solve_lower_triangular,
+        "dsolve3l"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float64::solve_upper_triangular,
+        "dsolve3u"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix3::float64::solve,
+        "dsolve3"
+    );
     // matrix4
-    blas2::matrix4::float32::matrix_vector_product =
-        reinterpret_cast<blas2::matrix4::float32::matrix_vector_product_def>(GetProcAddress(library, "smvprod4"));
-    VERIFY(blas2::matrix4::float32::matrix_vector_product);
-    blas2::matrix4::float32::solve_lower_triangular =
-        reinterpret_cast<blas2::matrix4::float32::solve_lower_triangular_def>(GetProcAddress(library, "ssolve4l"));
-    VERIFY(blas2::matrix4::float32::solve_lower_triangular);
-    blas2::matrix4::float32::solve_upper_triangular =
-        reinterpret_cast<blas2::matrix4::float32::solve_upper_triangular_def>(GetProcAddress(library, "ssolve4u"));
-    VERIFY(blas2::matrix4::float32::solve_upper_triangular);
-    blas2::matrix4::float32::solve = reinterpret_cast<blas2::matrix4::float32::solve_def>(GetProcAddress(library, "ssolve4"));
-    VERIFY(blas2::matrix4::float32::solve);
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float32::matrix_vector_product,
+        "smvprod4"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float32::solve_lower_triangular,
+        "ssolve4l"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float32::solve_upper_triangular,
+        "ssolve4u"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float32::solve,
+        "ssolve4"
+    );
 
-    blas2::matrix4::float64::matrix_vector_product =
-        reinterpret_cast<blas2::matrix4::float64::matrix_vector_product_def>(GetProcAddress(library, "dmvprod4"));
-    VERIFY(blas2::matrix4::float64::matrix_vector_product);
-    blas2::matrix4::float64::solve_lower_triangular =
-        reinterpret_cast<blas2::matrix4::float64::solve_lower_triangular_def>(GetProcAddress(library, "dsolve4l"));
-    VERIFY(blas2::matrix4::float64::solve_lower_triangular);
-    blas2::matrix4::float64::solve_upper_triangular =
-        reinterpret_cast<blas2::matrix4::float64::solve_upper_triangular_def>(GetProcAddress(library, "dsolve4u"));
-    VERIFY(blas2::matrix4::float64::solve_upper_triangular);
-    blas2::matrix4::float64::solve = reinterpret_cast<blas2::matrix4::float64::solve_def>(GetProcAddress(library, "dsolve4"));
-    VERIFY(blas2::matrix4::float64::solve);
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float64::matrix_vector_product,
+        "dmvprod4"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float64::solve_lower_triangular,
+        "dsolve4l"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float64::solve_upper_triangular,
+        "dsolve4u"
+    );
+    ENGINE_NS::get_symbol(
+        library,
+        blas2::matrix4::float64::solve,
+        "dsolve4"
+    );
     logger.get().info("Successfully linked matrix functions");
 }
 

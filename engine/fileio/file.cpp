@@ -129,7 +129,7 @@ auto ENGINE_NS::fileio::File::position() const -> std::expected<Position, error:
 #ifdef _WIN32
     auto offset = _ftelli64(handle_);
 #elif __linux__
-    auto offset = ftello(file);
+    auto offset = ftello(handle_);
 #else
     #error "Unsupported OS"
 #endif

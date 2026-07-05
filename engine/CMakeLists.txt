@@ -116,7 +116,7 @@ target_include_directories(engine SYSTEM PUBLIC
     ${EXTERNAL_HEADER_DIR}/Tracy
     ${EXTERNAL_HEADER_DIR}/stb
     ${EXTERNAL_HEADER_DIR}/robin-map
-    ${EXTERNAL_DIR}/sdl/include
+    ${EXTERNAL_DIR}/SDL/include
     ${EXTERNAL_DIR}/fastgltf/include
 )
 
@@ -157,6 +157,8 @@ else()
         -Wextra
         -Wpedantic
         -Werror
+        -Wno-gnu-anonymous-struct
+        -Wno-nested-anon-types
     )
 endif()
 

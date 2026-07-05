@@ -8,7 +8,7 @@
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
 
-#include <Volk/volk.h>
+#include <volk/volk.h>
 #include <linalg/vector.h>
 #include <robin_map.h>
 #include <vk_mem_alloc.h>
@@ -28,8 +28,8 @@
 
 
 // clang-format off
-#include <Tracy/Tracy.hpp>
-#include <Tracy/TracyVulkan.hpp>
+#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
 // clang-format on
 
 

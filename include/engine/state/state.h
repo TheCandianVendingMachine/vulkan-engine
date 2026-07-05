@@ -4,7 +4,7 @@
 #include "engine/graphics/pipeline.h"
 #include "engine/meta_defines.h"
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <memory>
 #include <mutex>
 #include <optional>

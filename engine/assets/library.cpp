@@ -4,7 +4,7 @@
 #include "engine/fileio/file.h"
 #include "engine/graphics/vulkan.h"
 
-#include <Volk/volk.h>
+#include <volk/volk.h>
 
 #include <cstdint>
 #include <filesystem>

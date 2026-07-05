@@ -1,6 +1,6 @@
 #include "engine/graphics/vulkan.h"
 // clang-format disable
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format enable
 #include <vulkan/vulkan_core.h>
 

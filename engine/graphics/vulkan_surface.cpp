@@ -3,7 +3,7 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
 // clang-format disable
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format enable
 #include <SDL3/SDL_vulkan.h>
 

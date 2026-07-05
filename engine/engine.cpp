@@ -7,7 +7,7 @@
 #include <SDL3/SDL.h>
 #include <imgui.h>
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <chrono>
 #include <thread>
 

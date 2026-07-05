@@ -1,6 +1,7 @@
 #pragma once
 #include "linalg/matrix.h"
 #include "linalg/vector.h"
+#include "linalg/meta.h"
 
 namespace linalg {
     namespace blas2 {
@@ -46,39 +47,39 @@ namespace linalg {
 
 extern "C"
 {
-    __declspec(dllexport) float* smvprod2(float* out, float* A, const float* x);
-    __declspec(dllexport) float* ssolve2l(float* out, float* L, float* b);
-    __declspec(dllexport) float* ssolve2u(float* out, float* U, float* b);
-    __declspec(dllexport) float* ssolve2(float* out, float* A, float* b);
+    LINALG_API float* smvprod2(float* out, float* A, const float* x);
+    LINALG_API float* ssolve2l(float* out, float* L, float* b);
+    LINALG_API float* ssolve2u(float* out, float* U, float* b);
+    LINALG_API float* ssolve2(float* out, float* A, float* b);
 
-    __declspec(dllexport) double* dmvprod2(double* out, double* A, const double* x);
-    __declspec(dllexport) double* dsolve2l(double* out, double* L, double* b);
-    __declspec(dllexport) double* dsolve2u(double* out, double* U, double* b);
-    __declspec(dllexport) double* dsolve2(double* out, double* A, double* b);
+    LINALG_API double* dmvprod2(double* out, double* A, const double* x);
+    LINALG_API double* dsolve2l(double* out, double* L, double* b);
+    LINALG_API double* dsolve2u(double* out, double* U, double* b);
+    LINALG_API double* dsolve2(double* out, double* A, double* b);
 }
 
 extern "C"
 {
-    __declspec(dllexport) float* smvprod3(float* out, float* A, const float* x);
-    __declspec(dllexport) float* ssolve3l(float* out, float* L, float* b);
-    __declspec(dllexport) float* ssolve3u(float* out, float* U, float* b);
-    __declspec(dllexport) float* ssolve3(float* out, float* A, float* b);
+    LINALG_API float* smvprod3(float* out, float* A, const float* x);
+    LINALG_API float* ssolve3l(float* out, float* L, float* b);
+    LINALG_API float* ssolve3u(float* out, float* U, float* b);
+    LINALG_API float* ssolve3(float* out, float* A, float* b);
 
-    __declspec(dllexport) double* dmvprod3(double* out, double* A, const double* x);
-    __declspec(dllexport) double* dsolve3l(double* out, double* L, double* b);
-    __declspec(dllexport) double* dsolve3u(double* out, double* U, double* b);
-    __declspec(dllexport) double* dsolve3(double* out, double* A, double* b);
+    LINALG_API double* dmvprod3(double* out, double* A, const double* x);
+    LINALG_API double* dsolve3l(double* out, double* L, double* b);
+    LINALG_API double* dsolve3u(double* out, double* U, double* b);
+    LINALG_API double* dsolve3(double* out, double* A, double* b);
 }
 
 extern "C"
 {
-    __declspec(dllexport) float* smvprod4(float* out, float* A, const float* x);
-    __declspec(dllexport) float* ssolve4l(float* out, float* L, float* b);
-    __declspec(dllexport) float* ssolve4u(float* out, float* U, float* b);
-    __declspec(dllexport) float* ssolve4(float* out, float* A, float* b);
+    LINALG_API float* smvprod4(float* out, float* A, const float* x);
+    LINALG_API float* ssolve4l(float* out, float* L, float* b);
+    LINALG_API float* ssolve4u(float* out, float* U, float* b);
+    LINALG_API float* ssolve4(float* out, float* A, float* b);
 
-    __declspec(dllexport) double* dmvprod4(double* out, double* A, const double* x);
-    __declspec(dllexport) double* dsolve4l(double* out, double* L, double* b);
-    __declspec(dllexport) double* dsolve4u(double* out, double* U, double* b);
-    __declspec(dllexport) double* dsolve4(double* out, double* A, double* b);
+    LINALG_API double* dmvprod4(double* out, double* A, const double* x);
+    LINALG_API double* dsolve4l(double* out, double* L, double* b);
+    LINALG_API double* dsolve4u(double* out, double* U, double* b);
+    LINALG_API double* dsolve4(double* out, double* A, double* b);
 }

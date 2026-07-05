@@ -1,6 +1,7 @@
 #pragma once
 
 #include "linalg/vector.h"
+#include "linalg/meta.h"
 
 namespace linalg {
     namespace blas1 {
@@ -70,63 +71,63 @@ namespace linalg {
 
 extern "C"
 {
-    __declspec(dllexport) float* saxpy2(float* out, const float a, const float* x, const float* y);
-    __declspec(dllexport) float* sscale2(float* out, const float a, const float* x);
-    __declspec(dllexport) void scopy2(float* a, const float* b);
-    __declspec(dllexport) void sswap2(float* a, float* b);
-    __declspec(dllexport) float sdot2(const float* a, const float* b);
-    __declspec(dllexport) float scomponentsum2(const float* x);
-    __declspec(dllexport) float smagnitude2(const float* x);
-    __declspec(dllexport) float scomponentmax2(const float* x);
+    LINALG_API float* saxpy2(float* out, const float a, const float* x, const float* y);
+    LINALG_API float* sscale2(float* out, const float a, const float* x);
+    LINALG_API void scopy2(float* a, const float* b);
+    LINALG_API void sswap2(float* a, float* b);
+    LINALG_API float sdot2(const float* a, const float* b);
+    LINALG_API float scomponentsum2(const float* x);
+    LINALG_API float smagnitude2(const float* x);
+    LINALG_API float scomponentmax2(const float* x);
 
-    __declspec(dllexport) double* daxpy2(double* out, const double a, const double* x, const double* y);
-    __declspec(dllexport) double* dscale2(double* out, const double a, const double* x);
-    __declspec(dllexport) void dcopy2(double* a, const double* b);
-    __declspec(dllexport) void dswap2(double* a, double* b);
-    __declspec(dllexport) double ddot2(const double* a, const double* b);
-    __declspec(dllexport) double dcomponentsum2(const double* x);
-    __declspec(dllexport) double dmagnitude2(const double* x);
-    __declspec(dllexport) double dcomponentmax2(const double* x);
+    LINALG_API double* daxpy2(double* out, const double a, const double* x, const double* y);
+    LINALG_API double* dscale2(double* out, const double a, const double* x);
+    LINALG_API void dcopy2(double* a, const double* b);
+    LINALG_API void dswap2(double* a, double* b);
+    LINALG_API double ddot2(const double* a, const double* b);
+    LINALG_API double dcomponentsum2(const double* x);
+    LINALG_API double dmagnitude2(const double* x);
+    LINALG_API double dcomponentmax2(const double* x);
 }
 
 extern "C"
 {
-    __declspec(dllexport) float* saxpy3(float* out, const float a, const float* x, const float* y);
-    __declspec(dllexport) float* sscale3(float* out, const float a, const float* x);
-    __declspec(dllexport) void scopy3(float* a, const float* b);
-    __declspec(dllexport) void sswap3(float* a, float* b);
-    __declspec(dllexport) float sdot3(const float* a, const float* b);
-    __declspec(dllexport) float scomponentsum3(const float* x);
-    __declspec(dllexport) float smagnitude3(const float* x);
-    __declspec(dllexport) float scomponentmax3(const float* x);
+    LINALG_API float* saxpy3(float* out, const float a, const float* x, const float* y);
+    LINALG_API float* sscale3(float* out, const float a, const float* x);
+    LINALG_API void scopy3(float* a, const float* b);
+    LINALG_API void sswap3(float* a, float* b);
+    LINALG_API float sdot3(const float* a, const float* b);
+    LINALG_API float scomponentsum3(const float* x);
+    LINALG_API float smagnitude3(const float* x);
+    LINALG_API float scomponentmax3(const float* x);
 
-    __declspec(dllexport) double* daxpy3(double* out, const double a, const double* x, const double* y);
-    __declspec(dllexport) double* dscale3(double* out, const double a, const double* x);
-    __declspec(dllexport) void dcopy3(double* a, const double* b);
-    __declspec(dllexport) void dswap3(double* a, double* b);
-    __declspec(dllexport) double ddot3(const double* a, const double* b);
-    __declspec(dllexport) double dcomponentsum3(const double* x);
-    __declspec(dllexport) double dmagnitude3(const double* x);
-    __declspec(dllexport) double dcomponentmax3(const double* x);
+    LINALG_API double* daxpy3(double* out, const double a, const double* x, const double* y);
+    LINALG_API double* dscale3(double* out, const double a, const double* x);
+    LINALG_API void dcopy3(double* a, const double* b);
+    LINALG_API void dswap3(double* a, double* b);
+    LINALG_API double ddot3(const double* a, const double* b);
+    LINALG_API double dcomponentsum3(const double* x);
+    LINALG_API double dmagnitude3(const double* x);
+    LINALG_API double dcomponentmax3(const double* x);
 }
 
 extern "C"
 {
-    __declspec(dllexport) float* saxpy4(float* out, const float a, const float* x, const float* y);
-    __declspec(dllexport) float* sscale4(float* out, const float a, const float* x);
-    __declspec(dllexport) void scopy4(float* a, const float* b);
-    __declspec(dllexport) void sswap4(float* a, float* b);
-    __declspec(dllexport) float sdot4(const float* a, const float* b);
-    __declspec(dllexport) float scomponentsum4(const float* x);
-    __declspec(dllexport) float smagnitude4(const float* x);
-    __declspec(dllexport) float scomponentmax4(const float* x);
+    LINALG_API float* saxpy4(float* out, const float a, const float* x, const float* y);
+    LINALG_API float* sscale4(float* out, const float a, const float* x);
+    LINALG_API void scopy4(float* a, const float* b);
+    LINALG_API void sswap4(float* a, float* b);
+    LINALG_API float sdot4(const float* a, const float* b);
+    LINALG_API float scomponentsum4(const float* x);
+    LINALG_API float smagnitude4(const float* x);
+    LINALG_API float scomponentmax4(const float* x);
 
-    __declspec(dllexport) double* daxpy4(double* out, const double a, const double* x, const double* y);
-    __declspec(dllexport) double* dscale4(double* out, const double a, const double* x);
-    __declspec(dllexport) void dcopy4(double* a, const double* b);
-    __declspec(dllexport) void dswap4(double* a, double* b);
-    __declspec(dllexport) double ddot4(const double* a, const double* b);
-    __declspec(dllexport) double dcomponentsum4(const double* x);
-    __declspec(dllexport) double dmagnitude4(const double* x);
-    __declspec(dllexport) double dcomponentmax4(const double* x);
+    LINALG_API double* daxpy4(double* out, const double a, const double* x, const double* y);
+    LINALG_API double* dscale4(double* out, const double a, const double* x);
+    LINALG_API void dcopy4(double* a, const double* b);
+    LINALG_API void dswap4(double* a, double* b);
+    LINALG_API double ddot4(const double* a, const double* b);
+    LINALG_API double dcomponentsum4(const double* x);
+    LINALG_API double dmagnitude4(const double* x);
+    LINALG_API double dcomponentmax4(const double* x);
 }

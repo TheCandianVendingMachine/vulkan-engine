@@ -2,7 +2,7 @@
 
 #include "engine/graphics/util.h"
 
-#include <Volk/volk.h>
+#include <volk/volk.h>
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 

@@ -4,11 +4,11 @@
 #include "engine/logger.h"
 #include "engine/rwlock.h"
 // clang-format disable
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format enable
 #include <SDL3/SDL_vulkan.h>
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <cstdint>
 #include <type_traits>
 #include <vector>

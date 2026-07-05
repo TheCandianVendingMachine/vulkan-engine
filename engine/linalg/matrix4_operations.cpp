@@ -2,7 +2,7 @@
 #include "engine/linalg/vector_operations.h"
 #include "engine/meta_defines.h"
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 
 using namespace linalg;
 

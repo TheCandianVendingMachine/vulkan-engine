@@ -10,7 +10,7 @@
 
 #include <cstdint>
 // clang-format off
-#include <Tracy/TracyVulkan.hpp>
+#include <tracy/TracyVulkan.hpp>
 // clang-format on
 
 void ENGINE_NS::graphics::ImGui::start_frame() {

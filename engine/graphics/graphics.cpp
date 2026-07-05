@@ -10,7 +10,7 @@
 #include "engine/logger.h"
 #include "engine/rwlock.h"
 // clang-format off
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format on
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -22,9 +22,9 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
-#include <Tracy/Tracy.hpp>
-#include <Tracy/TracyVulkan.hpp>
-#include <Tracy/common/TracySystem.hpp>
+#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
+#include <common/TracySystem.hpp>
 #include <algorithm>
 #include <array>
 #include <atomic>

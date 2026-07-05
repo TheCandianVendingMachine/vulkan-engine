@@ -52,6 +52,8 @@ else()
         -Wextra
         -Wpedantic
         -Werror
+        -Wno-gnu-anonymous-struct
+        -Wno-nested-anon-types
     )
 endif()
 
