@@ -3,31 +3,34 @@
 #include "engine/shared_library.h"
 
 #include <linalg/vector.h>
+#include <functional>
 
+namespace std {
 template <typename T>
-struct std::hash<::linalg::Vector2<T>> {
-        std::size_t operator()(const ::linalg::Vector2<T>& vector) const noexcept {
-            auto t1 = vector.x + vector.y;
-            auto t2 = vector.x + vector.y + T{1};
-            return (t1 + t2) / T{2};
-        }
-};
+    struct hash<::linalg::Vector2<T>> {
+            std::size_t operator()(const ::linalg::Vector2<T>& vector) const noexcept {
+                auto t1 = vector.x + vector.y;
+                auto t2 = vector.x + vector.y + T{1};
+                return (t1 + t2) / T{2};
+            }
+    };
 
-template <typename T>
-struct std::hash<::linalg::Vector3<T>> {
-        std::size_t operator()(const ::linalg::Vector3<T>& vector) const noexcept {
-            auto hash = std::hash<::linalg::Vector2<T>>{}({vector.x, vector.y});
-            return std::hash<::linalg::Vector2<T>>{}({hash, vector.z});
-        }
-};
+    template <typename T>
+    struct hash<::linalg::Vector3<T>> {
+            std::size_t operator()(const ::linalg::Vector3<T>& vector) const noexcept {
+                auto hash = std::hash<::linalg::Vector2<T>>{}({vector.x, vector.y});
+                return std::hash<::linalg::Vector2<T>>{}({hash, vector.z});
+            }
+    };
 
-template <typename T>
-struct std::hash<::linalg::Vector4<T>> {
-        std::size_t operator()(const ::linalg::Vector4<T>& vector) const noexcept {
-            auto hash = std::hash<::linalg::Vector3<T>>{}({vector.x, vector.y, vector.z});
-            return std::hash<::linalg::Vector2<T>>{}({hash, vector.w});
-        }
-};
+    template <typename T>
+    struct hash<::linalg::Vector4<T>> {
+            std::size_t operator()(const ::linalg::Vector4<T>& vector) const noexcept {
+                auto hash = std::hash<::linalg::Vector3<T>>{}({vector.x, vector.y, vector.z});
+                return std::hash<::linalg::Vector2<T>>{}({hash, vector.w});
+            }
+    };
+}
 
 // Vector2
 namespace linalg {
