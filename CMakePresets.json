@@ -21,6 +21,11 @@
             "displayName": "MSVC",
             "description": "Build with MSVC cl.exe. Run from a VS Developer Command Prompt.",
             "inherits": "base",
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl"
@@ -28,12 +33,12 @@
         },
         {
             "name": "clang",
-            "displayName": "Clang (clang-cl)",
-            "description": "Build with clang-cl (MSVC-compatible Clang frontend). Run from a VS Developer Command Prompt.",
+            "displayName": "Clang",
+            "description": "Build with Clang (uses clang-cl on Windows, native clang++ on Linux).",
             "inherits": "base",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "clang-cl",
-                "CMAKE_CXX_COMPILER": "clang-cl"
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_COMPILER": "clang++"
             }
         }
     ],
