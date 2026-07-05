@@ -72,39 +72,25 @@ ENGINE_NS::linalg::Library::Library(Arch arch) : arch_(arch) {
             load_avx_();
             break;
     }
-    if (library_ == nullptr) {
+    if (!library_.loaded()) {
         crash(ErrorCode::CANNOT_LOAD_LINEAR_ALGEBRA_LIBRARY);
     }
-    const_cast<ENGINE_NS::LibraryHandle&>(library) = library_;
     logger.get().info("Successfully loaded linear algebra library");
-}
-
-ENGINE_NS::linalg::Library::~Library() {
-    ZoneScoped;
-    if (library_ != nullptr) {
-        auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
-        logger.get().info("Releasing linear algebra library");
-        ENGINE_NS::unload_library(library_);
-        library_ = nullptr;
-    }
 }
 
 void ENGINE_NS::linalg::Library::load_scalar_() {
     ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     logger.get().info("Loading scalar linear algebra library");
-    library_ = ENGINE_NS::load_library(SCALAR_LIBRARY_NAME);
-    if (library_ == nullptr) {
-        logger.get().error("Failed to load linear algebra library");
-    }
+    library_ = ENGINE_NS::SharedLibrary::load(SCALAR_LIBRARY_NAME);
 }
 
 void ENGINE_NS::linalg::Library::load_sse_() {
     ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     logger.get().info("Loading SSE linear algebra library");
-    library_ = ENGINE_NS::load_library(SSE_LIBRARY_NAME);
-    if (library_ == nullptr) {
+    library_ = ENGINE_NS::SharedLibrary::load(SSE_LIBRARY_NAME);
+    if (!library_.loaded()) {
         logger.get().warning("Failed to load SSE linear algebra library");
         load_scalar_();
     }
@@ -114,10 +100,10 @@ void ENGINE_NS::linalg::Library::load_avx_() {
     ZoneScoped;
     auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
     logger.get().info("Loading AVX linear algebra library");
-    library_ = ENGINE_NS::load_library(AVX_LIBRARY_NAME);
-    if (library_ == nullptr) {
+    library_ = ENGINE_NS::SharedLibrary::load(AVX_LIBRARY_NAME);
+    if (!library_.loaded()) {
         logger.get().warning("Failed to load AVX linear algebra library");
-        load_sse_();
+        load_avx_();
     }
 }
 

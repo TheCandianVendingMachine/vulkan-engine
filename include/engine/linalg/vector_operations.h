@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+#include "engine/shared_library.h"
 
 #include <linalg/vector.h>
 
@@ -408,7 +409,7 @@ namespace linalg {
 
 namespace ENGINE_NS {
     namespace linalg {
-        void load_vector_functions(const void* library);
+        void load_vector_functions(const SharedLibrary& library);
         namespace blas1 {
             namespace vector2 {
                 namespace float32 {
