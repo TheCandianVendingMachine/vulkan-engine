@@ -1,21 +1,21 @@
-#include "engine/shared_library.h"
-
 #ifndef _WIN32
+#include "engine/shared_library.h"
+#include "engine/engine.h"
 
 #include <dlfcn.h>
 
-ENGINE_NS::SharedLibrary::load(const char* path) -> ENGINE_NS::SharedLibrary {
+auto ENGINE_NS::SharedLibrary::load(const char* path) -> ENGINE_NS::SharedLibrary {
     auto lib = SharedLibrary{};
     lib.handle_ = dlopen(path, RTLD_NOW);
     return lib;
 }
 
 ENGINE_NS::SharedLibrary::~SharedLibrary() {
-    if (library_ != nullptr) {
+    if (handle_ != nullptr) {
         auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
         logger.get().info("Releasing linear algebra library");
         dlclose(handle_);
-        library_ = nullptr;
+        handle_ = nullptr;
     }
 }
 

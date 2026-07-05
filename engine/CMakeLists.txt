@@ -30,6 +30,8 @@ target_sources(engine PRIVATE
     "${ENGINE_HEADER_PATH}/version.h")
 target_sources(engine PRIVATE
     stb_image_implementation.cpp
+    shared_library_linux.cpp
+    shared_library_windows.cpp
     deletion_queue.cpp
     deletions.cpp
     engine.cpp
@@ -164,6 +166,7 @@ endif()
 
 target_compile_definitions(engine PRIVATE
     VK_NO_PROTOTYPES
+    TRACY_VK_USE_SYMBOL_TABLE
 )
 
 target_link_libraries(engine PRIVATE

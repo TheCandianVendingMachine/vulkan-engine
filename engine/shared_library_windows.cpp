@@ -1,11 +1,11 @@
-#include "engine/shared_library.h"
-
 #ifdef _WIN32
+#include "engine/shared_library.h"
+#include "engine/engine.h"
 
 #include <Windows.h>
 #include <libloaderapi.h>
 
-ENGINE_NS::SharedLibrary::load(const char* path) -> ENGINE_NS::SharedLibrary {
+auto ENGINE_NS::SharedLibrary::load(const char* path) -> ENGINE_NS::SharedLibrary {
     auto lib = SharedLibrary{};
     lib.handle_ = reinterpret_cast<void*>(LoadLibraryA(path));
     return lib;
