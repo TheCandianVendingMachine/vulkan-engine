@@ -12,11 +12,11 @@ auto ENGINE_NS::SharedLibrary::load(const char* path) -> ENGINE_NS::SharedLibrar
 }
 
 ENGINE_NS::SharedLibrary::~SharedLibrary() {
-    if (library_ != nullptr) {
+    if (handle_ != nullptr) {
         auto logger = Engine::instance().logger.get(LogNamespaces::CORE);
         logger.get().info("Releasing linear algebra library");
         FreeLibrary(static_cast<HMODULE>(handle_));
-        library_ = nullptr;
+        handle_ = nullptr;
     }
 }
 
