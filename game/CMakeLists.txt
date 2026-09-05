@@ -52,10 +52,12 @@ else()
         -Wextra
         -Wpedantic
         -Werror
+        -Wno-gnu-anonymous-struct
+        -Wno-nested-anon-types
     )
 endif()
 
-target_compile_definitions(game PRIVATE VK_NO_PROTOTYPES)
+target_compile_definitions(game PRIVATE VK_NO_PROTOTYPES TRACY_VK_USE_SYMBOL_TABLE)
 target_link_libraries(game PRIVATE
     engine
     volk

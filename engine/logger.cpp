@@ -1,6 +1,6 @@
 #include "engine/logger.h"
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <chrono>
 #include <cstdio>
 #include <ranges>

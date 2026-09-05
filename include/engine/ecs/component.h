@@ -4,7 +4,7 @@
 #include "engine/meta_defines.h"
 #include "engine/pool.h"
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <algorithm>
 #include <memory>
 #include <optional>

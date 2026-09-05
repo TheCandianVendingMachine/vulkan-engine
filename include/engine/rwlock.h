@@ -1,7 +1,7 @@
 #pragma once
 #include "engine/meta_defines.h"
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <atomic>
 #include <cstdint>
 #include <utility>

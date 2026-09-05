@@ -1,6 +1,6 @@
 #include "engine/ecs/entity.h"
 
-#include <Tracy/tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <utility>
 
 auto ENGINE_NS::ecs::EntityStore::create(const Query& query) -> EntityAllocation {

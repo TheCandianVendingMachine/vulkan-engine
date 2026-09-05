@@ -11,7 +11,7 @@
 #include <cstdint>
 
 // clang-format: off
-#include <Tracy/TracyVulkan.hpp>
+#include <tracy/TracyVulkan.hpp>
 // clang-format: on
 
 auto ENGINE_NS::Deletion<ENGINE_NS::ImageAllocation>::destroy(VkDevice device, VmaAllocator allocator) -> void {

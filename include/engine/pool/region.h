@@ -4,7 +4,7 @@
 
 #include <robin_set.h>
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <cassert>
 #include <cstdint>
 #include <cstring>

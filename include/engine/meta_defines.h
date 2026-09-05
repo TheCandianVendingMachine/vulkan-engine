@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #define STR(arg)        #arg
 
 #define ENGINE_NAME     engine
@@ -17,7 +19,7 @@
     #define ENGINE_API
 #endif
 
-enum class ErrorCode : int {
+enum class ErrorCode : std::size_t {
     UNKNOWN = 0,
     CANNOT_LOAD_LINEAR_ALGEBRA_LIBRARY,
     CANNOT_LOAD_LINEAR_ALGEBRA_FUNCTION,
@@ -26,11 +28,13 @@ enum class ErrorCode : int {
     COUNT
 };
 
-static constexpr const char* g_ERROR_CODE_STR[static_cast<size_t>(ErrorCode::COUNT)] = {"Unknown",
-                                                                                        "Failed to load linear algebra library",
-                                                                                        "Failed to load linear algebra functions",
-                                                                                        "Vulkan Error",
-                                                                                        "Cannot read file"};
+static constexpr const char* g_ERROR_CODE_STR[static_cast<std::size_t>(ErrorCode::COUNT)] = {
+    "Unknown",
+    "Failed to load linear algebra library",
+    "Failed to load linear algebra functions",
+    "Vulkan Error",
+    "Cannot read file"
+};
 
 namespace StaticNames {
     static constexpr const char* EngineLoop                 = "Engine loop";

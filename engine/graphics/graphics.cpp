@@ -10,7 +10,7 @@
 #include "engine/logger.h"
 #include "engine/rwlock.h"
 // clang-format off
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format on
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>
@@ -22,9 +22,9 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vulkan_core.h>
 
-#include <Tracy/Tracy.hpp>
-#include <Tracy/TracyVulkan.hpp>
-#include <Tracy/common/TracySystem.hpp>
+#include <tracy/Tracy.hpp>
+#include <tracy/TracyVulkan.hpp>
+#include <common/TracySystem.hpp>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -441,7 +441,7 @@ auto ENGINE_NS::GraphicsEngine::init_vulkan_() -> void {
         VkCommandBufferAllocateInfo buffer_alloc = command_buffer_allocate_info(frame.get().command_pool);
         VK_CHECK(vkAllocateCommandBuffers(device_.device, &buffer_alloc, &frame.get().main_command_buffer));
         frame.get().tracy_context_ =
-            TracyVkContext(physical_device_.device, device_.device, device_.queues.at("graphics").get(), frame.get().main_command_buffer);
+            TracyVkContext(vulkan_instance_.instance, physical_device_.device, device_.device, device_.queues.at("graphics").get(), frame.get().main_command_buffer, vkGetInstanceProcAddr, vkGetDeviceProcAddr);
 
         VK_CHECK(vkCreateFence(device_.device, &fence_info, nullptr, &frame.get().render_fence_));
         VK_CHECK(vkCreateSemaphore(device_.device, &semaphore_info, nullptr, &frame.get().swapchain_semaphore_));
@@ -578,7 +578,7 @@ auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
 
         VK_CHECK(vkAllocateCommandBuffers(device_.device, &command_alloc_info, &immediate.command_buffer));
 
-        immediate.tracy_context = TracyVkContext(physical_device_.device, device_.device, queue.get(), immediate.command_buffer);
+        immediate.tracy_context = TracyVkContext(vulkan_instance_.instance, physical_device_.device, device_.device, queue.get(), immediate.command_buffer, vkGetInstanceProcAddr, vkGetDeviceProcAddr);
 
         deletion_queue_.push(immediate);
     }

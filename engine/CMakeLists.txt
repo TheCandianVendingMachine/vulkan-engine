@@ -30,6 +30,8 @@ target_sources(engine PRIVATE
     "${ENGINE_HEADER_PATH}/version.h")
 target_sources(engine PRIVATE
     stb_image_implementation.cpp
+    shared_library_linux.cpp
+    shared_library_windows.cpp
     deletion_queue.cpp
     deletions.cpp
     engine.cpp
@@ -116,7 +118,7 @@ target_include_directories(engine SYSTEM PUBLIC
     ${EXTERNAL_HEADER_DIR}/Tracy
     ${EXTERNAL_HEADER_DIR}/stb
     ${EXTERNAL_HEADER_DIR}/robin-map
-    ${EXTERNAL_DIR}/sdl/include
+    ${EXTERNAL_DIR}/SDL/include
     ${EXTERNAL_DIR}/fastgltf/include
 )
 
@@ -157,11 +159,14 @@ else()
         -Wextra
         -Wpedantic
         -Werror
+        -Wno-gnu-anonymous-struct
+        -Wno-nested-anon-types
     )
 endif()
 
 target_compile_definitions(engine PRIVATE
     VK_NO_PROTOTYPES
+    TRACY_VK_USE_SYMBOL_TABLE
 )
 
 target_link_libraries(engine PRIVATE

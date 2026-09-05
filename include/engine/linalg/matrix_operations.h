@@ -1,5 +1,6 @@
 #pragma once
 #include "engine/meta_defines.h"
+#include "engine/shared_library.h"
 
 #include <linalg/matrix.h>
 #include <linalg/vector.h>
@@ -227,7 +228,7 @@ namespace linalg {
 
 namespace ENGINE_NS {
     namespace linalg {
-        void load_matrix_functions(const void* library);
+        void load_matrix_functions(const SharedLibrary& library);
         namespace blas2 {
             namespace matrix2 {
                 namespace float32 {

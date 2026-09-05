@@ -27,6 +27,9 @@ target_include_directories(linalg_scalar PUBLIC
     ${PROJECT_SOURCE_DIR}/include
 )
 target_compile_features(linalg_scalar PRIVATE cxx_std_23)
+target_compile_definitions(linalg_scalar PRIVATE
+    LINALG_BUILD
+)
  
 if(MSVC)
     target_compile_options(linalg_scalar PRIVATE
@@ -50,6 +53,8 @@ else()
         -Wextra
         -Wpedantic
         -Werror
+        -Wno-gnu-anonymous-struct
+        -Wno-nested-anon-types
     )
 endif()
  
@@ -70,6 +75,9 @@ target_include_directories(linalg_sse PUBLIC
     ${PROJECT_SOURCE_DIR}/include
 )
 target_compile_features(linalg_sse PRIVATE cxx_std_23)
+target_compile_definitions(linalg_sse PRIVATE
+    LINALG_BUILD
+)
  
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(linalg_sse PRIVATE -msse4.2)
@@ -99,6 +107,8 @@ else()
         -Wextra
         -Wpedantic
         -Werror
+        -Wno-gnu-anonymous-struct
+        -Wno-nested-anon-types
     )
 endif()
  
@@ -114,6 +124,9 @@ target_include_directories(linalg_avx PUBLIC
     ${PROJECT_SOURCE_DIR}/include
 )
 target_compile_features(linalg_avx PRIVATE cxx_std_23)
+target_compile_definitions(linalg_avx PRIVATE
+    LINALG_BUILD
+)
  
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     target_compile_options(linalg_avx PRIVATE -mavx2)
@@ -143,6 +156,8 @@ else()
         -Wextra
         -Wpedantic
         -Werror
+        -Wno-gnu-anonymous-struct
+        -Wno-nested-anon-types
     )
 endif()
  

@@ -4,7 +4,7 @@
 #include "engine/meta_defines.h"
 
 #include <string_view>
-#include <tracy/tracy.hpp>
+#include <tracy/Tracy.hpp>
 
 using namespace ::ENGINE_NS;
 

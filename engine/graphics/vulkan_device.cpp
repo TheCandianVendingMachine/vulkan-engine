@@ -3,12 +3,12 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
 // clang-format disable
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format enable
 #include <robin_map.h>
 #include <robin_set.h>
 
-#include <Tracy/Tracy.hpp>
+#include <tracy/Tracy.hpp>
 #include <cstdint>
 #include <type_traits>
 #include <utility>

@@ -14,7 +14,7 @@ target_link_libraries(test_engine PRIVATE
 target_compile_features(test_engine PRIVATE cxx_std_23)
 
 set_target_properties(test_engine PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BIARY_DIR}/tests"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
 )
 
 if (MSVC)

@@ -1,7 +1,7 @@
 #include "engine/engine.h"
 #include "engine/graphics/vulkan.h"
 // clang-format disable
-#include <Volk/volk.h>
+#include <volk/volk.h>
 // clang-format enable
 #include <cstdint>
 
