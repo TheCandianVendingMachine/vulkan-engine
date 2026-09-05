@@ -169,6 +169,13 @@ target_compile_definitions(engine PRIVATE
     TRACY_VK_USE_SYMBOL_TABLE
 )
 
+if(WIN32)
+    target_compile_definitions(engine PRIVATE
+        NOMINMAX
+        _CRT_SECURE_NO_WARNINGS
+    )
+endif()
+
 target_link_libraries(engine PRIVATE
     fastgltf::fastgltf
     fmt::fmt
