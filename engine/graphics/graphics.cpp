@@ -562,7 +562,7 @@ auto ENGINE_NS::GraphicsEngine::init_imgui_() -> void {
 }
 
 auto ENGINE_NS::GraphicsEngine::init_immediates_() -> void {
-    for (const auto& thread : {graphics::Thread::MAIN, graphics::Thread::DRAW, graphics::Thread::UPLOAD}) {
+    for (const auto& thread : {graphics::Thread::MAIN, graphics::Thread::DRAW, graphics::Thread::UPLOAD, graphics::Thread::COMPILE}) {
         auto& immediate = immediates_.insert({thread, {}}).first.value();
 
         VkFenceCreateInfo fence_info = fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
