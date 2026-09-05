@@ -200,6 +200,7 @@ namespace ENGINE_NS {
 
             auto push(DescriptorAllocatorGrowable& descriptor_allocator) -> void;
             auto push(ImageAllocation& allocation) -> void;
+            auto push(BufferAllocation& allocation) -> void;
             auto push(VulkanDescriptorSetLayout layout) -> void;
             auto push(ComputePipeline pipeline) -> void;
             auto push(GraphicsPipeline pipeline) -> void;
@@ -210,6 +211,7 @@ namespace ENGINE_NS {
         private:
             std::vector<Deletion<DescriptorAllocatorGrowable>> descriptor_allocators_;
             std::vector<Deletion<ImageAllocation>> images_;
+            std::vector<Deletion<BufferAllocation>> buffers_;
             std::vector<Deletion<ComputePipeline>> compute_pipelines_;
             std::vector<Deletion<GraphicsPipeline>> graphics_pipelines_;
             std::vector<Deletion<VulkanDescriptorSetLayout>> layouts_;

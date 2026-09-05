@@ -136,6 +136,9 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& dev
     for (auto& image : images_) {
         image.destroy(device.device, allocator);
     }
+    for (auto& buffer : buffers_) {
+        buffer.destroy(device.device, allocator);
+    }
     for (auto& descriptor_allocator : descriptor_allocators_) {
         descriptor_allocator.destroy(device.device);
     }
@@ -157,6 +160,7 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::flush(VulkanDevice& dev
 
     layouts_.clear();
     images_.clear();
+    buffers_.clear();
     compute_pipelines_.clear();
     graphics_pipelines_.clear();
     mesh_buffers_.clear();
@@ -173,6 +177,11 @@ auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(DescriptorAllocato
 auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(ImageAllocation& allocation) -> void {
     allocation.will_be_destroyed_ = true;
     images_.push_back(Deletion<ImageAllocation>(allocation, 0));
+}
+
+auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(BufferAllocation& allocation) -> void {
+    allocation.will_be_destroyed_ = true;
+    buffers_.push_back(Deletion<BufferAllocation>(allocation, index_++));
 }
 
 auto ENGINE_NS::GraphicsRegisteredPipelineDeletionQueue::push(VulkanDescriptorSetLayout layout) -> void {
