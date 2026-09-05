@@ -9,6 +9,7 @@
 #include <robin_map.h>
 #include <vk_mem_alloc.h>
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -63,12 +64,23 @@ class LogicMap {
 
 class GraphicOverlay {
     public:
-        // set and update the texture
+        auto initialise(engine::GraphicsEngine& engine,
+                        const LogicMap& logic_map,
+                        engine::GraphicsRegisteredPipelineDeletionQueue& deletion_queue) -> void;
         auto update(const LogicMap& logic_map) -> void;
+        auto mark_dirty() -> void;
+
+        [[nodiscard]]
+        auto tile_count() const -> std::size_t;
 
     private:
-        engine::BufferAllocation tilemap_buffer_;
-        friend class TilemapPreDrawPipeline;
+        engine::BufferAllocation tilemap_buffer_{};
+        std::vector<std::uint32_t> gpu_tiles_{};
+        std::size_t allocated_tile_count_ = 0;
+        bool initialised_                 = false;
+        bool dirty_                       = true;
+
+        friend class TilemapDrawPipeline;
 };
 
 class TileMap {
@@ -93,7 +105,7 @@ class TileMap {
         tsl::robin_map<std::uint64_t, Tile> hash_to_tile_;
         linalg::Vector2<double> position_;
 
-        friend class TilemapPreDrawPipeline;
+        friend class TilemapDrawPipeline;
 
         LogicMap logic_;
         [[maybe_unused]]
@@ -111,6 +123,8 @@ class TilemapDrawPipeline : public engine::StatePipeline {
                                     engine::GraphicsRegisteredPipelineDeletionQueue& initialisation_deletion_queue)
             -> std::optional<engine::ComputePipelineBuilder> final;
 
+        auto push_constants() -> engine::GPUPushConstants final;
+
     protected:
         auto record_compute_(VkCommandBuffer cmd) -> void final;
 
@@ -123,7 +137,13 @@ class TilemapDrawPipeline : public engine::StatePipeline {
         VkDescriptorSet tilemap_id_image_descriptors_ = VK_NULL_HANDLE;
         engine::VulkanDescriptorSetLayout tilemap_id_image_layout_{};
 
-        engine::ImageAllocation tilemap_id_image_;
-        GraphicOverlay& tilemap_;
+        struct TilemapPushConstants {
+                std::uint32_t map_width  = 0;
+                std::uint32_t map_height = 0;
+                std::uint32_t tile_size  = 1;
+                std::uint32_t _padding   = 0;
+        } push_constants_{};
+
+        TileMap& tilemap_;
 };
 

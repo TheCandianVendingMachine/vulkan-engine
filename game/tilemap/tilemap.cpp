@@ -29,6 +29,7 @@
 
 TileMap::TileMap(std::uint64_t size_x, std::uint64_t size_y, std::uint64_t tile_size, Tile null_tile) :
     size_x(size_x), size_y(size_y), tile_size(tile_size), logic_(LogicMap(size_x, size_y, tile_size, null_tile)) {
+    hash_to_tile_.insert({null_tile.id(), std::move(null_tile)});
 }
 
 auto TileMap::set_position(linalg::Vector2<double> position) {
@@ -40,6 +41,7 @@ auto TileMap::set(linalg::Vector2<std::uint64_t> position, Tile tile) -> void {
         hash_to_tile_.insert({tile.id(), tile});
     }
     logic_.set(std::move(position), tile);
+    graphics_.mark_dirty();
 }
 
 auto TileMap::get(linalg::Vector2<std::uint64_t> position) -> Tile {
