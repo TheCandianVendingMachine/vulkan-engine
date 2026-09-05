@@ -615,6 +615,40 @@ auto ENGINE_NS::GraphicsEngine::draw_background_(VkCommandBuffer cmd) -> void {
 
 auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>& frame, VkCommandBuffer cmd) -> void {
     ZoneScoped;
+
+    auto registered_pipelines = registered_pipelines_.read();
+
+    // Compute passes run while draw_image_ is in GENERAL layout. Graphics passes
+    // are recorded afterwards inside dynamic rendering. This keeps compute
+    // renderers (such as the tilemap) legal and leaves the existing registered
+    // pipeline architecture intact.
+    for (const auto& [id, pipeline] : registered_pipelines.get()) {
+        ZoneScoped;
+        if (!pipeline->enabled) {
+            continue;
+        }
+        auto paused_count = pipeline->paused_.load(std::memory_order_acquire);
+        if (paused_count > 0 || !pipeline->compute_pipeline_.has_value()) {
+            continue;
+        }
+
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->compute_pipeline_.value().pipeline);
+
+        auto push_constants = pipeline->push_constants();
+        if (push_constants.size > 0 && (push_constants.data != nullptr)) {
+            vkCmdPushConstants(cmd,
+                               pipeline->compute_pipeline_.value().layout,
+                               VK_SHADER_STAGE_COMPUTE_BIT,
+                               0,
+                               static_cast<std::uint32_t>(push_constants.size),
+                               push_constants.data);
+        }
+        pipeline->record_compute(cmd);
+        frame.get().in_use_pipelines.push_back(id);
+    }
+
+    transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
     VkRenderingAttachmentInfo colour_attachment = attachment_info(draw_image_.view, nullptr, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
     VkRenderingInfo render_info                 = rendering_info(
         VkExtent2D{.width = static_cast<unsigned int>(window_extent_.x), .height = static_cast<unsigned int>(window_extent_.y)},
@@ -641,47 +675,28 @@ auto ENGINE_NS::GraphicsEngine::draw_registered_(RwDataMut<graphics::FrameData>&
 
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-    auto registered_pipelines = registered_pipelines_.read();
     for (const auto& [id, pipeline] : registered_pipelines.get()) {
         ZoneScoped;
         if (!pipeline->enabled) {
             continue;
         }
         auto paused_count = pipeline->paused_.load(std::memory_order_acquire);
-        if (paused_count > 0) {
+        if (paused_count > 0 || !pipeline->graphics_pipeline_.has_value()) {
             continue;
         }
 
-        if (pipeline->graphics_pipeline_.has_value()) {
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->graphics_pipeline_.value().pipeline);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->graphics_pipeline_.value().pipeline);
 
-            auto push_constants = pipeline->push_constants();
-            if (push_constants.size > 0 && (push_constants.data != nullptr)) {
-                vkCmdPushConstants(cmd,
-                                   pipeline->graphics_pipeline_.value().layout,
-                                   VK_SHADER_STAGE_VERTEX_BIT,
-                                   0,
-                                   static_cast<std::uint32_t>(push_constants.size),
-                                   push_constants.data);
-            }
-            pipeline->record_graphics(cmd);
+        auto push_constants = pipeline->push_constants();
+        if (push_constants.size > 0 && (push_constants.data != nullptr)) {
+            vkCmdPushConstants(cmd,
+                               pipeline->graphics_pipeline_.value().layout,
+                               VK_SHADER_STAGE_VERTEX_BIT,
+                               0,
+                               static_cast<std::uint32_t>(push_constants.size),
+                               push_constants.data);
         }
-
-        if (pipeline->compute_pipeline_.has_value()) {
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->compute_pipeline_.value().pipeline);
-
-            auto push_constants = pipeline->push_constants();
-            if (push_constants.size > 0 && (push_constants.data != nullptr)) {
-                vkCmdPushConstants(cmd,
-                                   pipeline->compute_pipeline_.value().layout,
-                                   VK_SHADER_STAGE_VERTEX_BIT,
-                                   0,
-                                   static_cast<std::uint32_t>(push_constants.size),
-                                   push_constants.data);
-            }
-            pipeline->record_compute(cmd);
-        }
-
+        pipeline->record_graphics(cmd);
         frame.get().in_use_pipelines.push_back(id);
     }
 
@@ -733,8 +748,6 @@ auto ENGINE_NS::GraphicsEngine::draw_() -> void {
                 transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
                 draw_background_(cmd);
-
-                transition_image(cmd, draw_image_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
                 {
                     auto in_use_pipelines = in_use_pipelines_.write();
