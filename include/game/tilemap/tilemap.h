@@ -37,13 +37,18 @@ class LogicMap {
         LogicMap(std::uint64_t size_x, std::uint64_t size_y, std::uint64_t tile_size, Tile null_tile);
 
         auto set(linalg::Vector2<std::uint64_t> position, Tile tile) -> void;
+        [[nodiscard]]
         auto get(linalg::Vector2<std::uint64_t> position) const -> std::uint64_t;
 
+        [[nodiscard]]
         auto get(linalg::Vector2<double> position) const -> std::uint64_t;
+        [[nodiscard]]
         auto get_nearby(linalg::Vector2<double> position, double radius) const -> std::vector<std::uint64_t>;
 
     private:
+        [[nodiscard]]
         auto index_from_coordinates_(linalg::Vector2<double> coordinate) const -> std::size_t;
+        [[nodiscard]]
         auto index_from_coordinates_(linalg::Vector2<std::uint64_t> coordinate) const -> std::size_t;
 
         std::uint64_t size_x_    = 0;
@@ -51,12 +56,19 @@ class LogicMap {
         std::uint64_t tile_size_ = 0;
 
         Tile null_tile_{};
-        std::vector<std::uint64_t> tiles_{};
+        std::vector<std::uint64_t> tiles_;
+
+        friend class GraphicOverlay;
 };
 
 class GraphicOverlay {
     public:
+        // set and update the texture
+        auto update(const LogicMap& logic_map) -> void;
+
     private:
+        engine::BufferAllocation tilemap_buffer_;
+        friend class TilemapPreDrawPipeline;
 };
 
 class TileMap {
@@ -81,15 +93,17 @@ class TileMap {
         tsl::robin_map<std::uint64_t, Tile> hash_to_tile_;
         linalg::Vector2<double> position_;
 
+        friend class TilemapPreDrawPipeline;
+
         LogicMap logic_;
         [[maybe_unused]]
         GraphicOverlay graphics_;
 };
 
 
-class TilemapPreDrawPipeline : public engine::StatePipeline {
+class TilemapDrawPipeline : public engine::StatePipeline {
     public:
-        using engine::StatePipeline::StatePipeline;
+        TilemapDrawPipeline(engine::State& state, TileMap& tilemap);
 
         auto name() const -> std::string final;
         auto build_compute_pipeline(engine::GraphicsEngine& engine,
@@ -109,6 +123,7 @@ class TilemapPreDrawPipeline : public engine::StatePipeline {
         VkDescriptorSet tilemap_id_image_descriptors_ = VK_NULL_HANDLE;
         engine::VulkanDescriptorSetLayout tilemap_id_image_layout_{};
 
-        engine::ImageAllocation tilemap_id_image_{};
+        engine::ImageAllocation tilemap_id_image_;
+        GraphicOverlay& tilemap_;
 };
 

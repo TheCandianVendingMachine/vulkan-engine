@@ -2,7 +2,5 @@ target_sources(game PRIVATE
     "${GAME_HEADER_PATH}/tilemap/tilemap.h"
 )
 target_sources(game PRIVATE
-    tilemap.cpp
-    graphics.cpp
+    tilemap_predraw_pipeline.cpp
 )
-add_subdirectory(pipelines)

@@ -9,7 +9,6 @@
 #include <engine/state/state.h>
 
 #include <memory>
-#include <utility>
 #include <vector>
 
 
@@ -20,12 +19,12 @@ class TestState : public engine::State {
         TestState() : tilemap{16, 16, 64, Tile{}} {
         }
 
-        virtual auto update() -> void override final {
+        auto update() -> void final {
         }
 
-        virtual auto init_pipelines(engine::GraphicsEngine&) -> std::vector<std::unique_ptr<engine::StatePipeline>> override final {
+        auto init_pipelines(engine::GraphicsEngine&) -> std::vector<std::unique_ptr<engine::StatePipeline>> final {
             auto pipelines = std::vector<std::unique_ptr<engine::StatePipeline>>{};
-            pipelines.emplace_back(std::make_unique<TilemapPreDrawPipeline>(*this));
+            pipelines.emplace_back(std::make_unique<TilemapDrawPipeline>(*this, tilemap));
             return pipelines;
         }
 };

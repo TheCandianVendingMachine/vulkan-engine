@@ -46,7 +46,8 @@ namespace ENGINE_NS {
             ENGINE_API auto run() -> void;
 
             StateManager state_manager{};
-            LogLocator logger{};
+            LogLocator logger;
+            GraphicsEngine graphics;
 
             const bool& crashed = crashed_;
 
@@ -63,8 +64,6 @@ namespace ENGINE_NS {
             bool crashed_              = false;
             bool running_              = false;
             std::uint64_t frame_count_ = 0;
-
-            GraphicsEngine graphics_;
 
             friend auto ::ENGINE_NS::crash(ErrorCode, int, const char*, const char*, const char*) -> void;
     };

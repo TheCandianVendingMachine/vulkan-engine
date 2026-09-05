@@ -60,3 +60,23 @@ target_link_libraries(game PRIVATE
     engine
     volk
 )
+
+# ---------------------------------------------------------------------------
+# Post-build: compile shaders
+#
+# Uses cmake -E env to set environment variables portably across Windows and
+# Linux without needing a platform-specific wrapper script.
+#
+# BASE_DIRECTORY  — repo root, used by build_shaders.py to resolve paths
+# TARGET_DIRECTORY — where compiled shaders are written
+# ---------------------------------------------------------------------------
+add_custom_command(TARGET game POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E env
+        BASE_DIRECTORY=${PROJECT_SOURCE_DIR}
+        TARGET_DIRECTORY=${PROJECT_SOURCE_DIR}/assets/shaders
+        uv run --project ${PROJECT_SOURCE_DIR}/python build-shaders
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/python
+    COMMENT "Compiling shaders..."
+    VERBATIM
+)
+

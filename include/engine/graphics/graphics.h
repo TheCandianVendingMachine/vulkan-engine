@@ -189,6 +189,7 @@ namespace ENGINE_NS {
             auto deregister_pipelines(std::vector<std::uint64_t>& ids) -> void;
 
             RwLock<graphics::ImGui> imgui;
+            VmaAllocator& allocator     = allocator_;
             ImageAllocation& draw_image = draw_image_;
 
         private:

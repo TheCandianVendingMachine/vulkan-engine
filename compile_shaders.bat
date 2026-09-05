@@ -2,16 +2,26 @@
 setlocal EnableDelayedExpansion
 
 :: ---------------------------------------------------------------------------
-:: Shader compilation script.
-:: Assumes uv is available on PATH.
+:: Shader compilation script — manual invocation for Windows.
 :: Run from anywhere; paths are resolved relative to this script's location.
+:: CMake also calls build-shaders automatically as a post-build step.
 :: ---------------------------------------------------------------------------
 
 set "REPO_ROOT=%~dp0"
 set "PYTHON_DIR=%REPO_ROOT%python"
+
 set "BASE_DIRECTORY=%REPO_ROOT%"
 set "TARGET_DIRECTORY=%REPO_ROOT%assets\shaders"
 
+:: ---- Check for uv ---------------------------------------------------------
+where uv >nul 2>&1
+if %errorlevel% neq 0 (
+    echo [ERROR] uv not found on PATH.
+    echo         Install it from: https://docs.astral.sh/uv/getting-started/installation/
+    exit /b 1
+)
+
+:: ---- Compile shaders -------------------------------------------------------
 echo Compiling shaders...
 cd /d "%PYTHON_DIR%"
 uv run build-shaders

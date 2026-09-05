@@ -126,7 +126,7 @@ auto ENGINE_NS::Engine::main_loop() -> void {
         accumulator += delta.count() * 1e-9;
         last_update = frame_start;
 
-        auto imgui_lock              = graphics_.imgui.write();
+        auto imgui_lock              = graphics.imgui.write();
         auto& imgui                  = imgui_lock.get();
         auto& io                     = ImGui::GetIO();
         bool should_discard_mouse    = io.WantCaptureMouse;
@@ -186,7 +186,7 @@ auto ENGINE_NS::Engine::main_loop() -> void {
         }
         imgui.start_frame();
 
-        this->state_manager.start_frame(this->graphics_);
+        this->state_manager.start_frame(this->graphics);
 
         this->update();
         while (accumulator > 0.0) {
@@ -200,7 +200,7 @@ auto ENGINE_NS::Engine::main_loop() -> void {
 
         this->state_manager.end_frame();
 
-        graphics_.draw();
+        graphics.draw();
 
         FrameMarkEnd(StaticNames::EngineLoop);
 
@@ -226,7 +226,7 @@ auto Engine::startup() -> void {
     linalg::load_vector_functions(linalg::g_VECTOR_LIBRARY->library);
     linalg::load_matrix_functions(linalg::g_VECTOR_LIBRARY->library);
 
-    graphics_.initialise();
+    graphics.initialise();
 
     my_logger.get().info("Engine ready");
     running_ = true;
@@ -237,8 +237,8 @@ auto Engine::shutdown() -> void {
     auto my_logger = logger.get(LogNamespaces::CORE);
     my_logger.get().info("Shutdown");
 
-    state_manager.shutdown(graphics_);
-    graphics_.cleanup();
+    state_manager.shutdown(graphics);
+    graphics.cleanup();
 
     linalg::g_VECTOR_LIBRARY->~Library();
     running_ = false;
