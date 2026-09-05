@@ -9,6 +9,10 @@ namespace ENGINE_NS {
         public:
             static auto load(const char* path) -> SharedLibrary;
             SharedLibrary() = default;
+            SharedLibrary(const SharedLibrary&) = delete;
+            auto operator=(const SharedLibrary&) -> SharedLibrary& = delete;
+            SharedLibrary(SharedLibrary&& rhs) noexcept;
+            auto operator=(SharedLibrary&& rhs) noexcept -> SharedLibrary&;
             ~SharedLibrary();
 
             template<typename TFunc>
