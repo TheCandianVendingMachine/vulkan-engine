@@ -10,7 +10,7 @@
 #include "engine/logger.h"
 #include "engine/rwlock.h"
 // clang-format off
-#include <volk/volk.h>
+#include <Volk/volk.h>
 // clang-format on
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_vulkan.h>

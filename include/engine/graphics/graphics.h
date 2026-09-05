@@ -8,7 +8,7 @@
 #include "engine/meta_defines.h"
 #include "engine/rwlock.h"
 
-#include <volk/volk.h>
+#include <Volk/volk.h>
 #include <linalg/vector.h>
 #include <robin_map.h>
 #include <vk_mem_alloc.h>

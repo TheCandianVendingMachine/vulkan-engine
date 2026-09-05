@@ -5,7 +5,7 @@
 #include "engine/graphics/vulkan.h"
 #include "engine/logger.h"
 
-#include <volk/volk.h>
+#include <Volk/volk.h>
 #include <engine/graphics/types.h>
 #include <engine/meta_defines.h>
 #include <vulkan/vulkan_core.h>
