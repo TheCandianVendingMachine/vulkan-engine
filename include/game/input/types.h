@@ -5,7 +5,7 @@
 #include <cstddef>
 #include <cstdint>
 
-struct InputId : engine::NewType<InputId, std::size_t>, engine::Hashable<InputId> {
+struct InputId : engine::NewType<InputId, std::size_t>, engine::Hashable<InputId>, engine::Eq<InputId> {
         using NewType::NewType;
 };
 
@@ -52,6 +52,8 @@ struct Input {
         } event;
         InputType type;
 };
+
+auto operator==(const Input& lhs, const Input& rhs) -> bool;
 
 namespace std {
     template <class Key>

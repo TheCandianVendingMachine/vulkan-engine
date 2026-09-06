@@ -5,8 +5,19 @@
 #include <engine/fileio/file.h>
 #include <robin_map.h>
 
+#include <cstddef>
 #include <cstdint>
+#include <functional>
+#include <optional>
+#include <tuple>
 #include <vector>
+
+using InputPair = std::tuple<Input, std::optional<Input>>;
+using PressInputPair = std::tuple<Press, InputPair>;
+
+struct PressInputPairHash {
+        auto operator()(const PressInputPair& mapping) const noexcept -> std::size_t;
+};
 
 class ActionMap {
     public:
@@ -34,8 +45,6 @@ class ActionMap {
         auto save_to_file(engine::fileio::File& file) -> void;
 
     private:
-        using InputPair = std::tuple<Input, std::optional<Input>>;
-
         tsl::robin_map<Input, std::vector<Action>> axis_mappings_;
-        tsl::robin_map<std::tuple<Press, InputPair>, std::vector<Action>> press_mappings_;
+        tsl::robin_map<PressInputPair, std::vector<Action>, PressInputPairHash> press_mappings_;
 };
