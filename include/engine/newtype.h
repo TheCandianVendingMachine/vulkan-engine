@@ -14,11 +14,25 @@ namespace ENGINE_NS {
     template <class Tag, typename T>
     class NewType {
         public:
-            NewType() : m_value() {
+            NewType()
+                requires std::is_default_constructible_v<T>
+                : m_value() {
             }
-            explicit NewType(T& value) : m_value(value) {
+
+            explicit NewType(const T& value) noexcept(std::is_nothrow_copy_constructible_v<T>)
+                requires std::is_copy_constructible_v<T>
+                : m_value(value) {
             }
-            explicit NewType(T&& value) noexcept(std::is_nothrow_move_constructible<T>::value) : m_value(std::move(value)) {
+
+            explicit NewType(T&& value) noexcept(std::is_nothrow_move_constructible_v<T>)
+                requires std::is_move_constructible_v<T>
+                : m_value(std::move(value)) {
+            }
+
+            template <typename U>
+                requires(!std::is_same_v<std::remove_cvref_t<U>, NewType> &&
+                         !std::is_same_v<std::remove_cvref_t<U>, std::remove_cvref_t<T>> && std::is_constructible_v<T, U&&>)
+            explicit NewType(U&& value) noexcept(std::is_nothrow_constructible_v<T, U&&>) : m_value(std::forward<U>(value)) {
             }
 
             explicit operator T&() noexcept {

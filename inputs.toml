@@ -1,0 +1,14 @@
+[[action.jump.keyboard]]
+user = "player1"
+scancodes = [ {id = "Space", state="down"}]
+keycodes = [ {id = "J", state="held"}]
+
+[[action.move_left.gamepad]]
+user = "player2"
+axis = [ { id="LeftX" } ]
+button = [ { id="X", state="double" } ]
+
+[[action.move_left.mouse]]
+user = "player3"
+button = [ { id="Left" } ]
+axis = [ { id="X" } ]

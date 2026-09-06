@@ -1,6 +1,7 @@
 #include "engine/ecs/component.h"
 #include "engine/reflection/type.h"
 #include "engine/utilities/transform.h"
+#include "game/input/types.h"
 #include "game/tilemap/tilemap.h"
 #include "game/world.h"
 #include "linalg/vector.h"

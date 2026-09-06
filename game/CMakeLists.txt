@@ -13,6 +13,7 @@ add_executable(game
 
 )
 
+add_subdirectory(input)
 add_subdirectory(level)
 add_subdirectory(tilemap)
 
