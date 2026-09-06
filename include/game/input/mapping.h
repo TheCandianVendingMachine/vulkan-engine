@@ -51,24 +51,6 @@ class ActionMap {
         [[nodiscard]]
         auto action_from_gamepad_axis(InputId gamepad_id, SDL_GamepadAxis axis) const -> const std::vector<Action>&;
 
-        /// Add a default `Press::DOWN` scancode mapping.
-        auto map_scancode(SDL_Scancode scancode, Action action) -> void;
-
-        /// Add a default `Press::DOWN` keycode mapping.
-        auto map_keycode(SDL_Keycode keycode, Action action) -> void;
-
-        /// Add a default `Press::DOWN` mouse button mapping.
-        auto map_mouse_button(std::uint8_t button, Action action) -> void;
-
-        /// Add a mouse axis mapping.
-        auto map_mouse_motion(MouseAxis axis, Action action) -> void;
-
-        /// Add a default `Press::DOWN` gamepad button mapping for a specific gamepad/input id.
-        auto map_gamepad_button(InputId gamepad_id, SDL_GamepadButton button, Action action) -> void;
-
-        /// Add a gamepad axis mapping for a specific gamepad/input id.
-        auto map_gamepad_axis(InputId gamepad_id, SDL_GamepadAxis axis, Action action) -> void;
-
         /// Start fluent construction of an ActionMap.
         static auto build() -> ActionMapBuilder;
 

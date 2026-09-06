@@ -4,7 +4,7 @@ namespace {
     const std::vector<Action> EMPTY_ACTIONS{};
 
     auto hash_combine(std::size_t seed, std::size_t value) noexcept -> std::size_t {
-        return seed ^ (value + 0x9e3779b97f4a7c15ULL + (seed << 6U) + (seed >> 2U));
+        return seed ^ (value + 0x9E3779B97F4A7C15ull + (seed << 6u) + (seed >> 2u));
     }
 
     auto input_id(std::size_t id = 0) -> InputId {
@@ -53,12 +53,12 @@ namespace {
 
     auto gamepad_axis_input(InputId gamepad_id, SDL_GamepadAxis axis) -> Input {
         Input input{};
-        input.input_id            = gamepad_id;
+        input.input_id           = gamepad_id;
         input.event.gamepad_axis = axis;
-        input.type                = InputType::GAMEPAD_AXIS;
+        input.type               = InputType::GAMEPAD_AXIS;
         return input;
     }
-}
+} // namespace
 
 auto PressInputPairHash::operator()(const PressInputPair& mapping) const noexcept -> std::size_t {
     const auto& [press, input_pair] = mapping;
@@ -76,20 +76,29 @@ auto PressInputPairHash::operator()(const PressInputPair& mapping) const noexcep
 }
 
 auto ActionMap::action_from_scancode(SDL_Scancode scancode) const -> const std::vector<Action>& {
-    auto key = PressInputPair{Press::DOWN, InputPair{scancode_input(scancode), std::nullopt}};
-    auto it  = press_mappings_.find(key);
+    auto key = PressInputPair{
+      Press::DOWN,
+      InputPair{scancode_input(scancode), std::nullopt}
+    };
+    auto it = press_mappings_.find(key);
     return it == press_mappings_.end() ? EMPTY_ACTIONS : it->second;
 }
 
 auto ActionMap::action_from_keycode(SDL_Keycode keycode) const -> const std::vector<Action>& {
-    auto key = PressInputPair{Press::DOWN, InputPair{keycode_input(keycode), std::nullopt}};
-    auto it  = press_mappings_.find(key);
+    auto key = PressInputPair{
+      Press::DOWN,
+      InputPair{keycode_input(keycode), std::nullopt}
+    };
+    auto it = press_mappings_.find(key);
     return it == press_mappings_.end() ? EMPTY_ACTIONS : it->second;
 }
 
 auto ActionMap::action_from_mouse_button(std::uint8_t button) const -> const std::vector<Action>& {
-    auto key = PressInputPair{Press::DOWN, InputPair{mouse_button_input(button), std::nullopt}};
-    auto it  = press_mappings_.find(key);
+    auto key = PressInputPair{
+      Press::DOWN,
+      InputPair{mouse_button_input(button), std::nullopt}
+    };
+    auto it = press_mappings_.find(key);
     return it == press_mappings_.end() ? EMPTY_ACTIONS : it->second;
 }
 
@@ -106,38 +115,17 @@ auto ActionMap::action_from_mouse_motion(float x_axis, float y_axis) const -> co
 }
 
 auto ActionMap::action_from_gamepad_button(InputId gamepad_id, SDL_GamepadButton button) const -> const std::vector<Action>& {
-    auto key = PressInputPair{Press::DOWN, InputPair{gamepad_button_input(gamepad_id, button), std::nullopt}};
-    auto it  = press_mappings_.find(key);
+    auto key = PressInputPair{
+      Press::DOWN,
+      InputPair{gamepad_button_input(gamepad_id, button), std::nullopt}
+    };
+    auto it = press_mappings_.find(key);
     return it == press_mappings_.end() ? EMPTY_ACTIONS : it->second;
 }
 
 auto ActionMap::action_from_gamepad_axis(InputId gamepad_id, SDL_GamepadAxis axis) const -> const std::vector<Action>& {
     auto it = axis_mappings_.find(gamepad_axis_input(gamepad_id, axis));
     return it == axis_mappings_.end() ? EMPTY_ACTIONS : it->second;
-}
-
-auto ActionMap::map_scancode(SDL_Scancode scancode, Action action) -> void {
-    map_press(Press::DOWN, scancode_input(scancode), std::nullopt, action);
-}
-
-auto ActionMap::map_keycode(SDL_Keycode keycode, Action action) -> void {
-    map_press(Press::DOWN, keycode_input(keycode), std::nullopt, action);
-}
-
-auto ActionMap::map_mouse_button(std::uint8_t button, Action action) -> void {
-    map_press(Press::DOWN, mouse_button_input(button), std::nullopt, action);
-}
-
-auto ActionMap::map_mouse_motion(MouseAxis axis, Action action) -> void {
-    map_axis(mouse_axis_input(axis), action);
-}
-
-auto ActionMap::map_gamepad_button(InputId gamepad_id, SDL_GamepadButton button, Action action) -> void {
-    map_press(Press::DOWN, gamepad_button_input(gamepad_id, button), std::nullopt, action);
-}
-
-auto ActionMap::map_gamepad_axis(InputId gamepad_id, SDL_GamepadAxis axis, Action action) -> void {
-    map_axis(gamepad_axis_input(gamepad_id, axis), action);
 }
 
 auto ActionMap::build() -> ActionMapBuilder {
@@ -154,7 +142,11 @@ auto ActionMap::map_axis(Input input, Action action) -> void {
 }
 
 auto ActionMap::map_press(Press press, Input input, std::optional<Input> chord, Action action) -> void {
-    press_mappings_[PressInputPair{press, InputPair{input, chord}}].push_back(action);
+    press_mappings_[PressInputPair{
+                      press,
+                      InputPair{input, chord}
+    }]
+        .push_back(action);
 }
 
 auto ActionMapBuilder::action(Action action) -> ActionMapBuilder& {

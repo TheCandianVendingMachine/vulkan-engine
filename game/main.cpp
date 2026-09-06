@@ -1,12 +1,15 @@
 #include "engine/ecs/component.h"
+#include "engine/fileio/file.h"
 #include "engine/reflection/type.h"
 #include "engine/utilities/transform.h"
+#include "game/input/mapping.h"
 #include "game/input/types.h"
 #include "game/tilemap/tilemap.h"
 #include "game/world.h"
 #include "linalg/vector.h"
 
 #include <SDL3/SDL_events.h>
+#include <SDL3/SDL_gamepad.h>
 #include <engine/assets/library.h>
 #include <engine/deletion_queue.h>
 #include <engine/ecs/query.h>

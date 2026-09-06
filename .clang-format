@@ -9,11 +9,11 @@ Language: Cpp
 Standard: Latest
 NamespaceIndentation: All
 MaxEmptyLinesToKeep: 2
-#NumericLiteralCase:
-#  ExponentLetter: Lower
-#  HexDigit: Upper
-#  Prefix: Lower
-#  Suffix: Lower
+NumericLiteralCase:
+  ExponentLetter: Lower
+  HexDigit: Upper
+  Prefix: Lower
+  Suffix: Lower
 DerivePointerAlignment: false
 PointerAlignment: Left
 AlignAfterOpenBracket: Align
@@ -100,10 +100,10 @@ QualifierAlignment: Custom
 QualifierOrder: [friend, static, inline, constexpr, const, volatile, type]
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:  '^"'
+  - Regex: '^"'
     Priority: 1
-  - Regex:  '^<.*\.h>'
+  - Regex: '^<.*\.h>'
     Priority: 2
-  - Regex:  '^<'
+  - Regex: "^<"
     Priority: 3
 FixNamespaceComments: true
