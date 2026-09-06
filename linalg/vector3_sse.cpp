@@ -6,6 +6,7 @@
 #endif
 #include <cmath>
 #include <cstring>
+#include <utility>
 
 constexpr auto float_abs_bits() -> __m128i {
     int32_t bitmask     = 0x7FFFFFFF;
@@ -24,27 +25,25 @@ constexpr auto double_abs_bits() -> __m128d {
 namespace linalg {
     namespace blas1 {
         auto axpy(const float a, const Vector3<float> x, const Vector3<float> y) -> Vector3<float> {
-            auto v_a1 = (__m128*)(&a);
-            auto v_a  = _mm_shuffle_ps(*v_a1, *v_a1, 0b0000'0000);
-            auto v_x  = _mm_loadl_pi(__m128(), (__m64*)(x.elements));
-            auto v_y  = _mm_loadl_pi(__m128(), (__m64*)(y.elements));
+            auto v_a  = _mm_set1_ps(a);
+            auto v_x  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(x.elements));
+            auto v_y  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(y.elements));
             auto v_ax = _mm_mul_ps(v_a, v_x);
 
             auto v_axpy = _mm_add_ps(v_ax, v_y);
 
             float result[4];
-            _mm_store_ps(result, v_axpy);
+            _mm_storeu_ps(result, v_axpy);
             return Vector3<float>{result[0], result[1], a * x.z + y.z};
         }
 
         auto scale(const float a, const Vector3<float> x) -> Vector3<float> {
-            auto v_a1 = (__m128*)(&a);
-            auto v_a  = _mm_shuffle_ps(*v_a1, *v_a1, 0b0000'0000);
-            auto v_x  = _mm_loadl_pi(__m128(), (__m64*)(x.elements));
+            auto v_a  = _mm_set1_ps(a);
+            auto v_x  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(x.elements));
             auto v_ax = _mm_mul_ps(v_a, v_x);
 
             float result[4];
-            _mm_store_ps(result, v_ax);
+            _mm_storeu_ps(result, v_ax);
             return Vector3<float>{result[0], result[1], a * x.z};
         }
 
@@ -53,20 +52,9 @@ namespace linalg {
         }
 
         auto swap(Vector3<float>& a, Vector3<float>& b) -> void {
-            auto v_x = _mm_loadu_ps(a.elements);
-            auto v_y = _mm_loadu_ps(b.elements);
-
-            v_x = _mm_xor_ps(v_y, v_x);
-            v_y = _mm_xor_ps(v_x, v_y);
-            v_x = _mm_xor_ps(v_y, v_x);
-
-            float result_a[4];
-            float result_b[4];
-            _mm_store_ps(result_a, v_x);
-            _mm_store_ps(result_b, v_y);
-
-            std::memcpy(a.elements, result_a, 3 * sizeof(float));
-            std::memcpy(b.elements, result_b, 3 * sizeof(float));
+            std::swap(a.x, b.x);
+            std::swap(a.y, b.y);
+            std::swap(a.z, b.z);
         }
 
         auto dot(const Vector3<float> a, const Vector3<float> b) -> float {
@@ -97,8 +85,7 @@ namespace linalg {
 namespace linalg {
     namespace blas1 {
         auto axpy(const double a, const Vector3<double> x, const Vector3<double> y) -> Vector3<double> {
-            auto v_a1 = (__m128d*)(&a);
-            auto v_a  = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
+            auto v_a  = _mm_set1_pd(a);
             auto v_x  = _mm_loadu_pd(x.elements);
             auto v_y  = _mm_loadu_pd(y.elements);
             auto v_ax = _mm_mul_pd(v_a, v_x);
@@ -106,18 +93,17 @@ namespace linalg {
             auto v_axpy = _mm_add_pd(v_ax, v_y);
 
             double result[2];
-            _mm_store_pd(result, v_axpy);
+            _mm_storeu_pd(result, v_axpy);
             return Vector3<double>{result[0], result[1], a * x.z + y.z};
         }
 
         auto scale(const double a, const Vector3<double> x) -> Vector3<double> {
-            auto v_a1 = (__m128d*)(&a);
-            auto v_a  = _mm_shuffle_pd(*v_a1, *v_a1, 0b00);
+            auto v_a  = _mm_set1_pd(a);
             auto v_x  = _mm_loadu_pd(x.elements);
             auto v_ax = _mm_mul_pd(v_a, v_x);
 
             double result[2];
-            _mm_store_pd(result, v_ax);
+            _mm_storeu_pd(result, v_ax);
             return Vector3<double>{result[0], result[1], a * x.z};
         }
 
@@ -135,8 +121,8 @@ namespace linalg {
 
             double result_a[2];
             double result_b[2];
-            _mm_store_pd(result_a, v_x);
-            _mm_store_pd(result_b, v_y);
+            _mm_storeu_pd(result_a, v_x);
+            _mm_storeu_pd(result_b, v_y);
 
             std::memcpy(a.elements, result_a, 2 * sizeof(double));
             std::memcpy(b.elements, result_b, 2 * sizeof(double));
