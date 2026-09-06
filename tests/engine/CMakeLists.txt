@@ -2,6 +2,7 @@ add_executable(test_engine
     test_bitset.cpp
     test_region.cpp
     test_pool.cpp
+    test_reflection.cpp
     )
 target_include_directories(test_engine PRIVATE
     ${PROJECT_SOURCE_DIR}/include

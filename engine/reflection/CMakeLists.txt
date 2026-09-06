@@ -7,6 +7,7 @@ target_sources(engine PRIVATE
     "${ENGINE_HEADER_PATH}/reflection/type_int64.h"
     "${ENGINE_HEADER_PATH}/reflection/type_string.h"
     "${ENGINE_HEADER_PATH}/reflection/type_vector.h"
+    "${ENGINE_HEADER_PATH}/reflection/type_quaternion.h"
 )
 target_sources(engine PRIVATE
     type.cpp

@@ -29,6 +29,10 @@ set(NATVIS_DIR ${OPTIONAL_DIR}/natvis)
 
 option(BUILD_TESTS "Build engine and game tests" ON)
 
+if(BUILD_TESTS)
+    include(CTest)
+endif()
+
 add_subdirectory(external)
 
 # ---------------------------------------------------------------------------

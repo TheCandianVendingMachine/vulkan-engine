@@ -1,10 +1,15 @@
 #include <fmt/format.h>
 
+#include <concepts>
+#include <string>
+#include <string_view>
+#include <utility>
+
 template <>
 struct ENGINE_NS::reflection::Type<float> : ENGINE_NS::reflection::Atom<float> {
         using Inner = float;
 
-        static constexpr auto name() -> const char* {
+        static constexpr auto name() -> std::string_view {
             return "float32";
         }
         static auto as_string(const Inner& var) -> std::string {
@@ -17,22 +22,23 @@ struct ENGINE_NS::reflection::Type<float> : ENGINE_NS::reflection::Atom<float> {
         static auto construct() -> Inner {
             return Inner();
         }
-        static auto construct(float&& arg) -> Inner {
-            return static_cast<Inner>(arg);
-        }
-        static auto construct(double&& arg) -> Inner {
-            return static_cast<Inner>(arg);
+        template <typename T>
+            requires std::convertible_to<T, Inner>
+        static auto construct(T&& arg) -> Inner {
+            return static_cast<Inner>(std::forward<T>(arg));
         }
 
-        static auto cast(float& arg) -> Inner {
-            return static_cast<Inner>(arg);
-        }
-        static auto cast(double& arg) -> Inner {
+        template <typename T>
+            requires std::convertible_to<T, Inner>
+        static auto cast(const T& arg) -> Inner {
             return static_cast<Inner>(arg);
         }
 
         static auto cast_from_ptr(void* arg) -> Inner& {
             return *reinterpret_cast<Inner*>(arg);
+        }
+        static auto cast_from_ptr(const void* arg) -> const Inner& {
+            return *reinterpret_cast<const Inner*>(arg);
         }
 };
 
@@ -40,7 +46,7 @@ template <>
 struct ENGINE_NS::reflection::Type<double> : ENGINE_NS::reflection::Atom<double> {
         using Inner = double;
 
-        static constexpr auto name() -> const char* {
+        static constexpr auto name() -> std::string_view {
             return "float64";
         }
         static auto as_string(const Inner& var) -> std::string {
@@ -53,21 +59,22 @@ struct ENGINE_NS::reflection::Type<double> : ENGINE_NS::reflection::Atom<double>
         static auto construct() -> Inner {
             return Inner();
         }
-        static auto construct(float&& arg) -> Inner {
-            return static_cast<Inner>(arg);
-        }
-        static auto construct(double&& arg) -> Inner {
-            return static_cast<Inner>(arg);
+        template <typename T>
+            requires std::convertible_to<T, Inner>
+        static auto construct(T&& arg) -> Inner {
+            return static_cast<Inner>(std::forward<T>(arg));
         }
 
-        static auto cast(float& arg) -> Inner {
-            return static_cast<Inner>(arg);
-        }
-        static auto cast(double& arg) -> Inner {
+        template <typename T>
+            requires std::convertible_to<T, Inner>
+        static auto cast(const T& arg) -> Inner {
             return static_cast<Inner>(arg);
         }
 
         static auto cast_from_ptr(void* arg) -> Inner& {
             return *reinterpret_cast<Inner*>(arg);
+        }
+        static auto cast_from_ptr(const void* arg) -> const Inner& {
+            return *reinterpret_cast<const Inner*>(arg);
         }
 };
