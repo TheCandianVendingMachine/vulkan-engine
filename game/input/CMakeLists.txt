@@ -9,5 +9,6 @@ target_sources(game PRIVATE
     layer.cpp
     mapping.cpp
     register.cpp
+    serializer.cpp
     types.cpp
 )
