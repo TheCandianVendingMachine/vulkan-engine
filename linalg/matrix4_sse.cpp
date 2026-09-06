@@ -158,32 +158,14 @@ namespace linalg {
 namespace linalg {
     namespace blas2 {
         auto matrix_vector_product(const Matrix4<float>& A, const Vector4<float> x) -> Vector4<float> {
-            auto v_x = _mm_loadu_ps(x.elements);
-
-            auto V_A1            = _mm_loadu_ps(&A.elements[0]);
-            auto v_product1      = _mm_mul_ps(V_A1, v_x);
-            auto v_product1_sum1 = _mm_add_ps(v_product1, _mm_shuffle_ps(v_product1, v_product1, 0b1011'0001));
-            auto v_product1_sum2 = _mm_add_ps(v_product1_sum1, _mm_shuffle_ps(v_product1_sum1, v_product1_sum1, 0b1011'0010));
-
-            auto V_A2            = _mm_loadu_ps(&A.elements[4]);
-            auto v_product2      = _mm_mul_ps(V_A2, v_x);
-            auto v_product2_sum1 = _mm_add_ps(v_product2, _mm_shuffle_ps(v_product2, v_product2, 0b1011'0001));
-            auto v_product2_sum2 = _mm_add_ps(v_product2_sum1, _mm_shuffle_ps(v_product2_sum1, v_product2_sum1, 0b1011'0010));
-
-            auto V_A3            = _mm_loadu_ps(&A.elements[8]);
-            auto v_product3      = _mm_mul_ps(V_A3, v_x);
-            auto v_product3_sum1 = _mm_add_ps(v_product3, _mm_shuffle_ps(v_product3, v_product3, 0b1011'0001));
-            auto v_product3_sum2 = _mm_add_ps(v_product3_sum1, _mm_shuffle_ps(v_product3_sum1, v_product3_sum1, 0b1011'0010));
-
-            auto V_A4            = _mm_loadu_ps(&A.elements[12]);
-            auto v_product4      = _mm_mul_ps(V_A4, v_x);
-            auto v_product4_sum1 = _mm_add_ps(v_product4, _mm_shuffle_ps(v_product4, v_product4, 0b1011'0001));
-            auto v_product4_sum2 = _mm_add_ps(v_product4_sum1, _mm_shuffle_ps(v_product4_sum1, v_product4_sum1, 0b1011'0010));
-
-            return Vector4<float>{_mm_cvtss_f32(v_product1_sum2),
-                                  _mm_cvtss_f32(v_product2_sum2),
-                                  _mm_cvtss_f32(v_product3_sum2),
-                                  _mm_cvtss_f32(v_product4_sum2)};
+            // Clang's SLP vectorizer generates a faster column-wise SSE sequence for
+            // this scalar form than the hand-written row-dot implementation. The row
+            // version performs four horizontal reductions and then has to repack the
+            // scalar results, which costs more than the SIMD arithmetic it saves.
+            return Vector4<float>{A.r1c1 * x.x + A.r1c2 * x.y + A.r1c3 * x.z + A.r1c4 * x.w,
+                                  A.r2c1 * x.x + A.r2c2 * x.y + A.r2c3 * x.z + A.r2c4 * x.w,
+                                  A.r3c1 * x.x + A.r3c2 * x.y + A.r3c3 * x.z + A.r3c4 * x.w,
+                                  A.r4c1 * x.x + A.r4c2 * x.y + A.r4c3 * x.z + A.r4c4 * x.w};
         }
 
         auto solve_lower_triangular(const Matrix4<float>& L, const Vector4<float> b) -> Vector4<float> {
