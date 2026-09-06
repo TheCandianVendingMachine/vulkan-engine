@@ -23,6 +23,9 @@ namespace ENGINE_NS {
         /// the ECS can register them by `T::Meta::name`.
         struct Component {};
 
+        template <typename T>
+        concept ComponentType = std::is_base_of_v<Component, T>;
+
         /// Registry that assigns global ids to component types and creates queries.
         ///
         /// Register each component type once before creating entities that use it.
@@ -41,7 +44,8 @@ namespace ENGINE_NS {
                 /// Register component type T using `T::Meta::name`.
                 ///
                 /// T must derive from Component and provide reflection metadata.
-                template <typename T, typename = std::enable_if_t<std::is_base_of<Component, T>::value>>
+                template <typename T>
+                    requires ComponentType<T>
                 auto register_component() -> ComponentGid {
                     return register_component_by_name(T::Meta::name);
                 }
@@ -50,7 +54,8 @@ namespace ENGINE_NS {
                 auto component_gid_by_name(std::string_view name) const -> std::optional<ComponentGid>;
 
                 /// Look up the global component type id for T.
-                template <typename T, typename = std::enable_if_t<std::is_base_of<Component, T>::value>>
+                template <typename T>
+                    requires ComponentType<T>
                 auto component_gid() const -> std::optional<ComponentGid> {
                     return component_gid_by_name(T::Meta::name);
                 }
@@ -73,7 +78,8 @@ namespace ENGINE_NS {
                 ///
                 /// The component must have been selected by the Query used to build
                 /// this Bundle, otherwise robin_map::at will throw.
-                template <typename T, typename = std::enable_if_t<std::is_base_of<Component, T>::value>>
+                template <typename T>
+                    requires ComponentType<T>
                 auto component() -> T& {
                     ZoneScoped;
                     auto gid       = component_map_.at(std::string(T::Meta::name));
@@ -97,7 +103,8 @@ namespace ENGINE_NS {
             private:
                 Bundle(EntityUid entity, Query query);
 
-                template <typename T, typename = std::enable_if_t<std::is_base_of<Component, T>::value>>
+                template <typename T>
+                    requires ComponentType<T>
                 auto assign(ComponentGid gid, T* component) -> void {
                     ZoneScoped;
                     if (query_.query.get(static_cast<std::size_t>(gid)) == 0) {
