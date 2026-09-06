@@ -1,18 +1,29 @@
 #pragma once
 #include "engine/meta_defines.h"
 
+#include <array>
+#include <concepts>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <ranges>
 #include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
 
 namespace ENGINE_NS {
     namespace reflection {
+        template <typename>
+        inline constexpr bool always_false_v = false;
+
         template <typename T>
         struct Atom {
-                static constexpr auto size() -> size_t {
+                static constexpr auto size() -> std::size_t {
                     return sizeof(T);
                 }
-                static constexpr auto alignment() -> size_t {
+                static constexpr auto alignment() -> std::size_t {
                     return alignof(T);
                 }
         };
@@ -33,7 +44,8 @@ namespace ENGINE_NS {
 
                 template <typename G>
                 static auto cast(const G& from) -> T;
-                static auto cast_from_ptr(const void* from) -> T&;
+                static auto cast_from_ptr(void* from) -> T&;
+                static auto cast_from_ptr(const void* from) -> const T&;
         };
 
         template <typename T>
@@ -51,11 +63,11 @@ namespace ENGINE_NS {
                     return TypeVar::name();
                 }
                 [[nodiscard]]
-                constexpr auto type_size() const -> size_t {
+                constexpr auto type_size() const -> std::size_t {
                     return TypeVar::size();
                 }
                 [[nodiscard]]
-                constexpr auto type_alignment() const -> size_t {
+                constexpr auto type_alignment() const -> std::size_t {
                     return TypeVar::alignment();
                 }
                 [[nodiscard]]
@@ -92,9 +104,9 @@ namespace ENGINE_NS {
                 virtual auto to_string(const void* data) const -> std::string       = 0;
                 virtual auto to_human_string(const void* data) const -> std::string = 0;
                 [[nodiscard]]
-                virtual auto size() const -> size_t = 0;
+                virtual auto size() const -> std::size_t = 0;
                 [[nodiscard]]
-                virtual auto alignment() const -> size_t = 0;
+                virtual auto alignment() const -> std::size_t = 0;
                 [[nodiscard]]
                 virtual auto name() const -> const char* = 0;
 
@@ -102,87 +114,24 @@ namespace ENGINE_NS {
                 static auto instance() -> std::shared_ptr<RuntimeType>;
         };
 
-        class RuntimeTypeInt8 : public RuntimeType {
+        template <typename T>
+        class RuntimeTypeAtomic : public RuntimeType {
             public:
-                using TypeVar = Type<std::int8_t>;
+                using TypeVar = Type<T>;
+                using Inner   = T;
+
                 auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
+                    return TypeVar::as_string(*static_cast<const Inner*>(data));
                 }
                 auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
+                    return TypeVar::as_human_string(*static_cast<const Inner*>(data));
                 }
                 [[nodiscard]]
-                auto size() const -> size_t final {
+                auto size() const -> std::size_t final {
                     return TypeVar::size();
                 }
                 [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-        class RuntimeTypeInt16 : public RuntimeType {
-            public:
-                using TypeVar = Type<std::int16_t>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-        class RuntimeTypeInt32 : public RuntimeType {
-            public:
-                using TypeVar = Type<std::int32_t>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-        class RuntimeTypeInt64 : public RuntimeType {
-            public:
-                using TypeVar = Type<std::int64_t>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
+                auto alignment() const -> std::size_t final {
                     return TypeVar::alignment();
                 }
                 [[nodiscard]]
@@ -191,186 +140,37 @@ namespace ENGINE_NS {
                 }
         };
 
-        class RuntimeTypeUInt8 : public RuntimeType {
-            public:
-                using TypeVar = Type<std::uint8_t>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-        class RuntimeTypeUInt16 : public RuntimeType {
-            public:
-                using TypeVar = Type<std::uint16_t>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-        class RuntimeTypeUInt32 : public RuntimeType {
-            public:
-                using TypeVar = Type<std::uint32_t>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-        class RuntimeTypeUInt64 : public RuntimeType {
-            public:
-                using TypeVar = Type<std::uint64_t>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-
-        class RuntimeTypeFloat32 : public RuntimeType {
-            public:
-                using TypeVar = Type<float>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-        class RuntimeTypeFloat64 : public RuntimeType {
-            public:
-                using TypeVar = Type<double>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
-
-        class RuntimeTypeString : public RuntimeType {
-            public:
-                using TypeVar = Type<std::string>;
-                auto to_string(const void* data) const -> std::string final {
-                    return TypeVar::as_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                auto to_human_string(const void* data) const -> std::string final {
-                    return TypeVar::as_human_string(*static_cast<const underlying_type<TypeVar>*>(data));
-                }
-                [[nodiscard]]
-                auto size() const -> size_t final {
-                    return TypeVar::size();
-                }
-                [[nodiscard]]
-                auto alignment() const -> size_t final {
-                    return TypeVar::alignment();
-                }
-                [[nodiscard]]
-                auto name() const -> const char* final {
-                    return TypeVar::name();
-                }
-        };
+        template <typename T>
+        auto RuntimeType::instance() -> std::shared_ptr<RuntimeType> {
+            if constexpr (requires { Type<T>::name(); }) {
+                static auto instance = std::make_shared<RuntimeTypeAtomic<T>>();
+                return instance;
+            } else {
+                static_assert(always_false_v<T>, "No RuntimeType registered for reflected type T");
+                return nullptr;
+            }
+        }
 
         struct RuntimeMember;
         struct Member {
-                const std::size_t offset_ = 0;
-                const std::string name;
-                const std::shared_ptr<RuntimeType> type_info = nullptr;
+                using Accessor = std::function<const void*(const void*)>;
+
+                std::size_t offset_ = 0;
+                std::string name;
+                std::shared_ptr<RuntimeType> type_info = nullptr;
+                Accessor accessor{};
 
                 Member() = default;
-                Member(std::size_t offset, std::string name, std::shared_ptr<RuntimeType> type_info);
+                Member(std::size_t offset, std::string name, std::shared_ptr<RuntimeType> type_info, Accessor accessor);
                 Member(const Member& rhs);
 
+                auto data(const void* owner) const -> const void*;
                 auto into_runtime(const void* owner) const -> RuntimeMember;
-                auto operator=(const Member& rhs) -> Member& {
-                    if (&rhs != this) {
-                        const_cast<std::size_t&>(this->offset_)                    = rhs.offset_;
-                        const_cast<std::string&>(this->name)                       = rhs.name;
-                        const_cast<std::shared_ptr<RuntimeType>&>(this->type_info) = rhs.type_info;
-                    }
-                    return *this;
-                }
+                auto operator=(const Member& rhs) -> Member& = default;
         };
 
         struct RuntimeMember {
-                const Member meta;
+                Member meta;
                 const void* owner_ = nullptr;
                 [[nodiscard]]
                 auto to_string() const -> std::string;
@@ -380,13 +180,7 @@ namespace ENGINE_NS {
                 RuntimeMember(const Member& meta, const void* owner);
                 RuntimeMember()                         = default;
                 RuntimeMember(const RuntimeMember& rhs) = default;
-                auto operator=(const RuntimeMember& rhs) -> RuntimeMember& {
-                    if (&rhs != this) {
-                        const_cast<Member&>(this->meta) = rhs.meta;
-                        this->owner_                    = rhs.owner_;
-                    }
-                    return *this;
-                }
+                auto operator=(const RuntimeMember& rhs) -> RuntimeMember& = default;
         };
     } // namespace reflection
 } // namespace ENGINE_NS
@@ -403,13 +197,13 @@ namespace ENGINE_NS {
                 Member members[] = {
 #define REFLECT_MEMBER(Mname)                                                                                                              \
     Member {                                                                                                                               \
-        [] {                                                                                                                               \
-            /* aligned storage avoids constructing the object */                                                                           \
-            alignas(Underlying) std::byte buf[sizeof(Underlying)]{};                                                                       \
-            auto* p = reinterpret_cast<Underlying*>(buf);                                                                                  \
-            return static_cast<std::size_t>(reinterpret_cast<std::byte*>(&p->Mname) - reinterpret_cast<std::byte*>(p));                    \
-        }(),                                                                                                                               \
-            STR(Mname), ENGINE_NS::reflection::RuntimeType::instance<decltype(Underlying::Mname)>()                                        \
+        0,                                                                                                                                 \
+            STR(Mname),                                                                                                                    \
+            ENGINE_NS::reflection::RuntimeType::instance<                                                                                  \
+                std::remove_cvref_t<decltype(std::declval<Underlying&>().Mname)>>(),                                                       \
+            [](const void* owner) -> const void* {                                                                                         \
+                return &static_cast<const Underlying*>(owner)->Mname;                                                                      \
+            }                                                                                                                              \
     }
 
 #define REFLECT_END                                                                                                                        \
@@ -424,7 +218,7 @@ namespace ENGINE_NS {
         auto arr          = std::array<ENGINE_NS::reflection::RuntimeMember, members.size()>{};                                            \
         std::ranges::transform(members,                                                                                                    \
                                arr.begin(),                                                                                                \
-                               [owner](const engine ::reflection ::Member& member) -> engine ::reflection ::RuntimeMember {                \
+                               [owner](const ENGINE_NS::reflection::Member& member) -> ENGINE_NS::reflection::RuntimeMember {              \
                                    return member.into_runtime(&owner->base);                                                               \
                                });                                                                                                         \
         return arr;                                                                                                                        \
