@@ -5,11 +5,12 @@
 #include "engine/linalg/vector_operations.h"
 
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_events.h>
 #include <imgui.h>
 
-#include <tracy/Tracy.hpp>
 #include <chrono>
 #include <thread>
+#include <tracy/Tracy.hpp>
 
 
 using namespace ::ENGINE_NS;
@@ -110,8 +111,9 @@ auto Engine::run() -> void {
 auto ENGINE_NS::Engine::main_loop() -> void {
     SDL_Event event;
 
-    const auto tick_rate   = std::chrono::milliseconds(2);
-    const auto update_rate = 1.0 / 40.0;
+    const auto tick_rate                = std::chrono::milliseconds(2);
+    const auto update_rate              = 1.0 / 40.0;
+    const double NANOSECONDS_CONVERSION = 0.000000001;
 
     double accumulator = 0.0;
     auto last_update   = std::chrono::high_resolution_clock::now();
@@ -145,6 +147,9 @@ auto ENGINE_NS::Engine::main_loop() -> void {
                         if (event.key.scancode == SDL_SCANCODE_GRAVE) {
                             this->logger.is_log_open_ = !this->logger.is_log_open_;
                         }
+                        for (auto& callback : keyboard_input_callbacks) {
+                            callback(event.key, engine::InputState::DOWN);
+                        }
                     }
                     break;
                 case SDL_EVENT_KEY_UP:
@@ -152,6 +157,9 @@ auto ENGINE_NS::Engine::main_loop() -> void {
                         ZoneScoped;
                         if (should_discard_keyboard) {
                             break;
+                        }
+                        for (auto& callback : keyboard_input_callbacks) {
+                            callback(event.key, engine::InputState::UP);
                         }
                     }
                     break;
@@ -161,6 +169,9 @@ auto ENGINE_NS::Engine::main_loop() -> void {
                         if (should_discard_mouse) {
                             continue;
                         }
+                        for (auto& callback : mouse_input_callbacks) {
+                            callback(event.button, engine::InputState::DOWN);
+                        }
                     }
                     break;
                 case SDL_EVENT_MOUSE_BUTTON_UP:
@@ -169,6 +180,9 @@ auto ENGINE_NS::Engine::main_loop() -> void {
                         if (should_discard_mouse) {
                             continue;
                         }
+                        for (auto& callback : mouse_input_callbacks) {
+                            callback(event.button, engine::InputState::UP);
+                        }
                     }
                     break;
                 case SDL_EVENT_MOUSE_MOTION:
@@ -176,6 +190,52 @@ auto ENGINE_NS::Engine::main_loop() -> void {
                         ZoneScoped;
                         if (should_discard_mouse) {
                             continue;
+                        }
+                        double timestamp = static_cast<double>(event.motion.timestamp) * NANOSECONDS_CONVERSION;
+                        double delta     = timestamp - last_mouse_motion_;
+
+                        for (auto& callback : mouse_motion_callbacks) {
+                            callback(event.motion, delta);
+                        }
+                        last_mouse_motion_ = timestamp;
+                    }
+                    break;
+                case SDL_EVENT_GAMEPAD_ADDED:
+                    {
+                        for (auto& callback : gamepad_device_callbacks) {
+                            callback(event.gdevice, DeviceState::ADDED);
+                        }
+                    }
+                    break;
+                case SDL_EVENT_GAMEPAD_REMOVED:
+                    {
+                        for (auto& callback : gamepad_device_callbacks) {
+                            callback(event.gdevice, DeviceState::REMOVED);
+                        }
+                    }
+                    break;
+                case SDL_EVENT_GAMEPAD_AXIS_MOTION:
+                    {
+                        double timestamp = static_cast<double>(event.gaxis.timestamp) * NANOSECONDS_CONVERSION;
+                        double delta     = timestamp - last_gamepad_axis_;
+
+                        for (auto& callback : gamepad_axis_callbacks) {
+                            callback(event.gaxis, delta);
+                        }
+                        last_gamepad_axis_ = timestamp;
+                    }
+                    break;
+                case SDL_EVENT_GAMEPAD_BUTTON_DOWN:
+                    {
+                        for (auto& callback : gamepad_input_callbacks) {
+                            callback(event.gbutton, InputState::DOWN);
+                        }
+                    }
+                    break;
+                case SDL_EVENT_GAMEPAD_BUTTON_UP:
+                    {
+                        for (auto& callback : gamepad_input_callbacks) {
+                            callback(event.gbutton, InputState::UP);
                         }
                     }
                     break;

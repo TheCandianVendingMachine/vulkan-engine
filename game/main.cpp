@@ -5,6 +5,7 @@
 #include "game/world.h"
 #include "linalg/vector.h"
 
+#include <SDL3/SDL_events.h>
 #include <engine/assets/library.h>
 #include <engine/deletion_queue.h>
 #include <engine/ecs/query.h>

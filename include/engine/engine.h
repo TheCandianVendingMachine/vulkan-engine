@@ -6,9 +6,31 @@
 #include "engine/rwlock.h"
 #include "engine/state/manager.h"
 
+#include <SDL3/SDL_events.h>
+
 #include <array>
+#include <vector>
+
 
 namespace ENGINE_NS {
+    enum class InputState {
+        DOWN,
+        UP
+    };
+    enum class DeviceState {
+        ADDED,
+        REMOVED
+    };
+    using MouseInputCallback  = void (*)(SDL_MouseButtonEvent, InputState);
+    using MouseMotionCallback = void (*)(SDL_MouseMotionEvent, double);
+    using MouseWheelCallback  = void (*)(SDL_MouseWheelEvent);
+
+    using KeyboardInputCallback = void (*)(SDL_KeyboardEvent, InputState);
+
+    using GamepadDeviceCallback = void (*)(SDL_GamepadDeviceEvent, DeviceState);
+    using GamepadAxisCallback   = void (*)(SDL_GamepadAxisEvent, double);
+    using GamepadButtonCallback = void (*)(SDL_GamepadButtonEvent, InputState);
+
     enum class LogNamespaces : std::uint8_t {
         CORE = 0,
         GRAPHICS,
@@ -49,6 +71,16 @@ namespace ENGINE_NS {
             LogLocator logger;
             GraphicsEngine graphics;
 
+            std::vector<MouseInputCallback> mouse_input_callbacks;
+            std::vector<MouseMotionCallback> mouse_motion_callbacks;
+            std::vector<MouseWheelCallback> mouse_wheel_callbacks;
+
+            std::vector<KeyboardInputCallback> keyboard_input_callbacks;
+
+            std::vector<GamepadDeviceCallback> gamepad_device_callbacks;
+            std::vector<GamepadButtonCallback> gamepad_input_callbacks;
+            std::vector<GamepadAxisCallback> gamepad_axis_callbacks;
+
             const bool& crashed = crashed_;
 
         private:
@@ -64,6 +96,9 @@ namespace ENGINE_NS {
             bool crashed_              = false;
             bool running_              = false;
             std::uint64_t frame_count_ = 0;
+
+            double last_mouse_motion_ = 0.0;
+            double last_gamepad_axis_ = 0.0;
 
             friend auto ::ENGINE_NS::crash(ErrorCode, int, const char*, const char*, const char*) -> void;
     };
