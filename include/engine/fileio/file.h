@@ -92,7 +92,8 @@ namespace ENGINE_NS {
                 [[nodiscard("not checking if operation has an error")]]
                 auto move_to_offset(Offset offset) -> std::expected<void, error::Error>;
 
-                template <typename T, typename = std::enable_if<std::is_trivially_copyable_v<T>>::type>
+                template <typename T>
+                    requires std::is_trivially_copyable_v<T>
                 [[nodiscard("not checking if operation has an error")]]
                 auto write(const T& to_write) -> std::expected<void, error::Error> {
                     if (!handle_ || moved_) {
@@ -110,7 +111,8 @@ namespace ENGINE_NS {
                     }
                     return std::expected<void, error::Error>{};
                 }
-                template <typename T, typename = std::enable_if<std::is_trivially_copyable_v<T>>::type>
+                template <typename T>
+                    requires std::is_trivially_copyable_v<T>
                 [[nodiscard("not checking if operation has an error")]]
                 auto write_buffer(const std::vector<T>& to_write) -> std::expected<void, error::Error> {
                     if (!handle_ || moved_) {
@@ -129,7 +131,8 @@ namespace ENGINE_NS {
                     return std::expected<void, error::Error>{};
                 }
 
-                template <typename TInner, typename = std::enable_if<std::is_trivially_copyable_v<TInner>>::type>
+                template <typename TInner>
+                    requires std::is_trivially_copyable_v<TInner>
                 [[nodiscard("not checking if operation has an error")]]
                 auto read(std::size_t count) -> std::expected<std::vector<TInner>, error::Error> {
                     auto buffer = std::vector<TInner>(count);
@@ -138,7 +141,8 @@ namespace ENGINE_NS {
                     }
                     return buffer;
                 }
-                template <typename TInner, typename = std::enable_if<std::is_trivially_copyable_v<TInner>>::type>
+                template <typename TInner>
+                    requires std::is_trivially_copyable_v<TInner>
                 [[nodiscard("not checking if operation has an error")]]
                 auto read_into(std::vector<TInner>& buffer) -> std::expected<void, error::Error> {
                     if (!handle_ || moved_) {
