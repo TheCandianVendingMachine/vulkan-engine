@@ -8,11 +8,13 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 namespace ENGINE_NS {
     namespace reflection {
@@ -50,6 +52,32 @@ namespace ENGINE_NS {
         };
 
         template <typename T>
+        concept HasAtomicReflection = requires(const T& value, void* ptr, const void* const_ptr) {
+            typename Type<T>::Inner;
+            { Type<T>::name() } -> std::convertible_to<std::string_view>;
+            { Type<T>::as_string(value) } -> std::convertible_to<std::string>;
+            { Type<T>::as_human_string(value) } -> std::convertible_to<std::string>;
+            { Type<T>::cast_from_ptr(ptr) } -> std::same_as<T&>;
+            { Type<T>::cast_from_ptr(const_ptr) } -> std::same_as<const T&>;
+        };
+
+        template <typename T>
+        concept HasNativeStaticReflection = requires {
+            typename T::Meta;
+            { T::Meta::name } -> std::convertible_to<std::string_view>;
+            T::Meta::static_members();
+        };
+
+        template <typename T>
+        concept HasTypeStaticReflection = requires {
+            { Type<T>::name() } -> std::convertible_to<std::string_view>;
+            Type<T>::static_members();
+        };
+
+        template <typename T>
+        concept HasStaticReflection = HasNativeStaticReflection<T> || HasTypeStaticReflection<T>;
+
+        template <typename T>
         T underlying_type_impl(Type<T>);
         template <typename T>
         using underlying_type = decltype(underlying_type_impl(std::declval<T>()));
@@ -60,7 +88,7 @@ namespace ENGINE_NS {
                 T* inner_     = nullptr;
 
                 [[nodiscard]]
-                constexpr auto type_name() const -> const char* {
+                constexpr auto type_name() const -> std::string_view {
                     return TypeVar::name();
                 }
                 [[nodiscard]]
@@ -95,11 +123,17 @@ namespace ENGINE_NS {
 #include "engine/reflection/type_int64.h"
 #include "engine/reflection/type_int8.h"
 #include "engine/reflection/type_string.h"
-#include "engine/reflection/type_vector.h"
 #include "engine/reflection/type_quaternion.h"
 
 namespace ENGINE_NS {
     namespace reflection {
+        struct RuntimeMember;
+
+        enum class RuntimeTypeKind : std::uint8_t {
+            Atomic,
+            Object,
+        };
+
         class RuntimeType {
             public:
                 virtual ~RuntimeType()                                              = default;
@@ -111,6 +145,16 @@ namespace ENGINE_NS {
                 virtual auto alignment() const -> std::size_t = 0;
                 [[nodiscard]]
                 virtual auto name() const -> std::string_view = 0;
+                [[nodiscard]]
+                virtual auto kind() const -> RuntimeTypeKind = 0;
+                [[nodiscard]]
+                virtual auto is_atomic() const -> bool;
+                [[nodiscard]]
+                virtual auto is_object() const -> bool;
+                [[nodiscard]]
+                virtual auto members(const void* data) const -> std::vector<RuntimeMember>;
+                [[nodiscard]]
+                virtual auto member(const void* data, std::string_view name) const -> std::optional<RuntimeMember>;
 
                 template <typename T>
                 static auto instance() -> std::shared_ptr<RuntimeType>;
@@ -140,20 +184,12 @@ namespace ENGINE_NS {
                 auto name() const -> std::string_view final {
                     return TypeVar::name();
                 }
+                [[nodiscard]]
+                auto kind() const -> RuntimeTypeKind final {
+                    return RuntimeTypeKind::Atomic;
+                }
         };
 
-        template <typename T>
-        auto RuntimeType::instance() -> std::shared_ptr<RuntimeType> {
-            if constexpr (requires { Type<T>::name(); }) {
-                static auto instance = std::make_shared<RuntimeTypeAtomic<T>>();
-                return instance;
-            } else {
-                static_assert(always_false_v<T>, "No RuntimeType registered for reflected type T");
-                return nullptr;
-            }
-        }
-
-        struct RuntimeMember;
         struct Member {
                 using Accessor = std::function<const void*(const void*)>;
 
@@ -175,6 +211,14 @@ namespace ENGINE_NS {
                 Member meta;
                 const void* owner_ = nullptr;
                 [[nodiscard]]
+                auto data() const -> const void*;
+                [[nodiscard]]
+                auto has_members() const -> bool;
+                [[nodiscard]]
+                auto members() const -> std::vector<RuntimeMember>;
+                [[nodiscard]]
+                auto get(std::string_view name) const -> std::optional<RuntimeMember>;
+                [[nodiscard]]
                 auto to_string() const -> std::string;
                 [[nodiscard]]
                 auto to_human_string() const -> std::string;
@@ -184,13 +228,109 @@ namespace ENGINE_NS {
                 RuntimeMember(const RuntimeMember& rhs) = default;
                 auto operator=(const RuntimeMember& rhs) -> RuntimeMember& = default;
         };
+
+        template <typename T>
+        class RuntimeTypeObject : public RuntimeType {
+            public:
+                auto to_string(const void* data) const -> std::string final {
+                    return format_object_(data, false);
+                }
+                auto to_human_string(const void* data) const -> std::string final {
+                    return format_object_(data, true);
+                }
+                [[nodiscard]]
+                auto size() const -> std::size_t final {
+                    return sizeof(T);
+                }
+                [[nodiscard]]
+                auto alignment() const -> std::size_t final {
+                    return alignof(T);
+                }
+                [[nodiscard]]
+                auto name() const -> std::string_view final {
+                    if constexpr (HasTypeStaticReflection<T>) {
+                        return Type<T>::name();
+                    } else {
+                        return T::Meta::name;
+                    }
+                }
+                [[nodiscard]]
+                auto kind() const -> RuntimeTypeKind final {
+                    return RuntimeTypeKind::Object;
+                }
+                [[nodiscard]]
+                auto members(const void* data) const -> std::vector<RuntimeMember> final {
+                    auto static_members = static_members_();
+                    auto runtime_members = std::vector<RuntimeMember>{};
+                    runtime_members.reserve(static_members.size());
+                    for (const auto& member : static_members) {
+                        runtime_members.emplace_back(member.into_runtime(data));
+                    }
+                    return runtime_members;
+                }
+                [[nodiscard]]
+                auto member(const void* data, std::string_view name) const -> std::optional<RuntimeMember> final {
+                    for (auto& runtime_member : members(data)) {
+                        if (runtime_member.meta.name == name) {
+                            return runtime_member;
+                        }
+                    }
+                    return std::nullopt;
+                }
+
+            private:
+                static auto static_members_() -> decltype(auto) {
+                    if constexpr (HasTypeStaticReflection<T>) {
+                        return Type<T>::static_members();
+                    } else {
+                        return T::Meta::static_members();
+                    }
+                }
+
+                auto format_object_(const void* data, bool human) const -> std::string {
+                    auto output = std::string(name());
+                    output += "{";
+                    bool first = true;
+                    for (const auto& runtime_member : members(data)) {
+                        if (!first) {
+                            output += ", ";
+                        }
+                        first = false;
+                        output += runtime_member.meta.name;
+                        output += ": ";
+                        output += human ? runtime_member.to_human_string() : runtime_member.to_string();
+                    }
+                    output += "}";
+                    return output;
+                }
+        };
+    } // namespace reflection
+} // namespace ENGINE_NS
+
+#include "engine/reflection/type_vector.h"
+
+namespace ENGINE_NS {
+    namespace reflection {
+        template <typename T>
+        auto RuntimeType::instance() -> std::shared_ptr<RuntimeType> {
+            if constexpr (HasStaticReflection<T>) {
+                static auto instance = std::make_shared<RuntimeTypeObject<T>>();
+                return instance;
+            } else if constexpr (HasAtomicReflection<T>) {
+                static auto instance = std::make_shared<RuntimeTypeAtomic<T>>();
+                return instance;
+            } else {
+                static_assert(always_false_v<T>, "No RuntimeType registered for reflected type T");
+                return nullptr;
+            }
+        }
     } // namespace reflection
 } // namespace ENGINE_NS
 
 #define REFLECT_START(Tbase)                                                                                                               \
     struct Meta {                                                                                                                          \
-            using Underlying                  = Tbase;                                                                                     \
-            static constexpr const char* name = STR(Tbase);                                                                                \
+            using Underlying                         = Tbase;                                                                              \
+            static constexpr std::string_view name = STR(Tbase);                                                                           \
             Underlying& base;                                                                                                              \
             explicit inline Meta(Underlying& from) : base(from) {                                                                          \
             }                                                                                                                              \
