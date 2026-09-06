@@ -5,12 +5,34 @@
 
 namespace linalg {
     namespace blas1 {
+        namespace detail {
+            auto axpy4(float* out, const float a, const float* x, const float* y) -> float* {
+                out[0] = a * x[0] + y[0];
+                out[1] = a * x[1] + y[1];
+                out[2] = a * x[2] + y[2];
+                out[3] = a * x[3] + y[3];
+                return out;
+            }
+
+            auto scale4(float* out, const float a, const float* x) -> float* {
+                out[0] = a * x[0];
+                out[1] = a * x[1];
+                out[2] = a * x[2];
+                out[3] = a * x[3];
+                return out;
+            }
+        } // namespace detail
+
         auto axpy(const float a, const Vector4<float> x, const Vector4<float> y) -> Vector4<float> {
-            return Vector4<float>{a * x.x + y.x, a * x.y + y.y, a * x.z + y.z, a * x.w + y.w};
+            auto out = Vector4<float>::zero();
+            detail::axpy4(out.elements, a, x.elements, y.elements);
+            return out;
         }
 
         auto scale(const float a, const Vector4<float> x) -> Vector4<float> {
-            return Vector4<float>{a * x.x, a * x.y, a * x.z, a * x.w};
+            auto out = Vector4<float>::zero();
+            detail::scale4(out.elements, a, x.elements);
+            return out;
         }
 
         auto copy(Vector4<float>& a, const Vector4<float> b) -> void {
@@ -44,12 +66,34 @@ namespace linalg {
 
 namespace linalg {
     namespace blas1 {
+        namespace detail {
+            auto axpy4(double* out, const double a, const double* x, const double* y) -> double* {
+                out[0] = a * x[0] + y[0];
+                out[1] = a * x[1] + y[1];
+                out[2] = a * x[2] + y[2];
+                out[3] = a * x[3] + y[3];
+                return out;
+            }
+
+            auto scale4(double* out, const double a, const double* x) -> double* {
+                out[0] = a * x[0];
+                out[1] = a * x[1];
+                out[2] = a * x[2];
+                out[3] = a * x[3];
+                return out;
+            }
+        } // namespace detail
+
         auto axpy(const double a, const Vector4<double> x, const Vector4<double> y) -> Vector4<double> {
-            return Vector4<double>{a * x.x + y.x, a * x.y + y.y, a * x.z + y.z, a * x.w + y.w};
+            auto out = Vector4<double>::zero();
+            detail::axpy4(out.elements, a, x.elements, y.elements);
+            return out;
         }
 
         auto scale(const double a, const Vector4<double> x) -> Vector4<double> {
-            return Vector4<double>{a * x.x, a * x.y, a * x.z, a * x.w};
+            auto out = Vector4<double>::zero();
+            detail::scale4(out.elements, a, x.elements);
+            return out;
         }
 
         auto copy(Vector4<double>& a, const Vector4<double> b) -> void {

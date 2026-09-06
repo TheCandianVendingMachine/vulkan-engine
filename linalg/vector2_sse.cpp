@@ -31,8 +31,8 @@ namespace linalg {
 
             auto v_axpy = _mm_add_ps(v_ax, v_y);
 
-            float result[4];
-            _mm_storeu_ps(result, v_axpy);
+            alignas(16) float result[4];
+            _mm_store_ps(result, v_axpy);
             return Vector2<float>{result[0], result[1]};
         }
 
@@ -41,8 +41,8 @@ namespace linalg {
             auto v_x  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(x.elements));
             auto v_ax = _mm_mul_ps(v_a, v_x);
 
-            float result[4];
-            _mm_storeu_ps(result, v_ax);
+            alignas(16) float result[4];
+            _mm_store_ps(result, v_ax);
             return Vector2<float>{result[0], result[1]};
         }
 
@@ -59,8 +59,8 @@ namespace linalg {
             v_y = _mm_xor_ps(v_x, v_y);
             v_x = _mm_xor_ps(v_y, v_x);
 
-            float result[4];
-            _mm_storeu_ps(result, v_x);
+            alignas(16) float result[4];
+            _mm_store_ps(result, v_x);
 
             std::memcpy(a.elements, &result[0], 2 * sizeof(float));
             std::memcpy(b.elements, &result[2], 2 * sizeof(float));
@@ -101,8 +101,8 @@ namespace linalg {
 
             auto v_axpy = _mm_add_pd(v_ax, v_y);
 
-            double result[2];
-            _mm_storeu_pd(result, v_axpy);
+            alignas(16) double result[2];
+            _mm_store_pd(result, v_axpy);
             return Vector2<double>{result[0], result[1]};
         }
 
@@ -111,8 +111,8 @@ namespace linalg {
             auto v_x  = _mm_loadu_pd(x.elements);
             auto v_ax = _mm_mul_pd(v_a, v_x);
 
-            double result[2];
-            _mm_storeu_pd(result, v_ax);
+            alignas(16) double result[2];
+            _mm_store_pd(result, v_ax);
             return Vector2<double>{result[0], result[1]};
         }
 
@@ -128,10 +128,10 @@ namespace linalg {
             v_y = _mm_xor_pd(v_x, v_y);
             v_x = _mm_xor_pd(v_y, v_x);
 
-            double result_a[2];
-            double result_b[2];
-            _mm_storeu_pd(result_a, v_x);
-            _mm_storeu_pd(result_b, v_y);
+            alignas(16) double result_a[2];
+            alignas(16) double result_b[2];
+            _mm_store_pd(result_a, v_x);
+            _mm_store_pd(result_b, v_y);
 
             std::memcpy(a.elements, result_a, 2 * sizeof(double));
             std::memcpy(b.elements, result_b, 2 * sizeof(double));

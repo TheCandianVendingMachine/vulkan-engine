@@ -42,7 +42,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector2::float32::component_max,
-                "scomponentsum2"
+                "scomponentmax2"
             );
 
 
@@ -76,7 +76,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector2::float64::component_max,
-                "dcomponentsum2"
+                "dcomponentmax2"
             );
 
             // Vector3
@@ -110,7 +110,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector3::float32::component_max,
-                "scomponentsum3"
+                "scomponentmax3"
             );
 
 
@@ -128,7 +128,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector3::float64::swap,
-                "sswap3"
+                "dswap3"
             );
             clibrary.get_symbol(
                 blas1::vector3::float64::dot,
@@ -144,7 +144,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector3::float64::component_max,
-                "dcomponentsum3"
+                "dcomponentmax3"
             );
 
             // Vector4
@@ -179,7 +179,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector4::float32::component_max,
-                "scomponentsum4"
+                "scomponentmax4"
             );
 
 
@@ -197,7 +197,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector4::float64::swap,
-                "sswap4"
+                "dswap4"
             );
             clibrary.get_symbol(
                 blas1::vector4::float64::dot,
@@ -213,7 +213,7 @@ namespace ENGINE_NS {
             );
             clibrary.get_symbol(
                 blas1::vector4::float64::component_max,
-                "dcomponentsum4"
+                "dcomponentmax4"
             );
             logger.get().info("Successfully linked vector functions");
         }

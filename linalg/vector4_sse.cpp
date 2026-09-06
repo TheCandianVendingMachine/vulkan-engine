@@ -5,7 +5,14 @@
     #include <intrin.h>
 #endif
 #include <cmath>
+#include <cstdint>
 #include <cstring>
+
+namespace {
+    auto is_aligned_16(const void* ptr) -> bool {
+        return (reinterpret_cast<std::uintptr_t>(ptr) & 0x0F) == 0;
+    }
+}
 
 constexpr auto float_abs_bits() -> __m128i {
     int32_t bitmask     = 0x7FFFFFFF;
@@ -23,24 +30,42 @@ constexpr auto double_abs_bits() -> __m128d {
 
 namespace linalg {
     namespace blas1 {
-        auto axpy(const float a, const Vector4<float> x, const Vector4<float> y) -> Vector4<float> {
-            auto v_a    = _mm_set1_ps(a);
-            auto v_x    = _mm_loadu_ps(x.elements);
-            auto v_y    = _mm_loadu_ps(y.elements);
-            auto v_axpy = _mm_add_ps(_mm_mul_ps(v_a, v_x), v_y);
+        namespace detail {
+            auto axpy4(float* out, const float a, const float* x, const float* y) -> float* {
+                const auto v_a    = _mm_set1_ps(a);
+                const auto v_x    = _mm_loadu_ps(x);
+                const auto v_y    = _mm_loadu_ps(y);
+                const auto v_axpy = _mm_add_ps(_mm_mul_ps(v_a, v_x), v_y);
+                if (is_aligned_16(out)) {
+                    _mm_store_ps(out, v_axpy);
+                } else {
+                    _mm_storeu_ps(out, v_axpy);
+                }
+                return out;
+            }
 
-            float result[4];
-            _mm_storeu_ps(result, v_axpy);
+            auto scale4(float* out, const float a, const float* x) -> float* {
+                const auto v_a  = _mm_set1_ps(a);
+                const auto v_x  = _mm_loadu_ps(x);
+                const auto v_ax = _mm_mul_ps(v_a, v_x);
+                if (is_aligned_16(out)) {
+                    _mm_store_ps(out, v_ax);
+                } else {
+                    _mm_storeu_ps(out, v_ax);
+                }
+                return out;
+            }
+        } // namespace detail
+
+        auto axpy(const float a, const Vector4<float> x, const Vector4<float> y) -> Vector4<float> {
+            alignas(16) float result[4];
+            detail::axpy4(result, a, x.elements, y.elements);
             return Vector4<float>{result[0], result[1], result[2], result[3]};
         }
 
         auto scale(const float a, const Vector4<float> x) -> Vector4<float> {
-            auto v_a  = _mm_set1_ps(a);
-            auto v_x  = _mm_loadu_ps(x.elements);
-            auto v_ax = _mm_mul_ps(v_a, v_x);
-
-            float result[4];
-            _mm_storeu_ps(result, v_ax);
+            alignas(16) float result[4];
+            detail::scale4(result, a, x.elements);
             return Vector4<float>{result[0], result[1], result[2], result[3]};
         }
 
@@ -56,10 +81,10 @@ namespace linalg {
             v_y = _mm_xor_ps(v_x, v_y);
             v_x = _mm_xor_ps(v_y, v_x);
 
-            float result_a[4];
-            float result_b[4];
-            _mm_storeu_ps(result_a, v_x);
-            _mm_storeu_ps(result_b, v_y);
+            alignas(16) float result_a[4];
+            alignas(16) float result_b[4];
+            _mm_store_ps(result_a, v_x);
+            _mm_store_ps(result_b, v_y);
 
             std::memcpy(a.elements, result_a, 4 * sizeof(float));
             std::memcpy(b.elements, result_b, 4 * sizeof(float));
@@ -100,40 +125,58 @@ namespace linalg {
 
 namespace linalg {
     namespace blas1 {
+        namespace detail {
+            auto axpy4(double* out, const double a, const double* x, const double* y) -> double* {
+                const auto v_a = _mm_set1_pd(a);
+
+                const auto v_xl    = _mm_loadu_pd(x + 0);
+                const auto v_yl    = _mm_loadu_pd(y + 0);
+                const auto v_axpyl = _mm_add_pd(_mm_mul_pd(v_a, v_xl), v_yl);
+
+                const auto v_xh    = _mm_loadu_pd(x + 2);
+                const auto v_yh    = _mm_loadu_pd(y + 2);
+                const auto v_axpyh = _mm_add_pd(_mm_mul_pd(v_a, v_xh), v_yh);
+
+                if (is_aligned_16(out)) {
+                    _mm_store_pd(out + 0, v_axpyl);
+                    _mm_store_pd(out + 2, v_axpyh);
+                } else {
+                    _mm_storeu_pd(out + 0, v_axpyl);
+                    _mm_storeu_pd(out + 2, v_axpyh);
+                }
+                return out;
+            }
+
+            auto scale4(double* out, const double a, const double* x) -> double* {
+                const auto v_a = _mm_set1_pd(a);
+
+                const auto v_xl  = _mm_loadu_pd(x + 0);
+                const auto v_axl = _mm_mul_pd(v_a, v_xl);
+
+                const auto v_xh  = _mm_loadu_pd(x + 2);
+                const auto v_axh = _mm_mul_pd(v_a, v_xh);
+
+                if (is_aligned_16(out)) {
+                    _mm_store_pd(out + 0, v_axl);
+                    _mm_store_pd(out + 2, v_axh);
+                } else {
+                    _mm_storeu_pd(out + 0, v_axl);
+                    _mm_storeu_pd(out + 2, v_axh);
+                }
+                return out;
+            }
+        } // namespace detail
+
         auto axpy(const double a, const Vector4<double> x, const Vector4<double> y) -> Vector4<double> {
-            auto v_a = _mm_set1_pd(a);
-
-            auto v_xl  = _mm_loadu_pd(x.elements + 0);
-            auto v_yl  = _mm_loadu_pd(y.elements + 0);
-            auto v_axl = _mm_mul_pd(v_a, v_xl);
-
-            auto v_xh  = _mm_loadu_pd(x.elements + 2);
-            auto v_yh  = _mm_loadu_pd(y.elements + 2);
-            auto v_axh = _mm_mul_pd(v_a, v_xh);
-
-            auto v_axpyl = _mm_add_pd(v_axl, v_yl);
-            auto v_axpyh = _mm_add_pd(v_axh, v_yh);
-
-            double result_l[2];
-            double result_h[2];
-            _mm_storeu_pd(result_l, v_axpyl);
-            _mm_storeu_pd(result_h, v_axpyh);
-            return Vector4<double>{result_l[0], result_l[1], result_h[0], result_h[1]};
+            alignas(16) double result[4];
+            detail::axpy4(result, a, x.elements, y.elements);
+            return Vector4<double>{result[0], result[1], result[2], result[3]};
         }
 
         auto scale(const double a, const Vector4<double> x) -> Vector4<double> {
-            auto v_a   = _mm_set1_pd(a);
-            auto v_xl  = _mm_loadu_pd(x.elements + 0);
-            auto v_axl = _mm_mul_pd(v_a, v_xl);
-
-            auto v_xh  = _mm_loadu_pd(x.elements + 2);
-            auto v_axh = _mm_mul_pd(v_a, v_xh);
-
-            double result_l[2];
-            double result_h[2];
-            _mm_storeu_pd(result_l, v_axl);
-            _mm_storeu_pd(result_h, v_axh);
-            return Vector4<double>{result_l[0], result_l[1], result_h[0], result_h[1]};
+            alignas(16) double result[4];
+            detail::scale4(result, a, x.elements);
+            return Vector4<double>{result[0], result[1], result[2], result[3]};
         }
 
         auto copy(Vector4<double>& a, const Vector4<double> b) -> void {
@@ -154,15 +197,15 @@ namespace linalg {
             v_yh = _mm_xor_pd(v_xh, v_yh);
             v_xh = _mm_xor_pd(v_yh, v_xh);
 
-            double result_a_l[2];
-            double result_b_l[2];
-            _mm_storeu_pd(result_a_l, v_xl);
-            _mm_storeu_pd(result_b_l, v_yl);
+            alignas(16) double result_a_l[2];
+            alignas(16) double result_b_l[2];
+            _mm_store_pd(result_a_l, v_xl);
+            _mm_store_pd(result_b_l, v_yl);
 
-            double result_a_h[2];
-            double result_b_h[2];
-            _mm_storeu_pd(result_a_h, v_xh);
-            _mm_storeu_pd(result_b_h, v_yh);
+            alignas(16) double result_a_h[2];
+            alignas(16) double result_b_h[2];
+            _mm_store_pd(result_a_h, v_xh);
+            _mm_store_pd(result_b_h, v_yh);
 
             std::memcpy(a.elements + 0, result_a_l, 2 * sizeof(double));
             std::memcpy(b.elements + 0, result_b_l, 2 * sizeof(double));

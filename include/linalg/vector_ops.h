@@ -66,6 +66,17 @@ namespace linalg {
         auto component_sum(const Vector4<double> x) -> double;
         auto magnitude(const Vector4<double> x) -> double;
         auto component_max(const Vector4<double> x) -> double;
+
+        // Out-parameter entry points used by the C ABI wrappers. Keeping these in the
+        // implementation library lets each backend choose its fastest safe store path
+        // (for example, SSE can use aligned stores when the caller's output is aligned)
+        // while preserving the public value-returning vector API above.
+        namespace detail {
+            auto axpy4(float* out, float a, const float* x, const float* y) -> float*;
+            auto scale4(float* out, float a, const float* x) -> float*;
+            auto axpy4(double* out, double a, const double* x, const double* y) -> double*;
+            auto scale4(double* out, double a, const double* x) -> double*;
+        } // namespace detail
     } // namespace blas1
 } // namespace linalg
 

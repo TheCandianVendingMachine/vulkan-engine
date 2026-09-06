@@ -10,7 +10,8 @@ add_executable(test_linalg_scalar
     test_vector4_float.cpp
     test_vector2_double.cpp
     test_vector3_double.cpp
-    test_vector4_double.cpp)
+    test_vector4_double.cpp
+    test_vector_c_api.cpp)
 set_target_properties(test_linalg_scalar PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
 )
@@ -37,7 +38,8 @@ add_executable(test_linalg_sse
     test_vector4_float.cpp
     test_vector2_double.cpp
     test_vector3_double.cpp
-    test_vector4_double.cpp)
+    test_vector4_double.cpp
+    test_vector_c_api.cpp)
 set_target_properties(test_linalg_sse PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
 )

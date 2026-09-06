@@ -150,18 +150,10 @@ extern "C"
         Interface for Vector4<float> and Vector4<double>
     */
     float* saxpy4(float* out, const float a, const float* x, const float* y) {
-        std::memcpy(
-            out,
-            linalg::blas1::axpy(a, *reinterpret_cast<const linalg::Vector4<float>*>(x), *reinterpret_cast<const linalg::Vector4<float>*>(y))
-                .elements,
-            sizeof(linalg::Vector4<float>::elements));
-        return out;
+        return linalg::blas1::detail::axpy4(out, a, x, y);
     }
     float* sscale4(float* out, const float a, const float* x) {
-        std::memcpy(out,
-                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector4<float>*>(x)).elements,
-                    sizeof(linalg::Vector4<float>::elements));
-        return out;
+        return linalg::blas1::detail::scale4(out, a, x);
     }
     void scopy4(float* a, const float* b) {
         linalg::blas1::copy(*reinterpret_cast<linalg::Vector4<float>*>(a), *reinterpret_cast<const linalg::Vector4<float>*>(b));
@@ -183,19 +175,10 @@ extern "C"
     }
 
     double* daxpy4(double* out, const double a, const double* x, const double* y) {
-        std::memcpy(out,
-                    linalg::blas1::axpy(a,
-                                        *reinterpret_cast<const linalg::Vector4<double>*>(x),
-                                        *reinterpret_cast<const linalg::Vector4<double>*>(y))
-                        .elements,
-                    sizeof(linalg::Vector4<double>::elements));
-        return out;
+        return linalg::blas1::detail::axpy4(out, a, x, y);
     }
     double* dscale4(double* out, const double a, const double* x) {
-        std::memcpy(out,
-                    linalg::blas1::scale(a, *reinterpret_cast<const linalg::Vector4<double>*>(x)).elements,
-                    sizeof(linalg::Vector4<double>::elements));
-        return out;
+        return linalg::blas1::detail::scale4(out, a, x);
     }
     void dcopy4(double* a, const double* b) {
         linalg::blas1::copy(*reinterpret_cast<linalg::Vector4<double>*>(a), *reinterpret_cast<const linalg::Vector4<double>*>(b));
