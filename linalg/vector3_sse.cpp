@@ -25,26 +25,11 @@ constexpr auto double_abs_bits() -> __m128d {
 namespace linalg {
     namespace blas1 {
         auto axpy(const float a, const Vector3<float> x, const Vector3<float> y) -> Vector3<float> {
-            auto v_a  = _mm_set1_ps(a);
-            auto v_x  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(x.elements));
-            auto v_y  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(y.elements));
-            auto v_ax = _mm_mul_ps(v_a, v_x);
-
-            auto v_axpy = _mm_add_ps(v_ax, v_y);
-
-            alignas(16) float result[4];
-            _mm_store_ps(result, v_axpy);
-            return Vector3<float>{result[0], result[1], a * x.z + y.z};
+            return Vector3<float>{a * x.x + y.x, a * x.y + y.y, a * x.z + y.z};
         }
 
         auto scale(const float a, const Vector3<float> x) -> Vector3<float> {
-            auto v_a  = _mm_set1_ps(a);
-            auto v_x  = _mm_loadl_pi(_mm_setzero_ps(), reinterpret_cast<const __m64*>(x.elements));
-            auto v_ax = _mm_mul_ps(v_a, v_x);
-
-            alignas(16) float result[4];
-            _mm_store_ps(result, v_ax);
-            return Vector3<float>{result[0], result[1], a * x.z};
+            return Vector3<float>{a * x.x, a * x.y, a * x.z};
         }
 
         auto copy(Vector3<float>& a, const Vector3<float> b) -> void {
@@ -85,26 +70,11 @@ namespace linalg {
 namespace linalg {
     namespace blas1 {
         auto axpy(const double a, const Vector3<double> x, const Vector3<double> y) -> Vector3<double> {
-            auto v_a  = _mm_set1_pd(a);
-            auto v_x  = _mm_loadu_pd(x.elements);
-            auto v_y  = _mm_loadu_pd(y.elements);
-            auto v_ax = _mm_mul_pd(v_a, v_x);
-
-            auto v_axpy = _mm_add_pd(v_ax, v_y);
-
-            alignas(16) double result[2];
-            _mm_store_pd(result, v_axpy);
-            return Vector3<double>{result[0], result[1], a * x.z + y.z};
+            return Vector3<double>{a * x.x + y.x, a * x.y + y.y, a * x.z + y.z};
         }
 
         auto scale(const double a, const Vector3<double> x) -> Vector3<double> {
-            auto v_a  = _mm_set1_pd(a);
-            auto v_x  = _mm_loadu_pd(x.elements);
-            auto v_ax = _mm_mul_pd(v_a, v_x);
-
-            alignas(16) double result[2];
-            _mm_store_pd(result, v_ax);
-            return Vector3<double>{result[0], result[1], a * x.z};
+            return Vector3<double>{a * x.x, a * x.y, a * x.z};
         }
 
         auto copy(Vector3<double>& a, const Vector3<double> b) -> void {

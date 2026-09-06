@@ -58,15 +58,11 @@ namespace linalg {
         } // namespace detail
 
         auto axpy(const float a, const Vector4<float> x, const Vector4<float> y) -> Vector4<float> {
-            alignas(16) float result[4];
-            detail::axpy4(result, a, x.elements, y.elements);
-            return Vector4<float>{result[0], result[1], result[2], result[3]};
+            return Vector4<float>{a * x.x + y.x, a * x.y + y.y, a * x.z + y.z, a * x.w + y.w};
         }
 
         auto scale(const float a, const Vector4<float> x) -> Vector4<float> {
-            alignas(16) float result[4];
-            detail::scale4(result, a, x.elements);
-            return Vector4<float>{result[0], result[1], result[2], result[3]};
+            return Vector4<float>{a * x.x, a * x.y, a * x.z, a * x.w};
         }
 
         auto copy(Vector4<float>& a, const Vector4<float> b) -> void {
@@ -168,15 +164,11 @@ namespace linalg {
         } // namespace detail
 
         auto axpy(const double a, const Vector4<double> x, const Vector4<double> y) -> Vector4<double> {
-            alignas(16) double result[4];
-            detail::axpy4(result, a, x.elements, y.elements);
-            return Vector4<double>{result[0], result[1], result[2], result[3]};
+            return Vector4<double>{a * x.x + y.x, a * x.y + y.y, a * x.z + y.z, a * x.w + y.w};
         }
 
         auto scale(const double a, const Vector4<double> x) -> Vector4<double> {
-            alignas(16) double result[4];
-            detail::scale4(result, a, x.elements);
-            return Vector4<double>{result[0], result[1], result[2], result[3]};
+            return Vector4<double>{a * x.x, a * x.y, a * x.z, a * x.w};
         }
 
         auto copy(Vector4<double>& a, const Vector4<double> b) -> void {
@@ -215,20 +207,7 @@ namespace linalg {
         }
 
         auto dot(const Vector4<double> a, const Vector4<double> b) -> double {
-            auto v_al = _mm_loadu_pd(a.elements + 0);
-            auto v_bl = _mm_loadu_pd(b.elements + 0);
-            auto v_ah = _mm_loadu_pd(a.elements + 2);
-            auto v_bh = _mm_loadu_pd(b.elements + 2);
-
-            auto v_abl  = _mm_mul_pd(v_al, v_bl);
-            auto v_bal  = _mm_shuffle_pd(v_abl, v_abl, _MM_SHUFFLE2(0, 1));
-            auto v_dotl = _mm_add_pd(v_abl, v_bal);
-
-            auto v_abh  = _mm_mul_pd(v_ah, v_bh);
-            auto v_bah  = _mm_shuffle_pd(v_abh, v_abh, _MM_SHUFFLE2(0, 1));
-            auto v_doth = _mm_add_pd(v_abh, v_bah);
-
-            return _mm_cvtsd_f64(v_dotl) + _mm_cvtsd_f64(v_doth);
+            return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
         }
 
         /* Single vector operations are quicker when not using SSE */
