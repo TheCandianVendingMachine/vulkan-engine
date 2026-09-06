@@ -483,7 +483,7 @@ class Tracy(GitDependency, CMakePackage):
         GitDependency.__init__(
             self,
             "https://github.com/wolfpld/tracy.git",
-            "c556831ddc6fe26d2fce01c14c97205a9dad46d5",
+            "30997d5ca6bb632cc10807a1da8a6d3de0aeeb3c",
         )
 
     def copy_headers(self):

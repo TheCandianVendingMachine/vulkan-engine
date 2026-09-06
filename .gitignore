@@ -3,6 +3,7 @@ external/
 assets/
 bin/
 .vscode
+.pi
 DartConfiguration.tcl
 compile_commands.json
 

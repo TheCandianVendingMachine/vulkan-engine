@@ -1,6 +1,7 @@
 #include "engine/bitset.h"
 
 #include <cassert>
+#include <tracy/Tracy.hpp>
 
 using namespace ::ENGINE_NS;
 
@@ -49,6 +50,7 @@ auto Bitset::operator[](size_t idx) const -> std::uint8_t {
 }
 
 auto Bitset::bit_or(const Bitset& rhs) const -> Bitset {
+    ZoneScoped;
     auto& smaller = (this->size() <= rhs.size()) ? *this : rhs;
     auto& bigger  = (this->size() > rhs.size()) ? *this : rhs;
 
@@ -64,6 +66,7 @@ auto Bitset::bit_or(const Bitset& rhs) const -> Bitset {
 }
 
 auto Bitset::bit_and(const Bitset& rhs) const -> Bitset {
+    ZoneScoped;
     auto& smaller = (this->size() <= rhs.size()) ? *this : rhs;
     auto& bigger  = (this->size() > rhs.size()) ? *this : rhs;
 
@@ -83,6 +86,7 @@ auto Bitset::bit_and(const Bitset& rhs) const -> Bitset {
 }
 
 auto Bitset::bit_xor(const Bitset& rhs) const -> Bitset {
+    ZoneScoped;
     auto& smaller = (this->size() <= rhs.size()) ? *this : rhs;
     auto& bigger  = (this->size() > rhs.size()) ? *this : rhs;
 
@@ -98,6 +102,7 @@ auto Bitset::bit_xor(const Bitset& rhs) const -> Bitset {
 }
 
 auto Bitset::bit_equals(const Bitset& rhs) const -> bool {
+    ZoneScoped;
     if (this->size() != rhs.size()) {
         return false;
     }
@@ -116,6 +121,7 @@ auto Bitset::bit_equals(const Bitset& rhs) const -> bool {
 }
 
 auto Bitset::get(size_t idx) const -> std::uint8_t {
+    ZoneScoped;
     if (idx >= this->size()) {
         return 0;
     }
@@ -127,6 +133,7 @@ auto Bitset::get(size_t idx) const -> std::uint8_t {
 }
 
 auto Bitset::flip(size_t idx) -> void {
+    ZoneScoped;
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
@@ -140,6 +147,7 @@ auto Bitset::flip(size_t idx) -> void {
 }
 
 auto Bitset::set(size_t idx) -> void {
+    ZoneScoped;
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
@@ -153,6 +161,7 @@ auto Bitset::set(size_t idx) -> void {
 }
 
 auto Bitset::set_to(size_t idx, std::uint8_t bit) -> void {
+    ZoneScoped;
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
@@ -167,6 +176,7 @@ auto Bitset::set_to(size_t idx, std::uint8_t bit) -> void {
 }
 
 auto Bitset::clear(size_t idx) -> void {
+    ZoneScoped;
     if (idx >= this->size()) {
         this->extend(idx - this->size() + 1);
     }
@@ -180,10 +190,12 @@ auto Bitset::clear(size_t idx) -> void {
 }
 
 auto Bitset::size() const -> size_t {
+    ZoneScoped;
     return this->m_bitcount;
 }
 
 auto Bitset::is_subset_of(const Bitset& superset) const -> bool {
+    ZoneScoped;
     // If we are bigger than the superset, but all of the extra bits are 0, then we can say we are still a subset
     if (this->size() > superset.size()) {
         auto bits_in_chunk       = sizeof(Bitset::UnderlyingBitRepresentation) * 8;
@@ -216,6 +228,7 @@ auto Bitset::is_subset_of(const Bitset& superset) const -> bool {
 }
 
 auto Bitset::extend(size_t bitcount) -> void {
+    ZoneScoped;
     auto new_size_count = Bitset::bits_to_representation_count(this->m_bitcount + bitcount);
     if (new_size_count > this->m_set.size()) {
         this->m_set.reserve(new_size_count);
@@ -229,6 +242,7 @@ auto Bitset::extend(size_t bitcount) -> void {
 }
 
 ENGINE_API auto ENGINE_NS::Bitset::set_bits() const -> std::vector<size_t> {
+    ZoneScoped;
     auto bits  = std::vector<size_t>{};
     size_t idx = 0;
     for (auto bitset : this->m_set) {
@@ -242,6 +256,7 @@ ENGINE_API auto ENGINE_NS::Bitset::set_bits() const -> std::vector<size_t> {
 }
 
 auto Bitset::_get_bitset_at_index(std::size_t idx) -> std::uint64_t& {
+    ZoneScoped;
     auto idx_bytes = idx / 8;
     auto position  = idx_bytes / sizeof(Bitset::UnderlyingBitRepresentation);
 
@@ -250,6 +265,7 @@ auto Bitset::_get_bitset_at_index(std::size_t idx) -> std::uint64_t& {
 }
 
 auto Bitset::_get_bitset_at_index(std::size_t idx) const -> std::uint64_t {
+    ZoneScoped;
     auto idx_bytes = idx / 8;
     auto position  = idx_bytes / sizeof(Bitset::UnderlyingBitRepresentation);
 

@@ -29,13 +29,11 @@ enum class ErrorCode : std::size_t {
     COUNT
 };
 
-static constexpr const char* g_ERROR_CODE_STR[static_cast<std::size_t>(ErrorCode::COUNT)] = {
-    "Unknown",
-    "Failed to load linear algebra library",
-    "Failed to load linear algebra functions",
-    "Vulkan Error",
-    "Cannot read file"
-};
+static constexpr const char* g_ERROR_CODE_STR[static_cast<std::size_t>(ErrorCode::COUNT)] = {"Unknown",
+                                                                                             "Failed to load linear algebra library",
+                                                                                             "Failed to load linear algebra functions",
+                                                                                             "Vulkan Error",
+                                                                                             "Cannot read file"};
 
 namespace StaticNames {
     static constexpr const char* EngineLoop                 = "Engine loop";
@@ -52,6 +50,8 @@ namespace StaticNames {
     static constexpr const char* MainCommandBufferName      = "MainCommandBuffer";
     static constexpr const char* ImmediateCommandBufferName = "ImmediateCommandBuffer";
     static constexpr const char* DeleteRegisteredPipelines  = "Delete Registered Pipelines";
-    static constexpr const char* PopGameStates              = "Pop Game Stats";
     static constexpr const char* PushGameStates             = "Push Game Stats";
+    static constexpr const char* PopGameStates              = "Pop Game Stats";
+    static constexpr const char* ComponentStoreCheck        = "Component Store [Check]";
+    static constexpr const char* ComponentStoreAssign       = "Component Store [Assign]";
 } // namespace StaticNames

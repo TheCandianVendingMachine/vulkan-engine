@@ -32,11 +32,11 @@ namespace ENGINE_NS {
                 }
 
                 /// Per-frame update for all entities matching query().
-                virtual auto tick(std::vector<Bundle>& bundles) -> void {
+                virtual auto tick(std::vector<Bundle>&) -> void {
                 }
 
                 /// Fixed-timestep update for all entities matching query().
-                virtual auto fixed_tick(double dt, std::vector<Bundle>& bundles) -> void {
+                virtual auto fixed_tick(double, std::vector<Bundle>&) -> void {
                 }
         };
     } // namespace ecs

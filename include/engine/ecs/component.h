@@ -4,12 +4,13 @@
 #include "engine/meta_defines.h"
 #include "engine/pool.h"
 
-#include <tracy/Tracy.hpp>
+#include <robin_map.h>
+
 #include <algorithm>
 #include <memory>
 #include <optional>
-#include <robin_map.h>
 #include <string>
+#include <tracy/Tracy.hpp>
 #include <type_traits>
 #include <vector>
 
@@ -74,13 +75,15 @@ namespace ENGINE_NS {
                 /// this Bundle, otherwise robin_map::at will throw.
                 template <typename T, typename = std::enable_if_t<std::is_base_of<Component, T>::value>>
                 auto component() -> T& {
-                    auto gid       = component_map_.at(T::Meta::name);
+                    ZoneScoped;
+                    auto gid       = component_map_.at(std::string(T::Meta::name));
                     auto component = stored_.at(gid);
                     return *static_cast<T*>(component);
                 }
 
                 /// Fetch a selected component by registered reflection/name string.
                 auto component(std::string_view name) -> Component* {
+                    ZoneScoped;
                     auto gid       = component_map_.at(std::string(name));
                     auto component = stored_.at(gid);
                     return component;
@@ -96,11 +99,12 @@ namespace ENGINE_NS {
 
                 template <typename T, typename = std::enable_if_t<std::is_base_of<Component, T>::value>>
                 auto assign(ComponentGid gid, T* component) -> void {
+                    ZoneScoped;
                     if (query_.query.get(static_cast<std::size_t>(gid)) == 0) {
                         return;
                     }
                     stored_.insert({gid, component});
-                    component_map_.insert({T::Meta::name, gid});
+                    component_map_.insert({std::string(T::Meta::name), gid});
                 }
 
                 friend class EntityStore;
@@ -119,6 +123,7 @@ namespace ENGINE_NS {
         /// can have its own strongly typed ComponentStore<T>.
         class ComponentStoreInterface {
             public:
+                virtual ~ComponentStoreInterface()                                                                  = default;
                 /// Create a default component instance assigned to an entity.
                 virtual auto create(EntityUid assigned) -> void                                                     = 0;
                 /// Destroy the component instance assigned to an entity.
@@ -191,10 +196,16 @@ namespace ENGINE_NS {
                 virtual auto assign_bundles(std::vector<Bundle>& bundles) -> void override final {
                     ZoneScoped;
                     for (auto& bundle : bundles) {
-                        if (bundle.query_.query.get(static_cast<std::size_t>(this->gid_)) == 0) {
-                            continue;
+                        {
+                            ZoneScopedN(StaticNames::ComponentStoreCheck);
+                            if (bundle.query_.query.get(static_cast<std::size_t>(this->gid_)) == 0) {
+                                continue;
+                            }
                         }
-                        bundle.assign(gid_, static_cast<T*>(this->fetch_mut(bundle.entity_)));
+                        {
+                            ZoneScopedN(StaticNames::ComponentStoreAssign);
+                            bundle.assign(gid_, static_cast<T*>(this->fetch_mut(bundle.entity_)));
+                        }
                     }
                 }
 

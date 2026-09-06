@@ -4,26 +4,26 @@
 #include "engine/engine_utils.h"
 #include "engine/shared_library.h"
 
-#include <tracy/Tracy.hpp>
 #include <memory>
+#include <tracy/Tracy.hpp>
 
 #ifdef _WIN32
     /// MSVC CPUID
     #include <intrin.h>
     #define cpuid(info, x) __cpuidex(info, x, 0)
 
-    constexpr const char* AVX_LIBRARY_NAME = "linalg_avx.dll";
-    constexpr const char* SSE_LIBRARY_NAME = "linalg_sse.dll";
-    constexpr const char* SCALAR_LIBRARY_NAME = "linalg_scalar.dll";
+constexpr const char* AVX_LIBRARY_NAME    = "linalg_avx.dll";
+constexpr const char* SSE_LIBRARY_NAME    = "linalg_sse.dll";
+constexpr const char* SCALAR_LIBRARY_NAME = "linalg_scalar.dll";
 #else
 //  GCC Intrinsics
     #include <cpuid.h>
     /// gcc / clang CPUID
     #define cpuid(info, x) __cpuid_count(x, 0, info[0], info[1], info[2], info[3])
 
-    constexpr const char* AVX_LIBRARY_NAME = "linalg_avx.so";
-    constexpr const char* SSE_LIBRARY_NAME = "linalg_sse.so";
-    constexpr const char* SCALAR_LIBRARY_NAME = "linalg_scalar.so";
+constexpr const char* AVX_LIBRARY_NAME    = "linalg_avx.so";
+constexpr const char* SSE_LIBRARY_NAME    = "linalg_sse.so";
+constexpr const char* SCALAR_LIBRARY_NAME = "linalg_scalar.so";
 #endif
 
 std::unique_ptr<ENGINE_NS::linalg::Library> ENGINE_NS::linalg::g_VECTOR_LIBRARY = nullptr;
@@ -43,7 +43,7 @@ void ENGINE_NS::linalg::load_library() {
     auto arch = Arch::SCALAR;
     if (has_sse) {
         logger.get().info("Detected SSE4.2");
-        // arch = Arch::SSE;
+        arch = Arch::SSE;
     } else {
         logger.get().info("SSE4.2 not present");
     }
