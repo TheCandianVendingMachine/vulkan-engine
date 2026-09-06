@@ -101,25 +101,89 @@
             "name": "msvc-debug-tests",
             "displayName": "MSVC — Debug Tests",
             "configurePreset": "msvc",
-            "configuration": "Debug"
+            "configuration": "Debug",
+            "filter": {
+                "exclude": {
+                    "label": "benchmark"
+                }
+            }
         },
         {
             "name": "msvc-release-tests",
             "displayName": "MSVC — Release Tests",
             "configurePreset": "msvc",
-            "configuration": "Release"
+            "configuration": "Release",
+            "filter": {
+                "exclude": {
+                    "label": "benchmark"
+                }
+            }
         },
         {
             "name": "clang-debug-tests",
             "displayName": "Clang — Debug Tests",
             "configurePreset": "clang",
-            "configuration": "Debug"
+            "configuration": "Debug",
+            "filter": {
+                "exclude": {
+                    "label": "benchmark"
+                }
+            }
         },
         {
             "name": "clang-release-tests",
             "displayName": "Clang — Release Tests",
             "configurePreset": "clang",
-            "configuration": "Release"
+            "configuration": "Release",
+            "filter": {
+                "exclude": {
+                    "label": "benchmark"
+                }
+            }
+        },
+        {
+            "name": "msvc-debug-benchmarks",
+            "displayName": "MSVC — Debug Benchmarks",
+            "configurePreset": "msvc",
+            "configuration": "Debug",
+            "filter": {
+                "include": {
+                    "label": "benchmark"
+                }
+            }
+        },
+        {
+            "name": "msvc-release-benchmarks",
+            "displayName": "MSVC — Release Benchmarks",
+            "configurePreset": "msvc",
+            "configuration": "Release",
+            "filter": {
+                "include": {
+                    "label": "benchmark"
+                }
+            }
+        },
+        {
+            "name": "clang-debug-benchmarks",
+            "displayName": "Clang — Debug Benchmarks",
+            "configurePreset": "clang",
+            "configuration": "Debug",
+            "filter": {
+                "include": {
+                    "label": "benchmark"
+                }
+            }
+        },
+        {
+            "name": "clang-release-benchmarks",
+            "displayName": "Clang — Release Benchmarks",
+            "configurePreset": "clang",
+            "configuration": "Release",
+            "filter": {
+                "include": {
+                    "label": "benchmark"
+                }
+            }
         }
     ]
 }
