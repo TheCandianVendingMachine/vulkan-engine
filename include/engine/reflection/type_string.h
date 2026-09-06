@@ -1,13 +1,14 @@
 #include <fmt/format.h>
 
 #include <string>
+#include <string_view>
 #include <utility>
 
 template <>
 struct ENGINE_NS::reflection::Type<std::string> : ENGINE_NS::reflection::Atom<std::string> {
         using Inner = std::string;
 
-        static constexpr auto name() -> const char* {
+        static constexpr auto name() -> std::string_view {
             return "string";
         }
         static auto as_string(const Inner& var) -> std::string {

@@ -2,13 +2,14 @@
 
 #include <concepts>
 #include <string>
+#include <string_view>
 #include <utility>
 
 template <>
 struct ENGINE_NS::reflection::Type<float> : ENGINE_NS::reflection::Atom<float> {
         using Inner = float;
 
-        static constexpr auto name() -> const char* {
+        static constexpr auto name() -> std::string_view {
             return "float32";
         }
         static auto as_string(const Inner& var) -> std::string {
@@ -45,7 +46,7 @@ template <>
 struct ENGINE_NS::reflection::Type<double> : ENGINE_NS::reflection::Atom<double> {
         using Inner = double;
 
-        static constexpr auto name() -> const char* {
+        static constexpr auto name() -> std::string_view {
             return "float64";
         }
         static auto as_string(const Inner& var) -> std::string {

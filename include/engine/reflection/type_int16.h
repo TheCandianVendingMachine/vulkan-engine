@@ -3,13 +3,14 @@
 #include <concepts>
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <utility>
 
 template <>
 struct ENGINE_NS::reflection::Type<std::uint16_t> : ENGINE_NS::reflection::Atom<std::uint16_t> {
         using Inner = std::uint16_t;
 
-        static constexpr auto name() -> const char* {
+        static constexpr auto name() -> std::string_view {
             return "uint16";
         }
         static auto as_string(const Inner& var) -> std::string {
@@ -46,7 +47,7 @@ template <>
 struct ENGINE_NS::reflection::Type<std::int16_t> : ENGINE_NS::reflection::Atom<std::int16_t> {
         using Inner = std::int16_t;
 
-        static constexpr auto name() -> const char* {
+        static constexpr auto name() -> std::string_view {
             return "int16";
         }
         static auto as_string(const Inner& var) -> std::string {

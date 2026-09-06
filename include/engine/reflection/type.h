@@ -1,6 +1,7 @@
 #pragma once
 #include "engine/meta_defines.h"
 
+#include <algorithm>
 #include <array>
 #include <concepts>
 #include <cstddef>
@@ -30,7 +31,7 @@ namespace ENGINE_NS {
 
         template <typename T>
         struct Type : Atom<T> {
-                static constexpr auto name() -> const char*;
+                static constexpr auto name() -> std::string_view;
                 static auto as_string(const T& var) -> std::string;
                 static auto as_human_string(const T& var) -> std::string {
                     return Type<T>::as_string(var);
@@ -95,6 +96,7 @@ namespace ENGINE_NS {
 #include "engine/reflection/type_int8.h"
 #include "engine/reflection/type_string.h"
 #include "engine/reflection/type_vector.h"
+#include "engine/reflection/type_quaternion.h"
 
 namespace ENGINE_NS {
     namespace reflection {
@@ -108,7 +110,7 @@ namespace ENGINE_NS {
                 [[nodiscard]]
                 virtual auto alignment() const -> std::size_t = 0;
                 [[nodiscard]]
-                virtual auto name() const -> const char* = 0;
+                virtual auto name() const -> std::string_view = 0;
 
                 template <typename T>
                 static auto instance() -> std::shared_ptr<RuntimeType>;
@@ -135,7 +137,7 @@ namespace ENGINE_NS {
                     return TypeVar::alignment();
                 }
                 [[nodiscard]]
-                auto name() const -> const char* final {
+                auto name() const -> std::string_view final {
                     return TypeVar::name();
                 }
         };

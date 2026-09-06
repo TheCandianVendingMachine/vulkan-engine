@@ -1,9 +1,15 @@
 #pragma once
 #include "engine/meta_defines.h"
 #include "engine/utilities/quaternion.h"
+#include "engine/reflection/type.h"
+
+#include <fmt/format.h>
 
 #include <linalg/matrix.h>
 #include <linalg/vector.h>
+
+#include <string>
+#include <string_view>
 
 namespace ENGINE_NS {
     class Transform {
@@ -47,5 +53,46 @@ namespace ENGINE_NS {
             Quaternion rotation_;
 
             bool dirty_ = true;
+
+        public:
+            REFLECT_START(Transform)
+            REFLECT_MEMBER(position_), REFLECT_MEMBER(scale_), REFLECT_MEMBER(rotation_)
+            REFLECT_END
     };
 } // namespace ENGINE_NS
+
+namespace ENGINE_NS::reflection {
+    template <>
+    struct Type<ENGINE_NS::Transform> : Atom<ENGINE_NS::Transform> {
+            using Inner = ENGINE_NS::Transform;
+
+            static constexpr auto name() -> std::string_view {
+                return "Transform";
+            }
+            static auto as_string(const Inner& var) -> std::string {
+                return fmt::format("{{position: {}, scale: {}, rotation: {}}}",
+                                   Type<::linalg::Vector3<double>>::as_string(var.position),
+                                   Type<::linalg::Vector3<double>>::as_string(var.scale),
+                                   Type<ENGINE_NS::Quaternion>::as_string(var.rotation));
+            }
+            static auto as_human_string(const Inner& var) -> std::string {
+                return fmt::format("Transform(position: {}, scale: {}, rotation: {})",
+                                   Type<::linalg::Vector3<double>>::as_human_string(var.position),
+                                   Type<::linalg::Vector3<double>>::as_human_string(var.scale),
+                                   Type<ENGINE_NS::Quaternion>::as_human_string(var.rotation));
+            }
+
+            static auto construct() -> Inner {
+                return Inner{};
+            }
+            static auto cast(const Inner& arg) -> Inner {
+                return arg;
+            }
+            static auto cast_from_ptr(void* arg) -> Inner& {
+                return *reinterpret_cast<Inner*>(arg);
+            }
+            static auto cast_from_ptr(const void* arg) -> const Inner& {
+                return *reinterpret_cast<const Inner*>(arg);
+            }
+    };
+} // namespace ENGINE_NS::reflection

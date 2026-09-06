@@ -7,6 +7,7 @@
 #include <fmt/format.h>
 
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace ENGINE_NS::reflection {
@@ -14,7 +15,7 @@ namespace ENGINE_NS::reflection {
     struct Type<ENGINE_NS::ecs::ComponentId> : Atom<ENGINE_NS::ecs::ComponentId> {
             using Inner = ENGINE_NS::ecs::ComponentId;
 
-            static constexpr auto name() -> const char* {
+            static constexpr auto name() -> std::string_view {
                 return "ComponentId";
             }
             static auto as_string(const Inner& var) -> std::string {
