@@ -63,7 +63,9 @@ endif()
 # linalg_sse
 # ---------------------------------------------------------------------------
 add_library(linalg_sse SHARED
-    #matrix_interface.cpp
+    matrix_interface.cpp
+    matrix2.cpp
+    matrix3.cpp
     matrix4_sse.cpp
     vector_interface.cpp
     vector2_sse.cpp
